@@ -121,7 +121,7 @@ class Graph:
             thres : float
                 If difference is smaller than this, points are equal.
                 The default value of 2e-8 radians is set based on
-                emphirical test cases. Relative threshold based on
+                empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
             # return np.array_equal(self._point, other._point)
