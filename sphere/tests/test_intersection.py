@@ -83,7 +83,7 @@ class intersection_test:
 
 @intersection_test(0, 90)
 def test1():
-    import pyfits
+    from astropy.io import fits as pyfits
     import os
 
     fits = pyfits.open(resolve_imagename(ROOT_DIR,'1904-66_TAN.fits'))
@@ -107,7 +107,7 @@ def test2():
 
 @intersection_test(0, 90)
 def test3():
-    import pyfits
+    from astropy.io import fits as pyfits
     fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
@@ -120,8 +120,8 @@ def test3():
 
 
 def test4():
-    import pyfits
-    import pywcs
+    from astropy.io import fits as pyfits
+    from astropy import wcs as pywcs
 
     A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
     B = pyfits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
@@ -142,8 +142,8 @@ def test4():
 
 
 def test5():
-    import pyfits
-    import pywcs
+    from astropy.io import fits as pyfits
+    from astropy import wcs as pywcs
 
     A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
     B = pyfits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
@@ -165,7 +165,7 @@ def test5():
 
 @intersection_test(0, 90)
 def test6():
-    import pyfits
+    from astropy.io import fits as pyfits
     fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 

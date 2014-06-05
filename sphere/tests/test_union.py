@@ -140,8 +140,8 @@ def test4():
 
 
 def test5():
-    import pyfits
-    import pywcs
+    from astropy.io import fits as pyfits
+    from astropy import wcs as pywcs
 
     A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
 
@@ -154,8 +154,8 @@ def test5():
 
 
 def test6():
-    import pyfits
-    import pywcs
+    from astropy.io import fits as pyfits
+    from astropy import wcs as pywcs
 
     A = pyfits.open(os.path.join(ROOT_DIR, '2chipC.fits.gz'))
 
@@ -169,8 +169,8 @@ def test6():
 
 @union_test(0, 90)
 def test7():
-    import pyfits
-    import pywcs
+    from astropy.io import fits as pyfits
+    from astropy import wcs as pywcs
 
     A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
 
