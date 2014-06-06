@@ -104,11 +104,14 @@ def test(package=None, test_path=None, args=None, plugins=None,
 
     """
     test_runner = _get_test_runner()
+    # The template version of this file has an extra **kwargs
+    # which does not work with the Ureka astropy version
+    # BPS 06.06.14
     return test_runner.run_tests(
         package=package, test_path=test_path, args=args,
         plugins=plugins, verbose=verbose, pastebin=pastebin,
         remote_data=remote_data, pep8=pep8, pdb=pdb,
-        coverage=coverage, open_files=open_files, **kwargs)
+        coverage=coverage, open_files=open_files)
 
 if not _ASTROPY_SETUP_:
 
