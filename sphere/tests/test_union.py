@@ -86,7 +86,7 @@ class union_test:
 
 @union_test(0, 90)
 def test1():
-    import pyfits
+    from astropy.io import fits as pyfits
     fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
@@ -191,7 +191,7 @@ def test7():
 
 @union_test(0, 90)
 def test8():
-    import pyfits
+    from astropy.io import fits as pyfits
     fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
