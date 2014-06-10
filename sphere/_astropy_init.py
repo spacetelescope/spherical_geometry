@@ -116,6 +116,7 @@ def test(package=None, test_path=None, args=None, plugins=None,
 if not _ASTROPY_SETUP_:
 
     import os
+    #import os.path
     from warnings import warn
     from astropy import config
 
@@ -124,6 +125,7 @@ if not _ASTROPY_SETUP_:
 
     if not os.environ.get('ASTROPY_SKIP_CONFIG_UPDATE', False):
         config_dir = os.path.dirname(__file__)
+        #config_dir = os.path.join(os.path.expanduser('~'), '.astropy', 'config')
         try:
             config.configuration.update_default_config(__package__, config_dir)
         except config.configuration.ConfigurationDefaultMissingError as e:
