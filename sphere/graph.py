@@ -124,9 +124,7 @@ class Graph:
                 empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
-            # return np.array_equal(self._point, other._point)
-            return great_circle_arc.length(self._point, other._point,
-                                           degrees=False) < thres
+            return np.array_equal(self._point, other._point)
 
 
     class Edge:
@@ -615,12 +613,9 @@ class Graph:
             A = starts[0]; starts = starts[1:]  # numpy equiv of "pop(0)"
             B = ends[0];   ends = ends[1:]      # numpy equiv of "pop(0)"
 
-            distance = great_circle_arc.length(A, B)
             for node in self._nodes:
                 if node not in AB._nodes:
-                    distanceA = great_circle_arc.length(node._point, A)
-                    distanceB = great_circle_arc.length(node._point, B)
-                    if np.abs((distanceA + distanceB) - distance) < 1e-8:
+                    if great_circle_arc.intersects_point(A, B, node._point):
                         newA, newB = self.split_edge(AB, node)
 
                         new_edges = [
@@ -707,15 +702,20 @@ class Graph:
 
         for edge in self._edges:
             edge._count = 0
+            A, B = edge._nodes
             for polygon in polygons:
                 if (not polygon in edge._source_polygons and
-                    polygon.intersects_arc(
-                        edge._nodes[0]._point, edge._nodes[1]._point)):
+                    ((polygon in A._source_polygons or
+                      polygon.contains_point(A._point)) and
+                     (polygon in B._source_polygons or
+                      polygon.contains_point(B._point)))):
                     edge._count += 1
 
         for edge in list(self._edges):
             if edge._count >= 1:
                 self.remove_edge(edge)
+
+        self._remove_orphaned_nodes()
 
     def _remove_exterior_edges(self):
         """
@@ -726,15 +726,22 @@ class Graph:
 
         for edge in self._edges:
             edge._count = 0
+            A, B = edge._nodes
             for polygon in polygons:
-                if (polygon in edge._source_polygons or
-                    polygon.intersects_arc(
-                        edge._nodes[0]._point, edge._nodes[1]._point)):
+                if polygon in edge._source_polygons:
                     edge._count += 1
+                else:
+                    if ((polygon in A._source_polygons or
+                         polygon.contains_point(A._point)) and
+                        (polygon in B._source_polygons or
+                         polygon.contains_point(B._point))):
+                        edge._count += 1
 
         for edge in list(self._edges):
             if edge._count < len(polygons):
                 self.remove_edge(edge)
+
+        self._remove_orphaned_nodes()
 
     def _remove_3ary_edges(self, large_first=False):
         """

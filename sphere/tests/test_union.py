@@ -86,8 +86,8 @@ class union_test:
 
 @union_test(0, 90)
 def test1():
-    from astropy.io import fits as pyfits
-    fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
+    from astropy.io import fits
+    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
     poly1 = polygon.SphericalPolygon.from_wcs(
@@ -113,37 +113,37 @@ def test2():
     return [poly1, poly2, poly3, poly4, poly5, poly6]
 
 
-@union_test(0, 90)
-def test3():
-    random.seed(0)
-    polys = []
-    for i in range(10):
-        polys.append(polygon.SphericalPolygon.from_cone(
-            random.randrange(-180, 180),
-            random.randrange(20, 90),
-            random.randrange(5, 16),
-            steps=16))
-    return polys
+# @union_test(0, 90)
+# def test3():
+#     random.seed(0)
+#     polys = []
+#     for i in range(10):
+#         polys.append(polygon.SphericalPolygon.from_cone(
+#             random.randrange(-180, 180),
+#             random.randrange(20, 90),
+#             random.randrange(5, 16),
+#             steps=16))
+#     return polys
 
 
-@union_test(0, 15)
-def test4():
-    random.seed(64)
-    polys = []
-    for i in range(10):
-        polys.append(polygon.SphericalPolygon.from_cone(
-            random.randrange(-30, 30),
-            random.randrange(-15, 60),
-            random.randrange(5, 16),
-            steps=16))
-    return polys
+# @union_test(0, 15)
+# def test4():
+#     random.seed(64)
+#     polys = []
+#     for i in range(10):
+#         polys.append(polygon.SphericalPolygon.from_cone(
+#             random.randrange(-30, 30),
+#             random.randrange(-15, 60),
+#             random.randrange(5, 16),
+#             steps=16))
+#     return polys
 
 
 def test5():
-    from astropy.io import fits as pyfits
+    from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
+    A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
 
     wcs = pywcs.WCS(A[1].header, fobj=A)
     chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
@@ -154,10 +154,10 @@ def test5():
 
 
 def test6():
-    from astropy.io import fits as pyfits
+    from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = pyfits.open(os.path.join(ROOT_DIR, '2chipC.fits.gz'))
+    A = fits.open(os.path.join(ROOT_DIR, '2chipC.fits.gz'))
 
     wcs = pywcs.WCS(A[1].header, fobj=A)
     chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
@@ -169,17 +169,17 @@ def test6():
 
 @union_test(0, 90)
 def test7():
-    from astropy.io import fits as pyfits
+    from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = pyfits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
+    A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
 
     wcs = pywcs.WCS(A[1].header, fobj=A)
     chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
     wcs = pywcs.WCS(A[4].header, fobj=A)
     chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
 
-    B = pyfits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
+    B = fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
 
     wcs = pywcs.WCS(B[1].header, fobj=B)
     chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
@@ -191,8 +191,9 @@ def test7():
 
 @union_test(0, 90)
 def test8():
-    from astropy.io import fits as pyfits
-    fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
+    from astropy.io import fits
+
+    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
     poly1 = polygon.SphericalPolygon.from_wcs(
@@ -213,3 +214,15 @@ if __name__ == '__main__':
     functions.sort()
     for k, v in functions:
         v()
+
+
+def test_union_empty():
+    p = polygon.SphericalPolygon.from_cone(
+        random.randrange(-180, 180),
+        random.randrange(20, 90),
+        random.randrange(5, 16),
+        steps=16)
+
+    p2 = p.union(polygon.SphericalPolygon([]))
+
+    assert_array_almost_equal(p2._points, p._points)

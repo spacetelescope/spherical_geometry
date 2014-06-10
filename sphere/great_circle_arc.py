@@ -71,7 +71,7 @@ def _fast_cross(a, b):
     """
     if HAS_C_UFUNCS:
         return math_util.cross(a, b)
-    
+
     cp = np.empty(np.broadcast(a, b).shape)
     aT = a.T
     bT = b.T
@@ -83,9 +83,11 @@ def _fast_cross(a, b):
 
     return cp
 
+
 def _cross_and_normalize(A, B):
     if HAS_C_UFUNCS:
-        return math_util.cross_and_norm(A, B)
+        with np.errstate(invalid='ignore'):
+            return math_util.cross_and_norm(A, B)
 
     T = _fast_cross(A, B)
     # Normalization
@@ -154,7 +156,7 @@ def intersection(A, B, C, D):
     """
     if HAS_C_UFUNCS:
         return math_util.intersection(A, B, C, D)
-    
+
     A = np.asanyarray(A)
     B = np.asanyarray(B)
     C = np.asanyarray(C)
@@ -224,6 +226,14 @@ def length(A, B, degrees=True):
     A = np.asanyarray(A)
     B = np.asanyarray(B)
 
+    A2 = A ** 2.0
+    Al = np.sqrt(A2[..., 0] + A2[..., 1] + A2[..., 2])
+    B2 = B ** 2.0
+    Bl = np.sqrt(B2[..., 0] + B2[..., 1] + B2[..., 2])
+
+    A = A / np.expand_dims(Al, 2)
+    B = B / np.expand_dims(Bl, 2)
+
     dot = inner1d(A, B)
     dot = np.clip(dot, -1.0, 1.0)
     with np.errstate(invalid='ignore'):
@@ -257,7 +267,25 @@ def intersects(A, B, C, D):
     """
     with np.errstate(invalid='ignore'):
         intersections = intersection(A, B, C, D)
+
     return np.isfinite(intersections[..., 0])
+
+
+def intersects_point(A, B, C):
+    """
+    Returns True if point C is along the great circle arc AB.
+    """
+    # Check for exact match at the endpoint first
+    if np.any(np.all(A == C, axis=-1)):
+        return True
+
+    total_length = length(A, B)
+    left_length = length(A, C)
+    right_length = length(C, B)
+
+    length_diff = np.abs((left_length + right_length) - total_length)
+
+    return np.any(length_diff < 1e-8)
 
 
 def angle(A, B, C, degrees=True):
