@@ -271,8 +271,12 @@ class Graph:
 
         # Don't add nodes that already exist.  Update the existing
         # node's source_polygons list to include the new polygon.
+
+        # Nodes that are closer together than 1e-10 are automatically
+        # merged, since we can't numerically determine whether those
+        # nodes are the same, or just along an arc.
         for node in self._nodes:
-            if node.equals(new_node):
+            if great_circle_arc.length(node._point, new_node._point) < 1e-10:
                 node._source_polygons.update(source_polygons)
                 return node
 
@@ -295,6 +299,8 @@ class Graph:
         for edge in list(node._edges):
             nodeB = edge.follow(node)
             nodeB._edges.remove(edge)
+            if len(nodeB._edges) == 0:
+                self._nodes.remove(nodeB)
             self._edges.remove(edge)
         self._nodes.remove(node)
 
@@ -432,16 +438,28 @@ class Graph:
         fig = plt.figure()
         m = Basemap()
 
+        minx = np.inf
+        miny = np.inf
+        maxx = -np.inf
+        maxy = -np.inf
+        for polygon in self._source_polygons:
+            polygon.draw(m, lw=10, alpha=0.1, color="black")
+            v = polygon._points
+            ra, dec = vector.vector_to_radec(v[:, 0], v[:, 1], v[:, 2])
+            x, y = m(ra, dec)
+            for x0 in x:
+                minx = min(x0, minx)
+                maxx = max(x0, maxx)
+            for y0 in y:
+                miny = min(y0, miny)
+                maxy = max(y0, maxy)
+
         counts = {}
         for node in self._nodes:
             count = func(node)
             counts.setdefault(count, [])
             counts[count].append(list(node._point))
 
-        minx = np.inf
-        miny = np.inf
-        maxx = -np.inf
-        maxy = -np.inf
         for k, v in counts.items():
             v = np.array(v)
             ra, dec = vector.vector_to_radec(v[:, 0], v[:, 1], v[:, 2])
@@ -512,8 +530,8 @@ class Graph:
         self._sanity_check("intersection - find all intersections")
         self._remove_exterior_edges()
         self._sanity_check("intersection - remove exterior edges")
-        self._remove_3ary_edges(large_first=True)
-        self._sanity_check("intersection - remove 3ary edges")
+        self._remove_cut_lines()
+        self._sanity_check("intersection - remove cut lines [2]")
         self._remove_orphaned_nodes()
         self._sanity_check("intersection - remove orphan nodes", True)
         return self._trace()
@@ -562,30 +580,8 @@ class Graph:
             if AB not in self._edges:
                 continue
             A, B = AB._nodes
-            for j in xrange(i + 1, len(edges)):
-                CD = edges[j]
-                if CD not in self._edges:
-                    continue
-                C, D = CD._nodes
-                # To be a cutline, the candidate edges need to run in
-                # the opposite direction, hence A == D and B == C, not
-                # A == C and B == D.
-                if (A.equals(D) and B.equals(C)):
-                    # Create new edges A -> D' and C -> B'
-                    self.add_edge(
-                        A, D.follow(CD).follow(D),
-                        AB._source_polygons | CD._source_polygons)
-                    self.add_edge(
-                        C, B.follow(AB).follow(B),
-                        AB._source_polygons | CD._source_polygons)
-
-                    # Remove B and D which are identical to C and A
-                    # respectively.  We do not need to remove AB and
-                    # CD because this will remove it for us.
-                    self.remove_node(D)
-                    self.remove_node(B)
-
-                    break
+            if len(A._edges) == 3 and len(B._edges) == 3:
+                self.remove_edge(AB)
 
     def _find_all_intersections(self):
         """
@@ -622,6 +618,10 @@ class Graph:
                             edge for edge in (newA, newB)
                             if edge not in edges]
 
+                        node._source_polygons.update(
+                            self.add_node(A)._source_polygons)
+                        node._source_polygons.update(
+                            self.add_node(B)._source_polygons)
                         edges = new_edges + edges
                         new_starts, new_ends = get_edge_points(new_edges)
                         starts = np.vstack(
@@ -708,7 +708,9 @@ class Graph:
                     ((polygon in A._source_polygons or
                       polygon.contains_point(A._point)) and
                      (polygon in B._source_polygons or
-                      polygon.contains_point(B._point)))):
+                      polygon.contains_point(B._point))) and
+                    polygon.contains_point(
+                        great_circle_arc.midpoint(A._point, B._point))):
                     edge._count += 1
 
         for edge in list(self._edges):
@@ -730,12 +732,13 @@ class Graph:
             for polygon in polygons:
                 if polygon in edge._source_polygons:
                     edge._count += 1
-                else:
-                    if ((polygon in A._source_polygons or
-                         polygon.contains_point(A._point)) and
-                        (polygon in B._source_polygons or
-                         polygon.contains_point(B._point))):
-                        edge._count += 1
+                elif ((polygon in A._source_polygons or
+                       polygon.contains_point(A._point)) and
+                      (polygon in B._source_polygons or
+                       polygon.contains_point(B._point)) and
+                      polygon.contains_point(
+                          great_circle_arc.midpoint(A._point, B._point))):
+                    edge._count += 1
 
         for edge in list(self._edges):
             if edge._count < len(polygons):
@@ -778,7 +781,8 @@ class Graph:
                     removes.append(node)
             if len(removes):
                 for node in removes:
-                    self.remove_node(node)
+                    if node in self._nodes:
+                        self.remove_node(node)
             else:
                 break
 

@@ -285,7 +285,7 @@ def intersects_point(A, B, C):
 
     length_diff = np.abs((left_length + right_length) - total_length)
 
-    return np.any(length_diff < 1e-8)
+    return np.any(length_diff < 1e-10)
 
 
 def angle(A, B, C, degrees=True):
