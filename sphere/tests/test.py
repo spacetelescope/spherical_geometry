@@ -156,8 +156,8 @@ def test_point_in_poly():
 
 
 def test_point_in_poly_lots():
-    import pyfits
-    fits = pyfits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
+    from astropy.io import fits
+    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
     header = fits[0].header
 
     poly1 = polygon.SphericalPolygon.from_wcs(
@@ -236,13 +236,13 @@ def test_great_circle_arc_length():
     B = [-90, 0]
     A = vector.radec_to_vector(*A)
     B = vector.radec_to_vector(*B)
-    assert great_circle_arc.length(A, B) == 135.0
+    assert_almost_equal(great_circle_arc.length(A, B), 135.0)
 
     A = [0, 0]
     B = [0, 90]
     A = vector.radec_to_vector(*A)
     B = vector.radec_to_vector(*B)
-    assert great_circle_arc.length(A, B) == 90.0
+    assert_almost_equal(great_circle_arc.length(A, B), 90.0)
 
 
 def test_great_circle_arc_angle():

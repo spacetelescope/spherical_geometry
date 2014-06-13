@@ -7,6 +7,20 @@
 #include "numpy/npy_math.h"
 
 /*
+  The intersects, length and intersects_point calculations use "long
+  doubles" internally.  Emperical testing shows that this level of
+  precision is required for finding all intersections in typical HST
+  images that are rotated only slightly from one another.
+
+  Unfortunately, "long double" is not a standard: On x86_64 Linux and
+  Mac, this is an 80-bit floating point representation, though
+  reportedly it is equivalent to double on Windows.  If
+  Windows-specific or non x86_64 problems present themselves, we may
+  want to use a software floating point library or some other method
+  for this support.
+*/
+
+/*
  *****************************************************************************
  **                            BASICS                                       **
  *****************************************************************************
@@ -56,12 +70,30 @@ load_point(const char *in, const intp s, double* out) {
 }
 
 static inline void
+load_pointl(const char *in, const intp s, long double* out) {
+    out[0] = (long double)(*(double *)in);
+    in += s;
+    out[1] = (long double)(*(double *)in);
+    in += s;
+    out[2] = (long double)(*(double *)in);
+}
+
+static inline void
 save_point(const double* in, char *out, const intp s) {
     *(double *)out = in[0];
     out += s;
     *(double *)out = in[1];
     out += s;
     *(double *)out = in[2];
+}
+
+static inline void
+save_pointl(const long double* in, char *out, const intp s) {
+    *(double *)out = (double)in[0];
+    out += s;
+    *(double *)out = (double)in[1];
+    out += s;
+    *(double *)out = (double)in[2];
 }
 
 static inline void
@@ -72,33 +104,71 @@ cross(const double *A, const double *B, double *C) {
 }
 
 static inline void
-normalize(double *A) {
-    double l = sqrt(A[0]*A[0] + A[1]*A[1] + A[2]*A[2]);
-    A[0] /= l;
-    A[1] /= l;
-    A[2] /= l;
+crossl(const long double *A, const long double *B, long double *C) {
+    C[0] = A[1]*B[2] - A[2]*B[1];
+    C[1] = A[2]*B[0] - A[0]*B[2];
+    C[2] = A[0]*B[1] - A[1]*B[0];
 }
 
-static inline double
-dot(const double *A, const double *B) {
+static inline void
+normalize(double *A) {
+    double l = A[0]*A[0] + A[1]*A[1] + A[2]*A[2];
+    if (l != 1.0) {
+        l = sqrt(l);
+        A[0] /= l;
+        A[1] /= l;
+        A[2] /= l;
+    }
+}
+
+static inline void
+normalizel(long double *A) {
+    long double l = A[0]*A[0] + A[1]*A[1] + A[2]*A[2];
+    if (l != 1.0L) {
+        l = sqrtl(l);
+        A[0] /= l;
+        A[1] /= l;
+        A[2] /= l;
+    }
+}
+
+static inline long double
+dotl(const long double *A, const long double *B) {
     return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
 }
 
-static inline double
-sign(const double A) {
-    return (A == 0.0) ? 0.0 : ((A < 0.0) ? -1.0 : 1.0);
+static inline long double
+signl(const long double A) {
+    return (A == 0.0L) ? 0.0L : ((A < 0.0L) ? -1.0L : 1.0L);
 }
 
 static inline int
-equals(const double *A, const double *B) {
+equalsl(const long double *A, const long double *B) {
     return A[0] == B[0] && A[1] == B[1] && A[2] == B[2];
 }
 
 static inline void
-mult(double *T, const double f) {
+multl(long double *T, const long double f) {
     T[0] *= f;
     T[1] *= f;
     T[2] *= f;
+}
+
+static inline long double
+lengthl(long double *A, long double *B) {
+    long double s;
+
+    /* Special case for "exactly equal" that avoids all of the calculation. */
+    if (equalsl(A, B)) {
+        return 0.0L;
+    }
+
+    s = dotl(A, B);
+
+    /* clip s to range -1.0 to 1.0 */
+    s = (s < -1.0L) ? -1.0L : (s > 1.0L) ? 1.0L : s;
+
+    return acosl(s);
 }
 
 /*
@@ -215,19 +285,19 @@ char *intersection_signature = "(i),(i),(i),(i)->(i)";
 static void
 DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    double A[3];
-    double B[3];
-    double C[3];
-    double D[3];
+    long double A[3];
+    long double B[3];
+    long double C[3];
+    long double D[3];
 
-    double ABX[3];
-    double CDX[3];
-    double T[3];
-    double tmp[3];
+    long double ABX[3];
+    long double CDX[3];
+    long double T[3];
+    long double tmp[3];
 
     double nans[3];
 
-    double s;
+    long double s;
     int match;
 
     nans[0] = nans[1] = nans[2] = NPY_NAN;
@@ -237,28 +307,28 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
     BEGIN_OUTER_LOOP_5
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
 
-        load_point(ip1, is1, A);
-        load_point(ip2, is2, B);
-        load_point(ip3, is3, C);
-        load_point(ip4, is4, D);
+        load_pointl(ip1, is1, A);
+        load_pointl(ip2, is2, B);
+        load_pointl(ip3, is3, C);
+        load_pointl(ip4, is4, D);
 
-        match = !(equals(A, C) | equals(A, D) | equals(B, C) | equals(B, D));
+        match = !(equalsl(A, C) | equalsl(A, D) | equalsl(B, C) | equalsl(B, D));
 
         if (match) {
-            cross(A, B, ABX);
-            cross(C, D, CDX);
-            cross(ABX, CDX, T);
-            normalize(T);
+            crossl(A, B, ABX);
+            crossl(C, D, CDX);
+            crossl(ABX, CDX, T);
+            normalizel(T);
 
             match = 0;
-            cross(ABX, A, tmp);
-            s = sign(dot(tmp, T));
-            cross(B, ABX, tmp);
-            if (s == sign(dot(tmp, T))) {
-                cross(CDX, C, tmp);
-                if (s == sign(dot(tmp, T))) {
-                    cross(D, CDX, tmp);
-                    if (s == sign(dot(tmp, T))) {
+            crossl(ABX, A, tmp);
+            s = signl(dotl(tmp, T));
+            crossl(B, ABX, tmp);
+            if (s == signl(dotl(tmp, T))) {
+                crossl(CDX, C, tmp);
+                if (s == signl(dotl(tmp, T))) {
+                    crossl(D, CDX, tmp);
+                    if (s == signl(dotl(tmp, T))) {
                         match = 1;
                     }
                 }
@@ -266,8 +336,8 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
         }
 
         if (match) {
-            mult(T, s);
-            save_point(T, op, is5);
+            multl(T, s);
+            save_pointl(T, op, is5);
         } else {
             save_point(nans, op, is5);
         }
@@ -277,6 +347,93 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
 static void * intersection_data[] = { (void *)NULL };
 static char intersection_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+
+/*///////////////////////////////////////////////////////////////////////////
+  length
+*/
+
+char *length_signature = "(i),(i)->()";
+
+/*
+ * Finds the length of the given great circle arc AB
+ */
+static void
+DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    long double A[3];
+    long double B[3];
+
+    long double s;
+
+    INIT_OUTER_LOOP_3
+    intp is1=steps[0], is2=steps[1];
+    BEGIN_OUTER_LOOP_3
+        char *ip1=args[0], *ip2=args[1], *op=args[2];
+
+        load_pointl(ip1, is1, A);
+        load_pointl(ip2, is2, B);
+
+        normalizel(A);
+        normalizel(B);
+
+        s = lengthl(A, B);
+
+        *((double *)op) = (double)s;
+    END_OUTER_LOOP
+}
+
+static PyUFuncGenericFunction length_functions[] = { DOUBLE_length };
+static void * length_data[] = { (void *)NULL };
+static char length_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+
+/*///////////////////////////////////////////////////////////////////////////
+  length
+*/
+
+char *intersects_point_signature = "(i),(i),(i)->()";
+
+/*
+ * Returns True is if the point C intersects arc AB
+ */
+static void
+DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+
+    long double A[3];
+    long double B[3];
+    long double C[3];
+
+    long double total;
+    long double left;
+    long double right;
+    long double diff;
+
+    INIT_OUTER_LOOP_4
+    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    BEGIN_OUTER_LOOP_4
+        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+
+        load_pointl(ip1, is1, A);
+        load_pointl(ip2, is2, B);
+        load_pointl(ip3, is3, C);
+
+        normalizel(A);
+        normalizel(B);
+        normalizel(C);
+
+        total = lengthl(A, B);
+        left = lengthl(A, C);
+        right = lengthl(C, B);
+
+        diff = fabsl((left + right) - total);
+
+        *((uint8_t *)op) = diff < 1e-10L;
+    END_OUTER_LOOP
+}
+
+static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects_point };
+static void * intersects_point_data[] = { (void *)NULL };
+static char intersects_point_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
 
 /*
  *****************************************************************************
@@ -322,6 +479,24 @@ addUfuncs(PyObject *dictionary) {
         "     \"(i),(i),(i),(i)->(i)\" \n",
         0, intersection_signature);
     PyDict_SetItemString(dictionary, "intersection", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
+        length_functions, length_data, length_signatures, 2, 2, 1,
+        PyUFunc_None, "length",
+        "length of great circle arc \n" \
+        "     \"(i),(i)->()\" \n",
+        0, length_signature);
+    PyDict_SetItemString(dictionary, "length", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
+        intersects_point_functions, intersects_point_data, intersects_point_signatures, 2, 3, 1,
+        PyUFunc_None, "intersects_point",
+        "True where point C intersects arc AB \n" \
+        "     \"(i),(i),(i)->()\" \n",
+        0, intersects_point_signature);
+    PyDict_SetItemString(dictionary, "intersects_point", f);
     Py_DECREF(f);
 }
 

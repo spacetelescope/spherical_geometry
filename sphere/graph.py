@@ -78,8 +78,6 @@ class Graph:
             source_polygon : `~sphere.polygon.SphericalPolygon` instance, optional
                 The polygon(s) this node came from.  Used for bookkeeping.
             """
-            point = vector.normalize_vector(*point)
-
             self._point = np.asanyarray(point)
             self._source_polygons = set(source_polygons)
             self._edges = weakref.WeakSet()
@@ -200,7 +198,6 @@ class Graph:
         self._nodes = set()
         self._edges = set()
         self._source_polygons = set()
-        self._start_node = None
 
         self.add_polygons(polygons)
 
@@ -234,13 +231,11 @@ class Graph:
         points = polygon._points
 
         if len(points) < 3:
-            raise ValueError("Too few points in polygon")
+            return
 
         self._source_polygons.add(polygon)
 
         start_node = nodeA = self.add_node(points[0], [polygon])
-        if self._start_node is None:
-            self._start_node = start_node
         for i in range(1, len(points) - 1):
             nodeB = self.add_node(points[i], [polygon])
             # Don't create self-pointing edges
@@ -267,19 +262,23 @@ class Graph:
         node : `~Graph.Node` instance
             The new node
         """
-        new_node = self.Node(point, source_polygons)
+        # Any nodes whose Cartesian coordinates are closer together
+        # than 2 ** -32 will cause numerical problems in the
+        # intersection calculations, so we merge any nodes that
+        # are closer together than that.
 
         # Don't add nodes that already exist.  Update the existing
         # node's source_polygons list to include the new polygon.
 
-        # Nodes that are closer together than 1e-10 are automatically
-        # merged, since we can't numerically determine whether those
-        # nodes are the same, or just along an arc.
+        point = vector.normalize_vector(*point)
+
+        # TODO: Vectorize this
         for node in self._nodes:
-            if great_circle_arc.length(node._point, new_node._point) < 1e-10:
+            if np.all(np.abs(node._point - point) < 2 ** -32):
                 node._source_polygons.update(source_polygons)
                 return node
 
+        new_node = self.Node(point, source_polygons)
         self._nodes.add(new_node)
         return new_node
 
@@ -302,7 +301,8 @@ class Graph:
             if len(nodeB._edges) == 0:
                 self._nodes.remove(nodeB)
             self._edges.remove(edge)
-        self._nodes.remove(node)
+        if node in self._nodes:
+            self._nodes.remove(node)
 
     def add_edge(self, A, B, source_polygons=[]):
         """
@@ -332,10 +332,10 @@ class Graph:
         # one, otherwise the Edge will get hooked up to the nodes but
         # be orphaned.
         for edge in self._edges:
-            if ((A.equals(edge._nodes[0]) and
-                 B.equals(edge._nodes[1])) or
-                (B.equals(edge._nodes[0]) and
-                 A.equals(edge._nodes[1]))):
+            if ((A is edge._nodes[0] and
+                 B is edge._nodes[1]) or
+                (A is edge._nodes[1] and
+                 B is edge._nodes[0])):
                 edge._source_polygons.update(source_polygons)
                 return edge
 
@@ -432,7 +432,8 @@ class Graph:
             raise
 
     def _dump_graph(self, title=None, lon_0=0, lat_0=90,
-                    projection='vandg', func=lambda x: len(x._edges)):
+                    projection='vandg', func=lambda x: len(x._edges),
+                    highlight_edge=None, intersections=[]):
         from mpl_toolkits.basemap import Basemap
         from matplotlib import pyplot as plt
         fig = plt.figure()
@@ -460,6 +461,18 @@ class Graph:
             counts.setdefault(count, [])
             counts[count].append(list(node._point))
 
+        for edge in list(self._edges):
+            A, B = [x._point for x in edge._nodes]
+            r0, d0 = vector.vector_to_radec(A[0], A[1], A[2])
+            r1, d1 = vector.vector_to_radec(B[0], B[1], B[2])
+            if edge is highlight_edge:
+                color = 'red'
+                lw = 2
+            else:
+                color = 'blue'
+                lw = 0.5
+            m.drawgreatcircle(r0, d0, r1, d1, color=color, lw=lw)
+
         for k, v in counts.items():
             v = np.array(v)
             ra, dec = vector.vector_to_radec(v[:, 0], v[:, 1], v[:, 2])
@@ -472,11 +485,11 @@ class Graph:
                 miny = min(y0, miny)
                 maxy = max(y0, maxy)
 
-        for edge in list(self._edges):
-            A, B = [x._point for x in edge._nodes]
-            r0, d0 = vector.vector_to_radec(A[0], A[1], A[2])
-            r1, d1 = vector.vector_to_radec(B[0], B[1], B[2])
-            m.drawgreatcircle(r0, d0, r1, d1, color='blue')
+        for v in intersections:
+            if np.all(np.isfinite(v)):
+                ra, dec = vector.vector_to_radec(v[0], v[1], v[2])
+                x, y = m(ra, dec)
+                m.plot(x, y, 'x', markersize=20)
 
         plt.xlim(minx, maxx)
         plt.ylim(miny, maxy)
@@ -583,16 +596,48 @@ class Graph:
             if len(A._edges) == 3 and len(B._edges) == 3:
                 self.remove_edge(AB)
 
-    def _find_all_intersections(self):
-        """
-        Find all the intersecting edges in the graph.  For each
-        intersecting pair, four new edges are created around the
-        intersection point.
-        """
-        def get_edge_points(edges):
-            return (np.array([x._nodes[0]._point for x in edges]),
-                    np.array([x._nodes[1]._point for x in edges]))
+    def _get_edge_points(self, edges):
+        return (np.array([x._nodes[0]._point for x in edges]),
+                np.array([x._nodes[1]._point for x in edges]))
 
+    def _find_point_to_arc_intersections(self):
+        # For speed, we want to vectorize all of the intersection
+        # calculations.  Therefore, there is a list of edges, and an
+        # array of points for all of the nodes.  Then calculating the
+        # intersection between an edge and all other nodes becomes a
+        # fast, vectorized operation.
+
+        edges = list(self._edges)
+        starts, ends = self._get_edge_points(edges)
+
+        nodes = list(self._nodes)
+        nodes_array = np.array([x._point for x in nodes])
+
+        # Split all edges by any nodes that intersect them
+        while len(edges) > 1:
+            AB = edges.pop(0)
+            A, B = list(AB._nodes)
+
+            intersects = great_circle_arc.intersects_point(
+                A._point, B._point, nodes_array)
+            intersection_indices = np.nonzero(intersects)[0]
+
+            for index in intersection_indices:
+                node = nodes[index]
+                if node not in AB._nodes:
+                    newA, newB = self.split_edge(AB, node)
+
+                    new_edges = [
+                        edge for edge in (newA, newB)
+                        if edge not in edges]
+
+                    for end_point in AB._nodes:
+                        node._source_polygons.update(
+                            end_point._source_polygons)
+                    edges = new_edges + edges
+                    break
+
+    def _find_arc_to_arc_intersections(self):
         # For speed, we want to vectorize all of the intersection
         # calculations.  Therefore, there is a list of edges, and two
         # arrays containing the end points of those edges.  They all
@@ -601,39 +646,9 @@ class Graph:
         # doing so is different between Python lists and numpy arrays.
 
         edges = list(self._edges)
-        starts, ends = get_edge_points(edges)
+        starts, ends = self._get_edge_points(edges)
 
-        # First, split all edges by any nodes that intersect them
-        while len(edges) > 1:
-            AB = edges.pop(0)
-            A = starts[0]; starts = starts[1:]  # numpy equiv of "pop(0)"
-            B = ends[0];   ends = ends[1:]      # numpy equiv of "pop(0)"
-
-            for node in self._nodes:
-                if node not in AB._nodes:
-                    if great_circle_arc.intersects_point(A, B, node._point):
-                        newA, newB = self.split_edge(AB, node)
-
-                        new_edges = [
-                            edge for edge in (newA, newB)
-                            if edge not in edges]
-
-                        node._source_polygons.update(
-                            self.add_node(A)._source_polygons)
-                        node._source_polygons.update(
-                            self.add_node(B)._source_polygons)
-                        edges = new_edges + edges
-                        new_starts, new_ends = get_edge_points(new_edges)
-                        starts = np.vstack(
-                            (new_starts, starts))
-                        ends = np.vstack(
-                            (new_ends, ends))
-                        break
-
-        edges = list(self._edges)
-        starts, ends = get_edge_points(edges)
-
-        # Next, calculate edge-to-edge intersections and break
+        # Calculate edge-to-edge intersections and break
         # edges on the intersection point.
         while len(edges) > 1:
             AB = edges.pop(0)
@@ -655,8 +670,6 @@ class Graph:
             # we want to eliminate intersections that only intersect
             # at the end points
             for j in intersection_indices:
-                C = starts[j]
-                D = ends[j]
                 CD = edges[j]
                 E = intersections[j]
 
@@ -686,12 +699,21 @@ class Graph:
                 # against all remaining edges.
                 del edges[j]  # CD
                 edges = new_edges + edges
-                new_starts, new_ends = get_edge_points(new_edges)
+                new_starts, new_ends = self._get_edge_points(new_edges)
                 starts = np.vstack(
                     (new_starts, starts[:j], starts[j+1:]))
                 ends = np.vstack(
                     (new_ends, ends[:j], ends[j+1:]))
                 break
+
+    def _find_all_intersections(self):
+        """
+        Find all the intersecting edges in the graph.  For each
+        intersecting pair, four new edges are created around the
+        intersection point.
+        """
+        self._find_point_to_arc_intersections()
+        self._find_arc_to_arc_intersections()
 
     def _remove_interior_edges(self):
         """
@@ -794,7 +816,6 @@ class Graph:
         """
         polygons = []
         edges = set(self._edges)  # copy
-        seen_nodes = set()
         while len(edges):
             polygon = []
             # Carefully pick out an "original" edge first.  Synthetic

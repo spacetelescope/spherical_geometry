@@ -84,11 +84,11 @@ def _fast_cross(a, b):
     return cp
 
 
-def _cross_and_normalize(A, B):
-    if HAS_C_UFUNCS:
-        with np.errstate(invalid='ignore'):
-            return math_util.cross_and_norm(A, B)
+if HAS_C_UFUNCS:
+    _fast_cross = math_util.cross
 
+
+def _cross_and_normalize(A, B):
     T = _fast_cross(A, B)
     # Normalization
     l = np.sqrt(np.sum(T ** 2, axis=-1))
@@ -97,6 +97,12 @@ def _cross_and_normalize(A, B):
     with np.errstate(invalid='ignore'):
         TN = T / l
     return TN
+
+
+if HAS_C_UFUNCS:
+    def _cross_and_normalize(A, B):
+        with np.errstate(invalid='ignore'):
+            return math_util.cross_and_norm(A, B)
 
 
 def intersection(A, B, C, D):
@@ -154,9 +160,6 @@ def intersection(A, B, C, D):
 
     http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
     """
-    if HAS_C_UFUNCS:
-        return math_util.intersection(A, B, C, D)
-
     A = np.asanyarray(A)
     B = np.asanyarray(B)
     C = np.asanyarray(C)
@@ -186,14 +189,18 @@ def intersection(A, B, C, D):
     # If they share a common point, it's not an intersection.  This
     # gets around some rounding-error/numerical problems with the
     # above.
-    equals = (np.all(A == C, axis = -1) |
-              np.all(A == D, axis = -1) |
-              np.all(B == C, axis = -1) |
-              np.all(B == D, axis = -1))
+    equals = (np.all(A == C, axis=-1) |
+              np.all(A == D, axis=-1) |
+              np.all(B == C, axis=-1) |
+              np.all(B == D, axis=-1))
 
     equals = np.expand_dims(equals, 2)
 
     return np.where(equals, np.nan, cross)
+
+
+if HAS_C_UFUNCS:
+    intersection = math_util.intersection
 
 
 def length(A, B, degrees=True):
@@ -223,21 +230,24 @@ def length(A, B, degrees=True):
 
        \Delta = \arccos(A \dot B)
     """
-    A = np.asanyarray(A)
-    B = np.asanyarray(B)
+    if HAS_C_UFUNCS:
+        result = math_util.length(A, B)
+    else:
+        A = np.asanyarray(A)
+        B = np.asanyarray(B)
 
-    A2 = A ** 2.0
-    Al = np.sqrt(A2[..., 0] + A2[..., 1] + A2[..., 2])
-    B2 = B ** 2.0
-    Bl = np.sqrt(B2[..., 0] + B2[..., 1] + B2[..., 2])
+        A2 = A ** 2.0
+        Al = np.sqrt(np.sum(A2, axis=-1))
+        B2 = B ** 2.0
+        Bl = np.sqrt(np.sum(B2, axis=-1))
 
-    A = A / np.expand_dims(Al, 2)
-    B = B / np.expand_dims(Bl, 2)
+        A = A / np.expand_dims(Al, 2)
+        B = B / np.expand_dims(Bl, 2)
 
-    dot = inner1d(A, B)
-    dot = np.clip(dot, -1.0, 1.0)
-    with np.errstate(invalid='ignore'):
-        result = np.arccos(dot)
+        dot = inner1d(A, B)
+        dot = np.clip(dot, -1.0, 1.0)
+        with np.errstate(invalid='ignore'):
+            result = np.arccos(dot)
 
     if degrees:
         return np.rad2deg(result)
@@ -275,9 +285,8 @@ def intersects_point(A, B, C):
     """
     Returns True if point C is along the great circle arc AB.
     """
-    # Check for exact match at the endpoint first
-    if np.any(np.all(A == C, axis=-1)):
-        return True
+    if HAS_C_UFUNCS:
+        return math_util.intersects_point(A, B, C)
 
     total_length = length(A, B)
     left_length = length(A, C)
@@ -285,7 +294,11 @@ def intersects_point(A, B, C):
 
     length_diff = np.abs((left_length + right_length) - total_length)
 
-    return np.any(length_diff < 1e-10)
+    return length_diff < 1e-10
+
+
+if HAS_C_UFUNCS:
+    intersects_point = math_util.intersects_point
 
 
 def angle(A, B, C, degrees=True):

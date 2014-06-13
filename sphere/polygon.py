@@ -133,6 +133,8 @@ class SphericalPolygon(object):
             List of *ra* and *dec* in degrees corresponding
             to `points`.
         """
+        if len(self.points) == 0:
+            return np.array([])
         return vector.vector_to_radec(self.points[:,0], self.points[:,1],
                                       self.points[:,2], degrees=True)
 
