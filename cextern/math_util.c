@@ -49,6 +49,9 @@ typedef npy_intp intp;
     INIT_OUTER_LOOP_4           \
     intp s4 = *steps++;
 
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
@@ -97,13 +100,6 @@ save_pointl(const long double* in, char *out, const intp s) {
 }
 
 static inline void
-cross(const double *A, const double *B, double *C) {
-    C[0] = A[1]*B[2] - A[2]*B[1];
-    C[1] = A[2]*B[0] - A[0]*B[2];
-    C[2] = A[0]*B[1] - A[1]*B[0];
-}
-
-static inline void
 crossl(const long double *A, const long double *B, long double *C) {
     C[0] = A[1]*B[2] - A[2]*B[1];
     C[1] = A[2]*B[0] - A[0]*B[2];
@@ -111,13 +107,17 @@ crossl(const long double *A, const long double *B, long double *C) {
 }
 
 static inline void
-normalize(double *A) {
+normalize_output(long double *A, double *B) {
     double l = A[0]*A[0] + A[1]*A[1] + A[2]*A[2];
     if (l != 1.0) {
         l = sqrt(l);
-        A[0] /= l;
-        A[1] /= l;
-        A[2] /= l;
+        B[0] = A[0] / l;
+        B[1] = A[1] / l;
+        B[2] = A[2] / l;
+    } else {
+        B[0] = A[0];
+        B[1] = A[1];
+        B[2] = A[2];
     }
 }
 
@@ -207,6 +207,35 @@ static void * inner1d_data[] = { (void *)NULL };
 static char inner1d_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
+  normalize
+*/
+
+char *normalize_signature = "(i)->(i)";
+
+static void
+DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    long double IN[3];
+    double OUT[3];
+
+    INIT_OUTER_LOOP_2
+    intp is1=steps[0], is2=steps[1];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+
+        load_pointl(ip1, is1, IN);
+
+        normalize_output(IN, OUT);
+
+        save_point(OUT, op, is2);
+    END_OUTER_LOOP
+}
+
+static PyUFuncGenericFunction normalize_functions[] = { DOUBLE_normalize };
+static void * normalize_data[] = { (void *)NULL };
+static char normalize_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+
+/*///////////////////////////////////////////////////////////////////////////
   cross
 */
 
@@ -215,21 +244,21 @@ char *cross_signature = "(i),(i)->(i)";
 static void
 DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    double A[3];
-    double B[3];
-    double C[3];
+    long double A[3];
+    long double B[3];
+    long double C[3];
 
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-        load_point(ip1, is1, A);
-        load_point(ip2, is2, B);
+        load_pointl(ip1, is1, A);
+        load_pointl(ip2, is2, B);
 
-        cross(A, B, C);
+        crossl(A, B, C);
 
-        save_point(C, op, is3);
+        save_pointl(C, op, is3);
     END_OUTER_LOOP
 }
 
@@ -250,22 +279,22 @@ char *cross_and_norm_signature = "(i),(i)->(i)";
 static void
 DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    double A[3];
-    double B[3];
-    double C[3];
+    long double A[3];
+    long double B[3];
+    long double C[3];
 
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-        load_point(ip1, is1, A);
-        load_point(ip2, is2, B);
+        load_pointl(ip1, is1, A);
+        load_pointl(ip2, is2, B);
 
-        cross(A, B, C);
-        normalize(C);
+        crossl(A, B, C);
+        normalizel(C);
 
-        save_point(C, op, is3);
+        save_pointl(C, op, is3);
     END_OUTER_LOOP
 }
 
@@ -452,6 +481,15 @@ addUfuncs(PyObject *dictionary) {
         "     \"(i),(i)->()\" \n",
         0, inner1d_signature);
     PyDict_SetItemString(dictionary, "inner1d", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
+        normalize_functions, normalize_data, normalize_signatures, 2, 1, 1,
+        PyUFunc_None, "normalize",
+        "inner on the last dimension and broadcast on the rest \n"      \
+        "     \"(i)->(i)\" \n",
+        0, normalize_signature);
+    PyDict_SetItemString(dictionary, "normalize", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(

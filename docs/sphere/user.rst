@@ -1,9 +1,9 @@
 User documentation
 ==================
 
-.. currentmodule:: sphere
+.. currentmodule:: stsci.sphere
 
-The `sphere` library is a pure Python package for handling spherical
+The `stsci.sphere` library is a pure Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
 Requirements
@@ -13,11 +13,7 @@ Requirements
 
 - Numpy 1.4 or later
 
-- PyFITS
-
-- PyWCS
-
-- STWCS
+- astropy 0.3 or later
 
 Coordinate representation
 -------------------------
@@ -28,13 +24,13 @@ While these representations are convenient, they have discontinuities
 at the poles, making operations on them trickier at arbitrary
 locations on the sky sphere.  Therefore, all internal operations of
 this library are done in 3D vector space, where coordinates are
-represented as (*x*, *y*, *z*) vectors.  The `sphere.vector` module
+represented as (*x*, *y*, *z*) vectors.  The `stsci.sphere.vector` module
 contains functions to convert between (*ra*, *dec*) and (*x*, *y*,
 *z*) representations.
 
 While any (*x*, *y*, *z*) triple represents a vector and therefore a
 location on the sky sphere, a distinction must be made between
-normalized coordinates fall exactly on the unit sphere, and
+normalized coordinates that fall exactly on the unit sphere, and
 unnormalized coordinates which do not.  A normalized coordinate is
 defined as a vector whose length is 1, i.e.:
 
@@ -44,20 +40,30 @@ defined as a vector whose length is 1, i.e.:
 
 To prevent unnecessary recomputation, many methods in this library
 assume that the vectors passed in are already normalized.  If this is
-not the case, `sphere.vector.normalize_vector` can be used to
+not the case, `stsci.sphere.vector.normalize_vector` can be used to
 normalize an array of vectors.
 
-The library allows the user to work in either degrees or radians.  All
-methods that require or return an angular value have a `degrees`
-keyword argument.  When `degrees` is `True`, these measurements are in
-degrees, otherwise they are in radians.
+When not working in Cartesian vectors, the library allows the user to
+work in either degrees or radians.  All methods that require or return
+an angular value have a `degrees` keyword argument.  When `degrees` is
+`True`, these measurements are in degrees, otherwise they are in
+radians.
+
+.. warning::
+
+    Due to constraints in the precision of intersection calculations,
+    points on the sphere that are closer than :math:`2^{-32}` along a
+    Cartesian axis are automatically merged into a single point.  This
+    prevents intersections from being missed due to floating point
+    rounding error.  There is currently no implemented solution to
+    deal with points that need to be closer together.
 
 Spherical polygons
 ------------------
 
 Spherical polygons are arbitrary areas on the sky sphere enclosed by
 great circle arcs.  They are represented by the
-`~sphere.polygon.SphericalPolygon` class.
+`~stsci.sphere.polygon.SphericalPolygon` class.
 
 Representation
 ``````````````
@@ -102,7 +108,7 @@ a hole and a disjoint region connected by cut lines.
 Creating spherical polygons
 ```````````````````````````
 
-.. currentmodule:: sphere.polygon
+.. currentmodule:: stsci.sphere.polygon
 
 `SphericalPolygon` objects have 4 different constructors:
 
@@ -117,7 +123,7 @@ Creating spherical polygons
 
   - `SphericalPolygon.from_wcs`: Creates a polygon from the footprint
     of a FITS image using its WCS header keywords.  Takes a FITS
-    filename or a `pyfits.Header` object.
+    filename or a `astropy.io.fits.Header` object.
 
 Operations on Spherical Polygons
 ````````````````````````````````
@@ -156,10 +162,10 @@ operations available:
 Great circle arcs
 -----------------
 
-.. currentmodule:: sphere.great_circle_arc
+.. currentmodule:: stsci.sphere.great_circle_arc
 
 As seen above, great circle arcs are used to define the edges of the
-polygon.  The `sphere.great_circle_arc` module contains a number of
+polygon.  The `stsci.sphere.great_circle_arc` module contains a number of
 functions that are useful for dealing with them.
 
 - `length`: Returns the angular distance between two points on the sphere.
@@ -168,6 +174,9 @@ functions that are useful for dealing with them.
   circle arcs.
 
 - `intersects`: Determines if two great circle arcs intersect.
+
+- `intersects_point`: Determines if a point is along the great circle
+  arc.
 
 - `angle`: Calculate the angle between two great circle arcs.
 

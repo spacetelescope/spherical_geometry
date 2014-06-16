@@ -19,8 +19,9 @@ graph.DEBUG = True
 
 def test_normalize_vector():
     x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
-    xn, yn, zn = vector.normalize_vector(x.flatten(), y.flatten(), z.flatten())
-    l = np.sqrt(xn ** 2 + yn ** 2 + zn ** 2)
+    xyz = np.dstack((x.flatten(), y.flatten(), z.flatten()))[0]
+    xyzn = vector.normalize_vector(xyz)
+    l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
     assert_almost_equal(l, 1.0)
 
 

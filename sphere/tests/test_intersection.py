@@ -140,28 +140,6 @@ def test4():
     X = Apoly.intersection(Bpoly)
 
 
-# def test5():
-#     from astropy.io import fits
-#     from astropy import wcs as pywcs
-
-#     A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
-#     B = fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
-
-#     wcs = pywcs.WCS(A[1].header, fobj=A)
-#     chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
-#     wcs = pywcs.WCS(A[4].header, fobj=A)
-#     chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
-#     wcs = pywcs.WCS(B[1].header, fobj=B)
-#     chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
-#     wcs = pywcs.WCS(B[4].header, fobj=B)
-#     chipB2 = polygon.SphericalPolygon.from_wcs(wcs)
-
-#     Apoly = chipA1.union(chipA2)
-#     Bpoly = chipB1.union(chipB2)
-
-#     Apoly.overlap(chipB1)
-
-
 @intersection_test(0, 90)
 def test6():
     from astropy.io import fits
@@ -186,6 +164,30 @@ def test_intersection_empty():
     p2 = p.intersection(polygon.SphericalPolygon([]))
 
     assert_array_almost_equal(p2._points, [])
+
+
+def test_difficult_intersections():
+    # Tests a number of intersections of real data that have been
+    # problematic in previous revisions of sphere
+
+    def test_intersection(polys):
+        A, B = polys
+        A.intersection(B)
+
+    fname = resolve_imagename(ROOT_DIR, "difficult_intersections.txt")
+    with open(fname, 'rb') as fd:
+        lines = fd.readlines()
+
+    def to_array(line):
+        x = np.frombuffer(line.strip().decode('hex'), dtype='<f8')
+        return x.reshape((len(x) / 3, 3))
+
+    for i in range(0, len(lines), 4):
+        Apoints, Ainside, Bpoints, Binside = [
+            to_array(line) for line in lines[i:i+4]]
+        polyA = polygon.SphericalPolygon(Apoints, Ainside)
+        polyB = polygon.SphericalPolygon(Bpoints, Binside)
+        yield test_intersection, (polyA, polyB)
 
 
 if __name__ == '__main__':

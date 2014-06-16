@@ -42,6 +42,12 @@ from __future__ import unicode_literals
 # THIRD-PARTY
 import numpy as np
 
+try:
+    from . import math_util
+    HAS_C_UFUNCS = True
+except ImportError:
+    HAS_C_UFUNCS = False
+
 
 __all__ = ['radec_to_vector', 'vector_to_radec', 'normalize_vector',
            'rotate_around']
@@ -121,9 +127,9 @@ def vector_to_radec(x, y, z, degrees=True):
 
         \delta = \arctan2(z, \sqrt{x^2 + y^2})
     """
-    x = np.asanyarray(x)
-    y = np.asanyarray(y)
-    z = np.asanyarray(z)
+    x = np.asanyarray(x, dtype=np.float64)
+    y = np.asanyarray(y, dtype=np.float64)
+    z = np.asanyarray(z, dtype=np.float64)
 
     result = (
         np.arctan2(y, x),
@@ -135,39 +141,37 @@ def vector_to_radec(x, y, z, degrees=True):
         return result
 
 
-def normalize_vector(x, y, z, inplace=False):
+def normalize_vector(xyz, output=None):
     r"""
     Normalizes a vector so it falls on the unit sphere.
 
-    *x*, *y*, *z* may be scalars or 1-D arrays
-
     Parameters
     ----------
-    x, y, z : scalars or 1-D arrays of the same length
+    xyz : Nx3 array of vectors
         The input vectors
 
-    inplace : bool, optional
-        When `True`, the original arrays will be normalized in place,
-        otherwise a normalized copy is returned.
+    output : Nx3 array of vectors, optional
+        The array to store the results in.  If `None`, a new array
+        will be created and returned.
 
     Returns
     -------
-    X, Y, Z : scalars of 1-D arrays of the same length
-        The normalized output vectors
+    output : Nx3 array of vectors
     """
-    x = np.asanyarray(x)
-    y = np.asanyarray(y)
-    z = np.asanyarray(z)
+    xyz = np.asanyarray(xyz, dtype=np.float64)
 
-    l = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    if output is None:
+        output = np.empty(xyz.shape, dtype=np.float64)
 
-    if inplace:
-        x /= l
-        y /= l
-        z /= l
-        return (x, y, z)
-    else:
-        return (x / l, y / l, z / l)
+    if HAS_C_UFUNCS:
+        math_util.normalize(xyz, output)
+        return output
+
+    l = np.sqrt(np.sum(xyz * xyz, axis=-1))
+
+    output = xyz / np.expand_dims(l, 2)
+
+    return output
 
 
 def rotate_around(x, y, z, u, v, w, theta, degrees=True):
@@ -212,19 +216,19 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     return X, Y, Z
 
 
-def equal_area_proj(x, y, z):
+def equal_area_proj(points):
     """
     Transform the coordinates to a 2-dimensional plane using the
     Lambert azimuthal equal-area projection.
 
     Parameters
     ----------
-    x, y, z : scalars or 1-D arrays
+    points : Nx3 array of vectors
         The input vectors
 
     Returns
     -------
-    X, Y : tuple of scalars or arrays of the same length
+    output : Nx2 array of points
 
     Notes
     -----
@@ -237,7 +241,5 @@ def equal_area_proj(x, y, z):
 
         Y = \sqrt{\frac{2}{1-z}}y
     """
-    scale = np.sqrt(2.0 / (1.0 - z))
-    X = scale * x
-    Y = scale * y
-    return X, Y
+    scale = np.sqrt(2.0 / (1.0 - points[..., 2]))
+    return np.expand_dims(scale, 2) * points[:, 0:2]

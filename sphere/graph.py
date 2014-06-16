@@ -270,11 +270,17 @@ class Graph:
         # Don't add nodes that already exist.  Update the existing
         # node's source_polygons list to include the new polygon.
 
-        point = vector.normalize_vector(*point)
+        point = vector.normalize_vector(point)
 
-        # TODO: Vectorize this
-        for node in self._nodes:
-            if np.all(np.abs(node._point - point) < 2 ** -32):
+        if len(self._nodes):
+            nodes = list(self._nodes)
+            node_array = np.array([node._point for node in nodes])
+
+            diff = np.all(np.abs(point - node_array) < 2 ** -32, axis=-1)
+
+            indices = np.nonzero(diff)[0]
+            if len(indices):
+                node = nodes[indices[0]]
                 node._source_polygons.update(source_polygons)
                 return node
 

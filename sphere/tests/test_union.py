@@ -113,32 +113,6 @@ def test2():
     return [poly1, poly2, poly3, poly4, poly5, poly6]
 
 
-# @union_test(0, 90)
-# def test3():
-#     random.seed(0)
-#     polys = []
-#     for i in range(10):
-#         polys.append(polygon.SphericalPolygon.from_cone(
-#             random.randrange(-180, 180),
-#             random.randrange(20, 90),
-#             random.randrange(5, 16),
-#             steps=16))
-#     return polys
-
-
-# @union_test(0, 15)
-# def test4():
-#     random.seed(64)
-#     polys = []
-#     for i in range(10):
-#         polys.append(polygon.SphericalPolygon.from_cone(
-#             random.randrange(-30, 30),
-#             random.randrange(-15, 60),
-#             random.randrange(5, 16),
-#             steps=16))
-#     return polys
-
-
 def test5():
     from astropy.io import fits
     from astropy import wcs as pywcs
@@ -204,18 +178,6 @@ def test8():
     return [poly1, poly2]
 
 
-if __name__ == '__main__':
-    if '--profile' not in sys.argv:
-        GRAPH_MODE = True
-        from mpl_toolkits.basemap import Basemap
-        from matplotlib import pyplot as plt
-
-    functions = [(k, v) for k, v in globals().items() if k.startswith('test')]
-    functions.sort()
-    for k, v in functions:
-        v()
-
-
 def test_union_empty():
     p = polygon.SphericalPolygon.from_cone(
         random.randrange(-180, 180),
@@ -226,3 +188,37 @@ def test_union_empty():
     p2 = p.union(polygon.SphericalPolygon([]))
 
     assert_array_almost_equal(p2._points, p._points)
+
+
+def test_difficult_unions():
+    # Tests a number of intersections of real data that have been
+    # problematic in previous revisions of sphere
+
+    fname = resolve_imagename(ROOT_DIR, "difficult_intersections.txt")
+    with open(fname, 'rb') as fd:
+        lines = fd.readlines()
+
+    def to_array(line):
+        x = np.frombuffer(line.strip().decode('hex'), dtype='<f8')
+        return x.reshape((len(x) / 3, 3))
+
+    polys = []
+    for i in range(0, len(lines), 2):
+        points, inside, = [
+            to_array(line) for line in lines[i:i+2]]
+        poly = polygon.SphericalPolygon(points, inside)
+        polys.append(poly)
+
+    polygon.SphericalPolygon.multi_union(polys[:len(polys)/2])
+
+
+if __name__ == '__main__':
+    if '--profile' not in sys.argv:
+        GRAPH_MODE = True
+        from mpl_toolkits.basemap import Basemap
+        from matplotlib import pyplot as plt
+
+    functions = [(k, v) for k, v in globals().items() if k.startswith('test')]
+    functions.sort()
+    for k, v in functions:
+        v()

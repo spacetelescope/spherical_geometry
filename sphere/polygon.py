@@ -168,11 +168,11 @@ class SphericalPolygon(object):
         # Convert to Cartesian
         x, y, z = vector.radec_to_vector(ra, dec, degrees=degrees)
 
+        points = np.dstack((x, y, z))[0]
+
         if center is None:
-            xc = x.mean()
-            yc = y.mean()
-            zc = z.mean()
-            center = vector.normalize_vector(xc, yc, zc)
+            center = points.mean(axis=0)
+            vector.normalize_vector(center, output=center)
         else:
             center = vector.radec_to_vector(*center, degrees=degrees)
 
@@ -556,24 +556,21 @@ class SphericalPolygon(object):
 
         # Rotate polygon so that center of polygon is at north pole
         centroid = np.mean(points[:-1], axis=0)
-        centroid = vector.normalize_vector(*centroid)
+        centroid = vector.normalize_vector(centroid)
         points = self._points - (centroid + np.array([0, 0, 1]))
-        vector.normalize_vector(
-            points[:, 0], points[:, 1], points[:, 2], inplace=True)
+        vector.normalize_vector(points, output=points)
 
-        X = []
-        Y = []
+        XYs = []
         for A, B in zip(points[:-1], points[1:]):
             length = great_circle_arc.length(A, B, degrees=True)
             interp = great_circle_arc.interpolate(A, B, length * 4)
-            x, y, z = vector.normalize_vector(
-                interp[:, 0], interp[:, 1], interp[:, 2], inplace=True)
-            x, y = vector.equal_area_proj(x, y, z)
-            X.extend(x)
-            Y.extend(y)
+            vector.normalize_vector(interp, output=interp)
+            XY = vector.equal_area_proj(interp)
+            XYs.append(XY)
 
-        X = np.array(X)
-        Y = np.array(Y)
+        XY = np.vstack(XYs)
+        X = XY[..., 0]
+        Y = XY[..., 1]
 
         return np.abs(np.sum(X[:-1] * Y[1:] - X[1:] * Y[:-1]) * 0.5 * np.pi)
 
