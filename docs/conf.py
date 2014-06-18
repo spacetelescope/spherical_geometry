@@ -51,6 +51,8 @@ exclude_patterns.append('_templates')
 # be used globally.
 rst_epilog += """
 """
+# Report warnings
+nitpicky = True
 
 # -- Project information ------------------------------------------------------
 
