@@ -1,9 +1,9 @@
 User documentation
 ==================
 
-.. currentmodule:: stsci.sphere
+.. currentmodule:: sphere
 
-The `stsci.sphere` library is a pure Python package for handling spherical
+The `sphere` library is a pure Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
 Requirements
@@ -24,7 +24,7 @@ While these representations are convenient, they have discontinuities
 at the poles, making operations on them trickier at arbitrary
 locations on the sky sphere.  Therefore, all internal operations of
 this library are done in 3D vector space, where coordinates are
-represented as (*x*, *y*, *z*) vectors.  The `stsci.sphere.vector` module
+represented as (*x*, *y*, *z*) vectors.  The `sphere.vector` module
 contains functions to convert between (*ra*, *dec*) and (*x*, *y*,
 *z*) representations.
 
@@ -40,7 +40,7 @@ defined as a vector whose length is 1, i.e.:
 
 To prevent unnecessary recomputation, many methods in this library
 assume that the vectors passed in are already normalized.  If this is
-not the case, `stsci.sphere.vector.normalize_vector` can be used to
+not the case, `sphere.vector.normalize_vector` can be used to
 normalize an array of vectors.
 
 When not working in Cartesian vectors, the library allows the user to
@@ -63,7 +63,7 @@ Spherical polygons
 
 Spherical polygons are arbitrary areas on the sky sphere enclosed by
 great circle arcs.  They are represented by the
-`~stsci.sphere.polygon.SphericalPolygon` class.
+`~sphere.polygon.SphericalPolygon` class.
 
 Representation
 ``````````````
@@ -108,7 +108,7 @@ a hole and a disjoint region connected by cut lines.
 Creating spherical polygons
 ```````````````````````````
 
-.. currentmodule:: stsci.sphere.polygon
+.. currentmodule:: sphere.polygon
 
 `SphericalPolygon` objects have 4 different constructors:
 
@@ -162,10 +162,10 @@ operations available:
 Great circle arcs
 -----------------
 
-.. currentmodule:: stsci.sphere.great_circle_arc
+.. currentmodule:: sphere.great_circle_arc
 
 As seen above, great circle arcs are used to define the edges of the
-polygon.  The `stsci.sphere.great_circle_arc` module contains a number of
+polygon.  The `sphere.great_circle_arc` module contains a number of
 functions that are useful for dealing with them.
 
 - `length`: Returns the angular distance between two points on the sphere.
