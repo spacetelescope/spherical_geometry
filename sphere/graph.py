@@ -44,6 +44,7 @@ import weakref
 
 # THIRD-PARTY
 import numpy as np
+from astropy.extern.six.moves import xrange
 
 # LOCAL
 from . import great_circle_arc
