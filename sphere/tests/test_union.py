@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import
 
 # STDLIB
+import codecs
 import functools
 import itertools
 import math
@@ -97,19 +98,19 @@ def test1():
     poly3 = polygon.SphericalPolygon.from_wcs(
         header, 1, crval=[175, 89])
     poly4 = polygon.SphericalPolygon.from_cone(
-        90, 70, 10, steps=50)
+        90, 70, 10, steps=8)
 
     return [poly1, poly2, poly3, poly4]
 
 
 @union_test(0, 90)
 def test2():
-    poly1 = polygon.SphericalPolygon.from_cone(0, 60, 7, steps=16)
-    poly2 = polygon.SphericalPolygon.from_cone(0, 72, 7, steps=16)
-    poly3 = polygon.SphericalPolygon.from_cone(20, 60, 7, steps=16)
-    poly4 = polygon.SphericalPolygon.from_cone(20, 72, 7, steps=16)
-    poly5 = polygon.SphericalPolygon.from_cone(35, 55, 7, steps=16)
-    poly6 = polygon.SphericalPolygon.from_cone(60, 60, 3, steps=16)
+    poly1 = polygon.SphericalPolygon.from_cone(0, 60, 7, steps=8)
+    poly2 = polygon.SphericalPolygon.from_cone(0, 72, 7, steps=8)
+    poly3 = polygon.SphericalPolygon.from_cone(20, 60, 7, steps=8)
+    poly4 = polygon.SphericalPolygon.from_cone(20, 72, 7, steps=8)
+    poly5 = polygon.SphericalPolygon.from_cone(35, 55, 7, steps=8)
+    poly6 = polygon.SphericalPolygon.from_cone(60, 60, 3, steps=8)
     return [poly1, poly2, poly3, poly4, poly5, poly6]
 
 
@@ -199,8 +200,8 @@ def test_difficult_unions():
         lines = fd.readlines()
 
     def to_array(line):
-        x = np.frombuffer(line.strip().decode('hex'), dtype='<f8')
-        return x.reshape((len(x) / 3, 3))
+        x = np.frombuffer(codecs.decode(line.strip(), 'hex_codec'), dtype='<f8')
+        return x.reshape((len(x) // 3, 3))
 
     polys = []
     for i in range(0, len(lines), 2):
@@ -209,7 +210,7 @@ def test_difficult_unions():
         poly = polygon.SphericalPolygon(points, inside)
         polys.append(poly)
 
-    polygon.SphericalPolygon.multi_union(polys[:len(polys)/2])
+    polygon.SphericalPolygon.multi_union(polys[:len(polys)//2])
 
 
 if __name__ == '__main__':

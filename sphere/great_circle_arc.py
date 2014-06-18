@@ -396,7 +396,7 @@ def interpolate(A, B, steps=50):
 
         \frac{\sin((1 - t)\Omega)}{\sin \Omega}A + \frac{\sin(t \Omega)}{\sin \Omega}B
     """
-    steps = max(steps, 2)
+    steps = int(max(steps, 2))
     t = np.linspace(0.0, 1.0, steps, endpoint=True).reshape((steps, 1))
 
     omega = length(A, B, degrees=False)
