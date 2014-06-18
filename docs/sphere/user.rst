@@ -3,7 +3,7 @@ User documentation
 
 .. currentmodule:: sphere
 
-The `sphere` library is a pure Python package for handling spherical
+The `sphere` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
 Requirements
