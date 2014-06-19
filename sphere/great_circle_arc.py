@@ -228,7 +228,7 @@ def length(A, B, degrees=True):
 
     .. math::
 
-       \Delta = \arccos(A \dot B)
+       \Delta = \arccos(A \cdot B)
     """
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
