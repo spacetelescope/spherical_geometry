@@ -1,6 +1,8 @@
 User documentation
 ==================
 
+.. currentmodule:: sphere
+
 The `sphere` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
@@ -106,6 +108,8 @@ a hole and a disjoint region connected by cut lines.
 Creating spherical polygons
 ```````````````````````````
 
+.. currentmodule:: sphere.polygon
+
 `SphericalPolygon` objects have 4 different constructors:
 
   - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*)
@@ -157,6 +161,8 @@ operations available:
 
 Great circle arcs
 -----------------
+
+.. currentmodule:: sphere.great_circle_arc
 
 As seen above, great circle arcs are used to define the edges of the
 polygon.  The `sphere.great_circle_arc` module contains a number of
