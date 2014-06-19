@@ -10,6 +10,7 @@ __pycache__
 */cython_version.py
 htmlcov
 .coverage
+docs/api/
 
 # Sphinx
 _build

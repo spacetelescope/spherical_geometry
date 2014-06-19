@@ -6,6 +6,8 @@
 Welcome to Spherical Geometry Toolkit's documentation!
 ======================================================
 
+.. currentmodule:: sphere
+
 Contents:
 
 .. toctree::

@@ -4,10 +4,14 @@ API Documentation
 Vectors
 -------
 
+.. currentmodule:: sphere.vector
+
 .. automodapi:: sphere.vector
 
 Great circle arcs
 -----------------
+
+.. currentmodule:: sphere.great_circle_arc
 
 .. automodapi:: sphere.great_circle_arc
 
