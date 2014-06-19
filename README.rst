@@ -15,6 +15,10 @@ Requirements
 
 - astropy 0.3 or later
 
+- qd-library 13 Mar 2012 or later (optional: if not available, the
+  bundled version will be used).  To force using the system-installed
+  version, build with ``setup.py build --use-system-qd``.
+
 Coordinate representation
 -------------------------
 

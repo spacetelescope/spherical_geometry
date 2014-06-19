@@ -5,6 +5,9 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 from distutils.core import Extension
 import os
+import sys
+
+from astropy_helpers import setup_helpers
 
 
 def requires_2to3():
@@ -14,6 +17,37 @@ def requires_2to3():
 def get_extensions():
     ROOT = os.path.relpath(os.path.dirname(__file__))
 
+    cfg = setup_helpers.DistutilsExtensionArgs()
+
+    sources = [str(os.path.join(ROOT, 'src', 'math_util.c'))]
+
+    if (not setup_helpers.use_system_library('qd') or
+        sys.platform == 'win32'):
+        qd_library_path = os.path.join(ROOT, '..', 'cextern', 'qd-library')
+        qd_library_c_path = os.path.join(qd_library_path, 'src')
+        qd_library_include_path = os.path.join(qd_library_path, 'include')
+
+        qd_sources = [
+            'bits.cpp',
+            'c_dd.cpp',
+            'dd_real.cpp',
+            'dd_const.cpp',
+            'fpu.cpp',
+            'util.cpp']
+
+        sources.extend([
+            str(os.path.join(qd_library_c_path, x))
+            for x in qd_sources])
+        cfg['include_dirs'] = [
+            qd_library_include_path,
+            str(os.path.join(ROOT, 'src'))]
+        cfg['libraries'].append('m')
+    else:
+        cfg.update(setup_helpers.pkg_config([], ['qd', 'm'], 'qd-config'))
+
     return [Extension(
-        str('sphere.math_util'),
-        [str(os.path.join(ROOT, 'src/math_util.c'))])]
+        str('sphere.math_util'), sources, **cfg)]
+
+
+def get_external_libraries():
+    return ['qd']
