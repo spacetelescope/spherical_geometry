@@ -139,13 +139,13 @@ def intersection(A, B, C, D):
 
     .. math::
 
-        s_1 = ((A × B) × A) · T
+        s_1 = ((A × B) × A) \cdot T
 
-        s_2 = (B × (A × B)) · T
+        s_2 = (B × (A × B)) \cdot T
 
-        s_3 = ((C × D) × C) · T
+        s_3 = ((C × D) × C) \cdot T
 
-        s_4 = (D × (C × D)) · T
+        s_4 = (D × (C × D)) \cdot T
 
     For :math:`s_n`, if all positive :math:`T` is returned as-is.  If
     all negative, :math:`T` is multiplied by :math:`-1`.  Otherwise
