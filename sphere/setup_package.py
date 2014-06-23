@@ -18,6 +18,7 @@ def get_extensions():
     ROOT = os.path.relpath(os.path.dirname(__file__))
 
     cfg = setup_helpers.DistutilsExtensionArgs()
+    cfg['include_dirs'].append('numpy')
 
     sources = [str(os.path.join(ROOT, 'src', 'math_util.c'))]
 
@@ -38,9 +39,9 @@ def get_extensions():
         sources.extend([
             str(os.path.join(qd_library_c_path, x))
             for x in qd_sources])
-        cfg['include_dirs'] = [
+        cfg['include_dirs'].extend([
             qd_library_include_path,
-            str(os.path.join(ROOT, 'src'))]
+            str(os.path.join(ROOT, 'src'))])
         cfg['libraries'].append('m')
     else:
         cfg.update(setup_helpers.pkg_config([], ['qd', 'm'], 'qd-config'))
