@@ -18,7 +18,7 @@ env:
         - LATEST_NUMPY_STABLE=1.8.1
 
         # Does your package need Cython to build?
-        - PACKAGE_NEEDS_CYTHON=true
+        - PACKAGE_NEEDS_CYTHON=false
         # Note that cython will be installed when it is needed for building
         # astropy development regardless of the setting of this variable.
 
