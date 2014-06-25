@@ -6,3 +6,7 @@ a separate source tree. Note that this package is distinct from the /cextern
 directory of the source code distribution, as that directory only contains C
 extension code.
 """
+
+from sys import version_info
+if version_info < (2, 7):
+    import weakrefset as weakref

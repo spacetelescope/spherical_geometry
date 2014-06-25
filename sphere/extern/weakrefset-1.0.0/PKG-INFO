@@ -1,0 +1,28 @@
+Metadata-Version: 1.0
+Name: weakrefset
+Version: 1.0.0
+Summary: A WeakSet class for storing objects using weak references.
+Home-page: http://pypi.python.org/pypi/weakrefset
+Author: Michael Foord
+Author-email: michael@voidspace.org.uk
+License: UNKNOWN
+Description: Python 2.7 & 3.1 include a ``WeakSet`` class, a collection for storing objects using weak references
+        (see the `Python weakref module <http://docs.python.org/library/weakref.html>`_).
+        
+        This project is a backport of the weakrefset module, and tests, for Python 2.5 and 2.6. The tests
+        require the `unittest2 package <http://pypi.python.org/pypi/unittest2>`_.
+        
+        * Mercurial repository & issue tracker: http://code.google.com/p/weakrefset/
+        
+Keywords: weakref set collection
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.5
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
