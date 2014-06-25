@@ -20,6 +20,8 @@ from astropy.extern.six.moves import xrange
 from . import great_circle_arc
 from . import vector
 
+__all__ = ['Graph']
+
 # Set to True to enable some sanity checks
 DEBUG = True
 

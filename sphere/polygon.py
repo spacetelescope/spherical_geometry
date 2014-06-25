@@ -3,8 +3,8 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The `polygon` module defines the `SphericalPolygon` class for managing
-polygons on the unit sphere.
+The `sphere.polygon` module defines the `SphericalPolygon` class for
+managing polygons on the unit sphere.
 """
 from __future__ import division, print_function, unicode_literals, absolute_import
 
@@ -214,11 +214,12 @@ class SphericalPolygon(object):
         Create a new `SphericalPolygon` from the footprint of a FITS
         WCS specification.
 
-        This method requires having `astropy` installed.
+        This method requires having `astropy <http://astropy.org>`__
+        installed.
 
         Parameters
         ----------
-        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
+        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.wcs.WCS`
             Refers to a FITS header containing a WCS specification.
 
         steps : int, optional
@@ -327,7 +328,7 @@ class SphericalPolygon(object):
         Determines if this `SphericalPolygon` points are the same
         as the other. Number of points and areas are also compared.
 
-        When `do_sort` is `True`, even when *self* and *other*
+        When *do_sort* is `True`, even when *self* and *other*
         have same points, they might not be equivalent because
         the order of the points defines the polygon.
 

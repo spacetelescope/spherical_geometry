@@ -30,7 +30,7 @@ else:
 
 
 __all__ = ['angle', 'intersection', 'intersects', 'length', 'midpoint',
-           'interpolate']
+           'interpolate', 'intersects_point']
 
 
 def _fast_cross(a, b):
@@ -130,6 +130,9 @@ def intersection(A, B, C, D):
 
     http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
     """
+    if HAS_C_UFUNCS:
+        return math_util.intersection(A, B, C, D)
+
     A = np.asanyarray(A)
     B = np.asanyarray(B)
     C = np.asanyarray(C)
@@ -167,10 +170,6 @@ def intersection(A, B, C, D):
     equals = np.expand_dims(equals, 2)
 
     return np.where(equals, np.nan, cross)
-
-
-if HAS_C_UFUNCS:
-    intersection = math_util.intersection
 
 
 def length(A, B, degrees=True):
@@ -253,7 +252,7 @@ def intersects(A, B, C, D):
 
 def intersects_point(A, B, C):
     """
-    Returns True if point C is along the great circle arc AB.
+    Returns `True` if point *C* is along the great circle arc *AB*.
     """
     if HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
@@ -265,10 +264,6 @@ def intersects_point(A, B, C):
     length_diff = np.abs((left_length + right_length) - total_length)
 
     return length_diff < 1e-10
-
-
-if HAS_C_UFUNCS:
-    intersects_point = math_util.intersects_point
 
 
 def angle(A, B, C, degrees=True):
