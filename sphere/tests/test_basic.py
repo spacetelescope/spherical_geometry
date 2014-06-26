@@ -158,7 +158,8 @@ def test_point_in_poly():
 
 def test_point_in_poly_lots():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
+
+    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'))
     header = fits[0].header
 
     poly1 = polygon.SphericalPolygon.from_wcs(
