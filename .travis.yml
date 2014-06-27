@@ -80,13 +80,13 @@ matrix:
 
         # one documentation build
         - python: 2.7
-          env: NUMPY_VERSION=$LATEST_NUMPY_STABLE SETUP_CMD='build_sphinx -w -n'
+          env: NUMPY_VERSION=$LATEST_NUMPY_STABLE SETUP_CMD='build_sphinx -w'
 
 before_install:
     - pip install --upgrade setuptools
     - pip install --upgrade pip
     - pip install wheel
-    - if [[ $SETUP_CMD == build_sphinx* ]]; then sudo apt-get update; sudo apt-get install graphviz; fi
+    - if [[ $SETUP_CMD == build_sphinx* ]]; then sudo apt-get update; sudo apt-get install graphviz texlive-latex-extra dvipng; fi
 
 install:
     - export PYTHONIOENCODING=UTF8 # just in case

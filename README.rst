@@ -3,7 +3,7 @@ User documentation
 
 .. currentmodule:: sphere
 
-The `sphere` library is a Python package for handling spherical
+The ``sphere`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
 Requirements
@@ -49,9 +49,9 @@ normalize an array of vectors.
 
 When not working in Cartesian vectors, the library allows the user to
 work in either degrees or radians.  All methods that require or return
-an angular value have a `degrees` keyword argument.  When `degrees` is
-`True`, these measurements are in degrees, otherwise they are in
-radians.
+an angular value have a ``degrees`` keyword argument.  When
+``degrees`` is `True`, these measurements are in degrees, otherwise
+they are in radians.
 
 .. warning::
 
