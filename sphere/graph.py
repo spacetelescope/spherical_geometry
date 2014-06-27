@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 # STDLIB
 import itertools
-import weakref
+from utils.compat import weakrefset as weakref
 
 # THIRD-PARTY
 import numpy as np
