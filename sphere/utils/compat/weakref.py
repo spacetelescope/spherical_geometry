@@ -13,7 +13,7 @@ from __future__ import absolute_import
 import weakref
 
 # python2.7 and later provide a WeakSet class
-if not hasattr(weakref, 'WeakPet'):
+if not hasattr(weakref, 'WeakSet'):
     from .weakrefset import WeakSet
 
 from weakref import *
