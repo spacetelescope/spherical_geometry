@@ -80,7 +80,7 @@ matrix:
 
         # one documentation build
         - python: 2.7
-          env: NUMPY_VERSION=$LATEST_NUMPY_STABLE SETUP_CMD='build_sphinx -w -n'
+          env: NUMPY_VERSION=$LATEST_NUMPY_STABLE SETUP_CMD='build_sphinx -w'
 
 before_install:
     - pip install --upgrade setuptools
