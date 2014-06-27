@@ -10,11 +10,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 # STDLIB
 import itertools
-
-import weakref
-if not hasattr(weakref, 'WeakSet'):
-    from .utils.compat.weakrefset import WeakSet
-from weakref import *
+from .utils.compat import weakref
 
 # THIRD-PARTY
 import numpy as np
@@ -55,9 +51,8 @@ class Graph:
             """
             self._point = np.asanyarray(point)
             self._source_polygons = set(source_polygons)
-            ##self._edges = weakref.WeakSet()
-            self._edges = WeakSet()
-
+            self._edges = weakref.WeakSet()
+            
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
