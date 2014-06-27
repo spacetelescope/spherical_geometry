@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 # STDLIB
 import itertools
-import weakref
+from .utils.compat import weakref
 
 # THIRD-PARTY
 import numpy as np
@@ -54,7 +54,7 @@ class Graph:
             self._point = np.asanyarray(point)
             self._source_polygons = set(source_polygons)
             self._edges = weakref.WeakSet()
-
+            
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
