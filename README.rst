@@ -3,7 +3,7 @@ User documentation
 
 .. currentmodule:: sphere
 
-The `sphere` library is a Python package for handling spherical
+The ``sphere`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
 Requirements
@@ -14,6 +14,10 @@ Requirements
 - Numpy 1.5.0 or later
 
 - astropy 0.3 or later
+
+- qd-library 2.3.7 or later (optional: if not available, the
+  bundled version will be used).  To force using the system-installed
+  version, build with ``setup.py build --use-system-qd``.
 
 Coordinate representation
 -------------------------
@@ -45,9 +49,9 @@ normalize an array of vectors.
 
 When not working in Cartesian vectors, the library allows the user to
 work in either degrees or radians.  All methods that require or return
-an angular value have a `degrees` keyword argument.  When `degrees` is
-`True`, these measurements are in degrees, otherwise they are in
-radians.
+an angular value have a ``degrees`` keyword argument.  When
+``degrees`` is `True`, these measurements are in degrees, otherwise
+they are in radians.
 
 .. warning::
 

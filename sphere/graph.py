@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 # STDLIB
 import itertools
-import weakref
+from .utils.compat import weakref
 
 # THIRD-PARTY
 import numpy as np
@@ -19,6 +19,8 @@ from astropy.extern.six.moves import xrange
 # LOCAL
 from . import great_circle_arc
 from . import vector
+
+__all__ = ['Graph']
 
 # Set to True to enable some sanity checks
 DEBUG = True
@@ -52,7 +54,7 @@ class Graph:
             self._point = np.asanyarray(point)
             self._source_polygons = set(source_polygons)
             self._edges = weakref.WeakSet()
-
+            
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
@@ -206,20 +208,20 @@ class Graph:
 
         self._source_polygons.add(polygon)
 
-        start_node = nodeA = self.add_node(points[0], [polygon])
+        start_node = nodeA = self._add_node(points[0], [polygon])
         for i in range(1, len(points) - 1):
-            nodeB = self.add_node(points[i], [polygon])
+            nodeB = self._add_node(points[i], [polygon])
             # Don't create self-pointing edges
             if nodeB is not nodeA:
-                self.add_edge(nodeA, nodeB, [polygon])
+                self._add_edge(nodeA, nodeB, [polygon])
                 nodeA = nodeB
         # Close the polygon
-        self.add_edge(nodeA, start_node, [polygon])
+        self._add_edge(nodeA, start_node, [polygon])
 
-    def add_node(self, point, source_polygons=[]):
+    def _add_node(self, point, source_polygons=[]):
         """
         Add a node to the graph.  It will be disconnected until used
-        in a call to `add_edge`.
+        in a call to `_add_edge`.
 
         Parameters
         ----------
@@ -259,7 +261,7 @@ class Graph:
         self._nodes.add(new_node)
         return new_node
 
-    def remove_node(self, node):
+    def _remove_node(self, node):
         """
         Removes a node and all of the edges that touch it.
 
@@ -281,7 +283,7 @@ class Graph:
         if node in self._nodes:
             self._nodes.remove(node)
 
-    def add_edge(self, A, B, source_polygons=[]):
+    def _add_edge(self, A, B, source_polygons=[]):
         """
         Add an edge between two nodes.
 
@@ -320,7 +322,7 @@ class Graph:
         self._edges.add(new_edge)
         return new_edge
 
-    def remove_edge(self, edge):
+    def _remove_edge(self, edge):
         """
         Remove an edge from the graph.  The nodes it points to remain intact.
 
@@ -336,14 +338,14 @@ class Graph:
         A, B = edge._nodes
         A._edges.remove(edge)
         if len(A._edges) == 0:
-            self.remove_node(A)
+            self._remove_node(A)
         if A is not B:
             B._edges.remove(edge)
             if len(B._edges) == 0:
-                self.remove_node(B)
+                self._remove_node(B)
         self._edges.remove(edge)
 
-    def split_edge(self, edge, node):
+    def _split_edge(self, edge, node):
         """
         Splits an `~Graph.Edge` *edge* at `~Graph.Node` *node*, removing
         *edge* and replacing it with two new `~Graph.Edge` instances.
@@ -367,10 +369,10 @@ class Graph:
         assert node in self._nodes
 
         A, B = edge._nodes
-        edgeA = self.add_edge(A, node, edge._source_polygons)
-        edgeB = self.add_edge(node, B, edge._source_polygons)
+        edgeA = self._add_edge(A, node, edge._source_polygons)
+        edgeB = self._add_edge(node, B, edge._source_polygons)
         if edge not in (edgeA, edgeB):
-            self.remove_edge(edge)
+            self._remove_edge(edge)
         return [edgeA, edgeB]
 
     def _sanity_check(self, title, node_is_2=False):
@@ -571,7 +573,7 @@ class Graph:
                 continue
             A, B = AB._nodes
             if len(A._edges) == 3 and len(B._edges) == 3:
-                self.remove_edge(AB)
+                self._remove_edge(AB)
 
     def _get_edge_points(self, edges):
         return (np.array([x._nodes[0]._point for x in edges]),
@@ -602,7 +604,7 @@ class Graph:
             for index in intersection_indices:
                 node = nodes[index]
                 if node not in AB._nodes:
-                    newA, newB = self.split_edge(AB, node)
+                    newA, newB = self._split_edge(AB, node)
 
                     new_edges = [
                         edge for edge in (newA, newB)
@@ -662,10 +664,10 @@ class Graph:
                 #                |
                 #                B
 
-                E = self.add_node(
+                E = self._add_node(
                     E, AB._source_polygons | CD._source_polygons)
-                newA, newB = self.split_edge(AB, E)
-                newC, newD = self.split_edge(CD, E)
+                newA, newB = self._split_edge(AB, E)
+                newC, newD = self._split_edge(CD, E)
 
                 new_edges = [
                     edge for edge in (newA, newB, newC, newD)
@@ -714,7 +716,7 @@ class Graph:
 
         for edge in list(self._edges):
             if edge._count >= 1:
-                self.remove_edge(edge)
+                self._remove_edge(edge)
 
         self._remove_orphaned_nodes()
 
@@ -741,7 +743,7 @@ class Graph:
 
         for edge in list(self._edges):
             if edge._count < len(polygons):
-                self.remove_edge(edge)
+                self._remove_edge(edge)
 
         self._remove_orphaned_nodes()
 
@@ -767,7 +769,7 @@ class Graph:
 
             for edge in removals:
                 if edge in self._edges:
-                    self.remove_edge(edge)
+                    self._remove_edge(edge)
 
     def _remove_orphaned_nodes(self):
         """
@@ -781,7 +783,7 @@ class Graph:
             if len(removes):
                 for node in removes:
                     if node in self._nodes:
-                        self.remove_node(node)
+                        self._remove_node(node)
             else:
                 break
 

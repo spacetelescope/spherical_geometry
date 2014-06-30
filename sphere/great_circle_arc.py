@@ -29,6 +29,7 @@ else:
     from numpy.core.umath_tests import inner1d
 
 
+
 __all__ = ['angle', 'intersection', 'intersects', 'intersects_point', 
            'length', 'midpoint', 'interpolate']
 
@@ -109,13 +110,13 @@ def intersection(A, B, C, D):
 
     .. math::
 
-        s_1 = ((A × B) × A) · T
+        s_1 = ((A × B) × A) \cdot T
 
-        s_2 = (B × (A × B)) · T
+        s_2 = (B × (A × B)) \cdot T
 
-        s_3 = ((C × D) × C) · T
+        s_3 = ((C × D) × C) \cdot T
 
-        s_4 = (D × (C × D)) · T
+        s_4 = (D × (C × D)) \cdot T
 
     For :math:`s_n`, if all positive :math:`T` is returned as-is.  If
     all negative, :math:`T` is multiplied by :math:`-1`.  Otherwise
@@ -130,6 +131,9 @@ def intersection(A, B, C, D):
 
     http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
     """
+    if HAS_C_UFUNCS:
+        return math_util.intersection(A, B, C, D)
+
     A = np.asanyarray(A)
     B = np.asanyarray(B)
     C = np.asanyarray(C)
@@ -169,10 +173,6 @@ def intersection(A, B, C, D):
     return np.where(equals, np.nan, cross)
 
 
-if HAS_C_UFUNCS:
-    intersection = math_util.intersection
-
-
 def length(A, B, degrees=True):
     r"""
     Returns the angular distance between two points (in vector space)
@@ -198,7 +198,7 @@ def length(A, B, degrees=True):
 
     .. math::
 
-       \Delta = \arccos(A \dot B)
+       \Delta = \arccos(A \cdot B)
     """
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
@@ -253,7 +253,7 @@ def intersects(A, B, C, D):
 
 def intersects_point(A, B, C):
     """
-    Returns True if point C is along the great circle arc AB.
+    Returns True if point C is along the great circle arc *AB*.
 
     Parameters
     ----------
@@ -277,10 +277,6 @@ def intersects_point(A, B, C):
     length_diff = np.abs((left_length + right_length) - total_length)
 
     return length_diff < 1e-10
-
-
-if HAS_C_UFUNCS:
-    intersects_point = math_util.intersects_point
 
 
 def angle(A, B, C, degrees=True):

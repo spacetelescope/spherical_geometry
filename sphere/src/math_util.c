@@ -6,18 +6,14 @@
 
 #include "numpy/npy_math.h"
 
-/*
-  The intersects, length and intersects_point calculations use "long
-  doubles" internally.  Emperical testing shows that this level of
-  precision is required for finding all intersections in typical HST
-  images that are rotated only slightly from one another.
+#include "qd/c_dd.h"
 
-  Unfortunately, "long double" is not a standard: On x86_64 Linux and
-  Mac, this is an 80-bit floating point representation, though
-  reportedly it is equivalent to double on Windows.  If
-  Windows-specific or non x86_64 problems present themselves, we may
-  want to use a software floating point library or some other method
-  for this support.
+/*
+  The intersects, length and intersects_point calculations use "double
+  double" representation internally, as supported by libqd.  Emperical
+  testing shows that this level of precision is required for finding all
+  intersections in typical HST images that are rotated only slightly from one
+  another.
 */
 
 /*
@@ -63,6 +59,10 @@ typedef npy_intp intp;
 
 #define END_OUTER_LOOP  }
 
+typedef struct {
+    double x[2];
+} dd;
+
 static inline void
 load_point(const char *in, const intp s, double* out) {
     out[0] = (*(double *)in);
@@ -73,12 +73,15 @@ load_point(const char *in, const intp s, double* out) {
 }
 
 static inline void
-load_pointl(const char *in, const intp s, long double* out) {
-    out[0] = (long double)(*(double *)in);
+load_point_dd(const char *in, const intp s, dd* out) {
+    out[0].x[0] = (*(double *)in);
+    out[0].x[1] = 0.0;
     in += s;
-    out[1] = (long double)(*(double *)in);
+    out[1].x[0] = (*(double *)in);
+    out[1].x[1] = 0.0;
     in += s;
-    out[2] = (long double)(*(double *)in);
+    out[2].x[0] = (*(double *)in);
+    out[2].x[1] = 0.0;
 }
 
 static inline void
@@ -91,84 +94,91 @@ save_point(const double* in, char *out, const intp s) {
 }
 
 static inline void
-save_pointl(const long double* in, char *out, const intp s) {
-    *(double *)out = (double)in[0];
+save_point_dd(const dd* in, char *out, const intp s) {
+    *(double *)out = in[0].x[0];
     out += s;
-    *(double *)out = (double)in[1];
+    *(double *)out = in[1].x[0];
     out += s;
-    *(double *)out = (double)in[2];
+    *(double *)out = in[2].x[0];
 }
 
 static inline void
-crossl(const long double *A, const long double *B, long double *C) {
-    C[0] = A[1]*B[2] - A[2]*B[1];
-    C[1] = A[2]*B[0] - A[0]*B[2];
-    C[2] = A[0]*B[1] - A[1]*B[0];
+cross_dd(const dd *A, const dd *B, dd *C) {
+    double tmp1[2];
+    double tmp2[2];
+
+    c_dd_mul(A[1].x, B[2].x, tmp1);
+    c_dd_mul(A[2].x, B[1].x, tmp2);
+    c_dd_sub(tmp1, tmp2, C[0].x);
+
+    c_dd_mul(A[2].x, B[0].x, tmp1);
+    c_dd_mul(A[0].x, B[2].x, tmp2);
+    c_dd_sub(tmp1, tmp2, C[1].x);
+
+    c_dd_mul(A[0].x, B[1].x, tmp1);
+    c_dd_mul(A[1].x, B[0].x, tmp2);
+    c_dd_sub(tmp1, tmp2, C[2].x);
 }
 
 static inline void
-normalize_output(long double *A, double *B) {
-    double l = A[0]*A[0] + A[1]*A[1] + A[2]*A[2];
-    if (l != 1.0) {
-        l = sqrt(l);
-        B[0] = A[0] / l;
-        B[1] = A[1] / l;
-        B[2] = A[2] / l;
-    } else {
-        B[0] = A[0];
-        B[1] = A[1];
-        B[2] = A[2];
+normalize_dd(const dd *A, dd *B) {
+    size_t i;
+
+    double T[4][2];
+    double l[2];
+
+    for (i = 0; i < 3; ++i) {
+        c_dd_sqr(A[i].x, T[i]);
+    }
+
+    c_dd_add(T[0], T[1], T[3]);
+    c_dd_add(T[3], T[2], T[3]);
+
+    if (!(T[3][0] == 1.0 && T[3][1] == 0.0)) {
+        c_dd_sqrt(T[3], l);
+        for (i = 0; i < 3; ++i) {
+            c_dd_div(A[i].x, l, B[i].x);
+        }
     }
 }
 
 static inline void
-normalizel(long double *A) {
-    long double l = A[0]*A[0] + A[1]*A[1] + A[2]*A[2];
-    if (l != 1.0L) {
-        l = sqrtl(l);
-        A[0] /= l;
-        A[1] /= l;
-        A[2] /= l;
+dot_dd(const dd *A, const dd *B, dd *C) {
+    size_t i;
+    double tmp[4][2];
+
+    for (i = 0; i < 3; ++i) {
+        c_dd_mul(A[i].x, B[i].x, tmp[i]);
     }
+
+    c_dd_add(tmp[0], tmp[1], tmp[3]);
+    c_dd_add(tmp[3], tmp[2], C->x);
 }
 
-static inline long double
-dotl(const long double *A, const long double *B) {
-    return A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
-}
-
-static inline long double
-signl(const long double A) {
-    return (A == 0.0L) ? 0.0L : ((A < 0.0L) ? -1.0L : 1.0L);
+static inline double
+sign(const double A) {
+    return (A == 0.0) ? 0.0 : ((A < 0.0) ? -1.0 : 1.0);
 }
 
 static inline int
-equalsl(const long double *A, const long double *B) {
-    return A[0] == B[0] && A[1] == B[1] && A[2] == B[2];
+equals_dd(const dd *A, const dd *B) {
+    return memcmp(A, B, sizeof(dd) * 3) == 0;
 }
 
 static inline void
-multl(long double *T, const long double f) {
-    T[0] *= f;
-    T[1] *= f;
-    T[2] *= f;
-}
-
-static inline long double
-lengthl(long double *A, long double *B) {
-    long double s;
+length_dd(const dd *A, const dd *B, dd *l) {
+    dd s;
 
     /* Special case for "exactly equal" that avoids all of the calculation. */
-    if (equalsl(A, B)) {
-        return 0.0L;
+    if (equals_dd(A, B)) {
+        l->x[0] = 0.0;
+        l->x[1] = 0.0;
+        return;
     }
 
-    s = dotl(A, B);
+    dot_dd(A, B, &s);
 
-    /* clip s to range -1.0 to 1.0 */
-    s = (s < -1.0L) ? -1.0L : (s > 1.0L) ? 1.0L : s;
-
-    return acosl(s);
+    return c_dd_acos(s.x, l->x);
 }
 
 /*
@@ -215,20 +225,25 @@ char *normalize_signature = "(i)->(i)";
 static void
 DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    long double IN[3];
-    double OUT[3];
+    dd IN[3];
+    dd OUT[3];
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     INIT_OUTER_LOOP_2
     intp is1=steps[0], is2=steps[1];
     BEGIN_OUTER_LOOP_2
         char *ip1=args[0], *op=args[1];
 
-        load_pointl(ip1, is1, IN);
+        load_point_dd(ip1, is1, IN);
 
-        normalize_output(IN, OUT);
+        normalize_dd(IN, OUT);
 
-        save_point(OUT, op, is2);
+        save_point_dd(OUT, op, is2);
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction normalize_functions[] = { DOUBLE_normalize };
@@ -244,22 +259,27 @@ char *cross_signature = "(i),(i)->(i)";
 static void
 DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    long double A[3];
-    long double B[3];
-    long double C[3];
+    dd A[3];
+    dd B[3];
+    dd C[3];
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-        load_pointl(ip1, is1, A);
-        load_pointl(ip2, is2, B);
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
 
-        crossl(A, B, C);
+        cross_dd(A, B, C);
 
-        save_pointl(C, op, is3);
+        save_point_dd(C, op, is3);
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction cross_functions[] = { DOUBLE_cross };
@@ -279,23 +299,28 @@ char *cross_and_norm_signature = "(i),(i)->(i)";
 static void
 DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    long double A[3];
-    long double B[3];
-    long double C[3];
+    dd A[3];
+    dd B[3];
+    dd C[3];
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-        load_pointl(ip1, is1, A);
-        load_pointl(ip2, is2, B);
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
 
-        crossl(A, B, C);
-        normalizel(C);
+        cross_dd(A, B, C);
+        normalize_dd(C, C);
 
-        save_pointl(C, op, is3);
+        save_point_dd(C, op, is3);
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction cross_and_norm_functions[] = { DOUBLE_cross_and_norm };
@@ -314,20 +339,25 @@ char *intersection_signature = "(i),(i),(i),(i)->(i)";
 static void
 DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    long double A[3];
-    long double B[3];
-    long double C[3];
-    long double D[3];
+    dd A[3];
+    dd B[3];
+    dd C[3];
+    dd D[3];
 
-    long double ABX[3];
-    long double CDX[3];
-    long double T[3];
-    long double tmp[3];
+    dd ABX[3];
+    dd CDX[3];
+    dd T[3];
+    dd tmp[3];
+    dd dot;
 
     double nans[3];
 
-    long double s;
+    double s;
     int match;
+
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     nans[0] = nans[1] = nans[2] = NPY_NAN;
 
@@ -336,28 +366,32 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
     BEGIN_OUTER_LOOP_5
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
 
-        load_pointl(ip1, is1, A);
-        load_pointl(ip2, is2, B);
-        load_pointl(ip3, is3, C);
-        load_pointl(ip4, is4, D);
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
+        load_point_dd(ip3, is3, C);
+        load_point_dd(ip4, is4, D);
 
-        match = !(equalsl(A, C) | equalsl(A, D) | equalsl(B, C) | equalsl(B, D));
+        match = !(equals_dd(A, C) | equals_dd(A, D) | equals_dd(B, C) | equals_dd(B, D));
 
         if (match) {
-            crossl(A, B, ABX);
-            crossl(C, D, CDX);
-            crossl(ABX, CDX, T);
-            normalizel(T);
+            cross_dd(A, B, ABX);
+            cross_dd(C, D, CDX);
+            cross_dd(ABX, CDX, T);
+            normalize_dd(T, T);
 
             match = 0;
-            crossl(ABX, A, tmp);
-            s = signl(dotl(tmp, T));
-            crossl(B, ABX, tmp);
-            if (s == signl(dotl(tmp, T))) {
-                crossl(CDX, C, tmp);
-                if (s == signl(dotl(tmp, T))) {
-                    crossl(D, CDX, tmp);
-                    if (s == signl(dotl(tmp, T))) {
+            cross_dd(ABX, A, tmp);
+            dot_dd(tmp, T, &dot);
+            s = sign(dot.x[0]);
+            cross_dd(B, ABX, tmp);
+            dot_dd(tmp, T, &dot);
+            if (s == sign(dot.x[0])) {
+                cross_dd(CDX, C, tmp);
+                dot_dd(tmp, T, &dot);
+                if (s == sign(dot.x[0])) {
+                    cross_dd(D, CDX, tmp);
+                    dot_dd(tmp, T, &dot);
+                    if (s == sign(dot.x[0])) {
                         match = 1;
                     }
                 }
@@ -365,12 +399,16 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
         }
 
         if (match) {
-            multl(T, s);
-            save_pointl(T, op, is5);
+            T[0].x[0] *= s;
+            T[1].x[0] *= s;
+            T[2].x[0] *= s;
+            save_point_dd(T, op, is5);
         } else {
             save_point(nans, op, is5);
         }
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
@@ -389,26 +427,32 @@ char *length_signature = "(i),(i)->()";
 static void
 DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    long double A[3];
-    long double B[3];
+    dd A[3];
+    dd B[3];
 
-    long double s;
+    dd s;
+
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
-        load_pointl(ip1, is1, A);
-        load_pointl(ip2, is2, B);
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
 
-        normalizel(A);
-        normalizel(B);
+        normalize_dd(A, A);
+        normalize_dd(B, B);
 
-        s = lengthl(A, B);
+        length_dd(A, B, &s);
 
-        *((double *)op) = (double)s;
+        *((double *)op) = s.x[0];
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction length_functions[] = { DOUBLE_length };
@@ -427,37 +471,46 @@ char *intersects_point_signature = "(i),(i),(i)->()";
 static void
 DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
+    dd A[3];
+    dd B[3];
+    dd C[3];
 
-    long double A[3];
-    long double B[3];
-    long double C[3];
+    dd total;
+    dd left;
+    dd right;
+    double t1[2], t2[2];
+    int result;
 
-    long double total;
-    long double left;
-    long double right;
-    long double diff;
+    unsigned int old_cw;
+
+    fpu_fix_start(&old_cw);
 
     INIT_OUTER_LOOP_4
     intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_4
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
 
-        load_pointl(ip1, is1, A);
-        load_pointl(ip2, is2, B);
-        load_pointl(ip3, is3, C);
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
+        load_point_dd(ip3, is3, C);
 
-        normalizel(A);
-        normalizel(B);
-        normalizel(C);
+        normalize_dd(A, A);
+        normalize_dd(B, B);
+        normalize_dd(C, C);
 
-        total = lengthl(A, B);
-        left = lengthl(A, C);
-        right = lengthl(C, B);
+        length_dd(A, B, &total);
+        length_dd(A, C, &left);
+        length_dd(C, B, &right);
 
-        diff = fabsl((left + right) - total);
+        c_dd_add(left.x, right.x, t1);
+        c_dd_sub(t1, total.x, t2);
+        c_dd_abs(t2, t1);
 
-        *((uint8_t *)op) = diff < 1e-10L;
+        c_dd_comp_dd_d(t1, 1e-10, &result);
+        *((uint8_t *)op) = (result == -1);
     END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
 }
 
 static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects_point };
@@ -486,7 +539,7 @@ addUfuncs(PyObject *dictionary) {
     f = PyUFunc_FromFuncAndDataAndSignature(
         normalize_functions, normalize_data, normalize_signatures, 2, 1, 1,
         PyUFunc_None, "normalize",
-        "inner on the last dimension and broadcast on the rest \n"      \
+        "Normalize the vector to the unit sphere. \n"      \
         "     \"(i)->(i)\" \n",
         0, normalize_signature);
     PyDict_SetItemString(dictionary, "normalize", f);
