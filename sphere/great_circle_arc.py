@@ -29,8 +29,9 @@ else:
     from numpy.core.umath_tests import inner1d
 
 
-__all__ = ['angle', 'intersection', 'intersects', 'length', 'midpoint',
-           'interpolate', 'intersects_point']
+
+__all__ = ['angle', 'intersection', 'intersects', 'intersects_point', 
+           'length', 'midpoint', 'interpolate']
 
 
 def _fast_cross(a, b):
@@ -252,7 +253,19 @@ def intersects(A, B, C, D):
 
 def intersects_point(A, B, C):
     """
-    Returns `True` if point *C* is along the great circle arc *AB*.
+    Returns True if point C is along the great circle arc *AB*.
+
+    Parameters
+    ----------
+    A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
+        Endpoints of the great circle arc.
+
+    C : (*x*, *y*, *z*) triples or array of triples of points
+
+    Returns
+    -------
+    intersects : bool or array of bool
+        If the point is on the line, returns `True`.
     """
     if HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
