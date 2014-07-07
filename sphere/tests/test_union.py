@@ -88,7 +88,7 @@ class union_test:
 @union_test(0, 90)
 def test1():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
+    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'))
     header = fits[0].header
 
     poly1 = polygon.SphericalPolygon.from_wcs(
