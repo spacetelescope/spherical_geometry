@@ -16,7 +16,8 @@ from __future__ import with_statement, division, absolute_import, unicode_litera
 # THIRD-PARTY
 import numpy as np
 
-
+# C versions of the code have been written to speed up operations
+# the python versions are a fallback if the C cannot be used
 try:
     from . import math_util
     HAS_C_UFUNCS = True
