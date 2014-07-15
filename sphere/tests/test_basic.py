@@ -171,8 +171,8 @@ def test_point_in_poly_lots():
     points = get_point_set()
     count = 0
     for point in points:
-        if poly1.contains_point(point) or poly2.contains_point(point) or \
-               poly3.contains_point(point):
+        if (poly1.contains_point(point) or poly2.contains_point(point) or 
+               poly3.contains_point(point)):
             count += 1
 
     assert count == 5
