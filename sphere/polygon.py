@@ -219,7 +219,7 @@ class SphericalPolygon(object):
 
         Parameters
         ----------
-        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.wcs.WCS`
+        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
             Refers to a FITS header containing a WCS specification.
 
         steps : int, optional
