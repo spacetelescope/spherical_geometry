@@ -1,20 +1,20 @@
 API Documentation
 =================
 
-.. currentmodule:: sphere.vector
+.. currentmodule:: stsci_sphere.vector
 
-.. automodapi:: sphere.vector
+.. automodapi:: stsci_sphere.vector
 
-.. currentmodule:: sphere.great_circle_arc
+.. currentmodule:: stsci_sphere.great_circle_arc
 
-.. automodapi:: sphere.great_circle_arc
+.. automodapi:: stsci_sphere.great_circle_arc
 
-.. currentmodule:: sphere.polygon
+.. currentmodule:: stsci_sphere.polygon
 
-.. automodapi:: sphere.polygon
+.. automodapi:: stsci_sphere.polygon
     :no-inheritance-diagram:
 
-.. currentmodule:: sphere.graph
+.. currentmodule:: stsci_sphere.graph
 
-.. automodapi:: sphere.graph
+.. automodapi:: stsci_sphere.graph
     :no-inheritance-diagram:
