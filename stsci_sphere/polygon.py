@@ -3,7 +3,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The `sphere.polygon` module defines the `SphericalPolygon` class for
+The `stsci_sphere.polygon` module defines the `SphericalPolygon` class for
 managing polygons on the unit sphere.
 """
 from __future__ import division, print_function, unicode_literals, absolute_import
@@ -573,7 +573,7 @@ class SphericalPolygon(object):
 
         Notes
         -----
-        For implementation details, see the :mod:`~sphere.graph`
+        For implementation details, see the :mod:`~stsci_sphere.graph`
         module.
         """
         from . import graph
@@ -676,7 +676,7 @@ class SphericalPolygon(object):
 
         Notes
         -----
-        For implementation details, see the :mod:`~sphere.graph`
+        For implementation details, see the :mod:`~stsci_sphere.graph`
         module.
         """
         # if not self.intersects_poly(other):

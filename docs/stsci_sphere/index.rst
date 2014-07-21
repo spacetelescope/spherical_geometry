@@ -6,7 +6,7 @@
 Welcome to Spherical Geometry Toolkit's documentation!
 ======================================================
 
-.. currentmodule:: sphere
+.. currentmodule:: stsci_sphere
 
 Contents:
 

@@ -7,7 +7,7 @@ this package is here:
 .. toctree::
   :maxdepth: 2
 
-  sphere/index.rst
+  stsci_sphere/index.rst
 
 .. note:: Do not edit this page - instead, place all documentation for the
           affiliated package inside ``packagename/``

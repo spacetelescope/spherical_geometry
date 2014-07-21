@@ -193,7 +193,7 @@ def test_union_empty():
 
 def test_difficult_unions():
     # Tests a number of intersections of real data that have been
-    # problematic in previous revisions of sphere
+    # problematic in previous revisions of stsci_sphere
 
     fname = resolve_imagename(ROOT_DIR, "difficult_intersections.txt")
     with open(fname, 'rb') as fd:
