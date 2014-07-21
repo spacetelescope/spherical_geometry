@@ -104,19 +104,14 @@ def test(package=None, test_path=None, args=None, plugins=None,
 
     """
     test_runner = _get_test_runner()
-    # The template version of this file has an extra **kwargs
-    # which does not work with the Ureka astropy version
-    # BPS 06.06.14
     return test_runner.run_tests(
         package=package, test_path=test_path, args=args,
         plugins=plugins, verbose=verbose, pastebin=pastebin,
         remote_data=remote_data, pep8=pep8, pdb=pdb,
-        coverage=coverage, open_files=open_files)
+        coverage=coverage, open_files=open_files, **kwargs)
 
 if not _ASTROPY_SETUP_:
-
     import os
-    #import os.path
     from warnings import warn
     from astropy import config
 
@@ -125,11 +120,19 @@ if not _ASTROPY_SETUP_:
 
     if not os.environ.get('ASTROPY_SKIP_CONFIG_UPDATE', False):
         config_dir = os.path.dirname(__file__)
-        #config_dir = os.path.join(os.path.expanduser('~'), '.astropy', 'config')
-        try:
-            config.configuration.update_default_config(__package__, config_dir)
-        except config.configuration.ConfigurationDefaultMissingError as e:
-            wmsg = (e.args[0] + " Cannot install default profile. If you are "
-                    "importing from source, this is expected.")
-            warn(config.configuration.ConfigurationDefaultMissingWarning(wmsg))
-            del e
+        config_template = os.path.join(config_dir, __package__ + ".cfg")
+        if os.path.isfile(config_template):
+            try:
+                config.configuration.update_default_config(
+                    __package__, config_dir, version=__version__)
+            except TypeError as orig_error:
+                try:
+                    config.configuration.update_default_config(
+                        __package__, config_dir)
+                except config.configuration.ConfigurationDefaultMissingError as e:
+                    wmsg = (e.args[0] + " Cannot install default profile. If you are "
+                            "importing from source, this is expected.")
+                    warn(config.configuration.ConfigurationDefaultMissingWarning(wmsg))
+                    del e
+                except:
+                    raise orig_error
