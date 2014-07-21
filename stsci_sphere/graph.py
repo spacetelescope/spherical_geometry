@@ -33,8 +33,8 @@ class Graph:
 
     .. note::
        This class is not meant to be used directly.  Instead, use
-       `~sphere.polygon.SphericalPolygon.union` and
-       `~sphere.polygon.SphericalPolygon.intersection`.
+       `~stsci_sphere.polygon.SphericalPolygon.union` and
+       `~stsci_sphere.polygon.SphericalPolygon.intersection`.
     """
 
     class Node:
@@ -48,7 +48,7 @@ class Graph:
             ----------
             point : 3-sequence (*x*, *y*, *z*) coordinate
 
-            source_polygon : `~sphere.polygon.SphericalPolygon` instance, optional
+            source_polygon : `~stsci_sphere.polygon.SphericalPolygon` instance, optional
                 The polygon(s) this node came from.  Used for bookkeeping.
             """
             self._point = np.asanyarray(point)
@@ -109,7 +109,7 @@ class Graph:
             ----------
             A, B : `~Graph.Node` instances
 
-            source_polygon : `~sphere.polygon.SphericalPolygon` instance, optional
+            source_polygon : `~stsci_sphere.polygon.SphericalPolygon` instance, optional
                 The polygon this edge came from.  Used for bookkeeping.
             """
             self._nodes = [A, B]
@@ -165,7 +165,7 @@ class Graph:
         """
         Parameters
         ----------
-        polygons : sequence of `~sphere.polygon.SphericalPolygon` instances
+        polygons : sequence of `~stsci_sphere.polygon.SphericalPolygon` instances
             Build a graph from this initial set of polygons.
         """
         self._nodes = set()
@@ -183,7 +183,7 @@ class Graph:
 
         Parameters
         ----------
-        polygons : sequence of `~sphere.polygon.SphericalPolygon` instances
+        polygons : sequence of `~stsci_sphere.polygon.SphericalPolygon` instances
             Set of polygons to add to the graph
         """
         for polygon in polygons:
@@ -198,7 +198,7 @@ class Graph:
 
         Parameters
         ----------
-        polygon : `~sphere.polygon.SphericalPolygon` instance
+        polygon : `~stsci_sphere.polygon.SphericalPolygon` instance
             Polygon to add to the graph
         """
         points = polygon._points
@@ -227,7 +227,7 @@ class Graph:
         ----------
         point : 3-sequence (*x*, *y*, *z*) coordinate
 
-        source_polygon : `~sphere.polygon.SphericalPolygon` instance, optional
+        source_polygon : `~stsci_sphere.polygon.SphericalPolygon` instance, optional
             The polygon this node came from.  Used for bookkeeping.
 
         Returns
@@ -294,7 +294,7 @@ class Graph:
         ----------
         A, B : `~Graph.Node` instances
 
-        source_polygons : `~sphere.polygon.SphericalPolygon` instance, optional
+        source_polygons : `~stsci_sphere.polygon.SphericalPolygon` instance, optional
             The polygon(s) this edge came from.  Used for bookkeeping.
 
         Returns
