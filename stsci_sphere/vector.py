@@ -3,7 +3,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The `sphere.vector` module contains the basic operations for handling
+The `stsci_sphere.vector` module contains the basic operations for handling
 vectors and converting them to and from other representations.
 """
 
