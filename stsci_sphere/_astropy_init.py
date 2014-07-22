@@ -104,8 +104,9 @@ def test(package=None, test_path=None, args=None, plugins=None,
 
     """
     test_runner = _get_test_runner()
-    from astropy.version import _last_generated_version
-    if _last_generated_version >= '0.4':
+    import astropy
+    from astropy import __version__
+    if astropy.__version__ >= '0.4':
         return test_runner.run_tests(
             package=package, test_path=test_path, args=args,
             plugins=plugins, verbose=verbose, pastebin=pastebin,
