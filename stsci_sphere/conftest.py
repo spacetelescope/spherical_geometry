@@ -6,4 +6,6 @@ from astropy.tests.pytest_plugins import *
 
 ## Uncomment the following line to treat all DeprecationWarnings as
 ## exceptions
-enable_deprecations_as_exceptions()
+from astropy.version import _last_generated_version
+if _last_generated_version >= '0.4':
+    enable_deprecations_as_exceptions()

@@ -104,11 +104,19 @@ def test(package=None, test_path=None, args=None, plugins=None,
 
     """
     test_runner = _get_test_runner()
-    return test_runner.run_tests(
-        package=package, test_path=test_path, args=args,
-        plugins=plugins, verbose=verbose, pastebin=pastebin,
-        remote_data=remote_data, pep8=pep8, pdb=pdb,
-        coverage=coverage, open_files=open_files, **kwargs)
+    from astropy.version import _last_generated_version
+    if _last_generated_version >= '0.4':
+        return test_runner.run_tests(
+            package=package, test_path=test_path, args=args,
+            plugins=plugins, verbose=verbose, pastebin=pastebin,
+            remote_data=remote_data, pep8=pep8, pdb=pdb,
+            coverage=coverage, open_files=open_files, **kwargs)
+    else:
+        return test_runner.run_tests(
+            package=package, test_path=test_path, args=args,
+            plugins=plugins, verbose=verbose, pastebin=pastebin,
+            remote_data=remote_data, pep8=pep8, pdb=pdb,
+            coverage=coverage, open_files=open_files)
 
 if not _ASTROPY_SETUP_:
     import os
