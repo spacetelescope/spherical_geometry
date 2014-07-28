@@ -787,6 +787,28 @@ class Graph:
             else:
                 break
 
+    @staticmethod
+    def _fast_area(points):
+        """
+        Calculates an approximate area of a polygon.  Unlike the area
+        calculation in `SphericalPolygon`, this does not interpolate
+        along the arcs, so is not useful for getting an actual area,
+        but only whether the area is positive or negative, telling us
+        whether the points proceed clockwise or counter-clockwise
+        respectively.
+        """
+        # Rotate polygon so that center of polygon is at north pole
+        centroid = np.mean(points[:-1], axis=0)
+        centroid = vector.normalize_vector(centroid)
+        points = points - (centroid + np.array([0, 0, 1]))
+        vector.normalize_vector(points, output=points)
+
+        XY = vector.equal_area_proj(points)
+        X = XY[..., 0]
+        Y = XY[..., 1]
+
+        return np.sum(X[:-1] * Y[1:] - X[1:] * Y[:-1])
+
     def _trace(self):
         """
         Given a graph that has had cutlines removed and all
@@ -797,13 +819,7 @@ class Graph:
         edges = set(self._edges)  # copy
         while len(edges):
             polygon = []
-            # Carefully pick out an "original" edge first.  Synthetic
-            # edges may not be pointing in the right direction to
-            # properly calculate the area.
-            for edge in edges:
-                if len(edge._source_polygons) == 1:
-                    break
-            edges.remove(edge)
+            edge = edges.pop()
             start_node = node = edge._nodes[0]
             while True:
                 # TODO: Do we need this if clause any more?
@@ -819,7 +835,13 @@ class Graph:
                     polygon.append(node._point)
                     break
 
-            polygons.append(np.asarray(polygon))
+            polygon = np.asarray(polygon)
+            area = self._fast_area(polygon)
+            if area < 0:
+                # Reverse the points
+                polygon = polygon[::-1, ...]
+
+            polygons.append(polygon)
 
         if len(polygons) == 1:
             return polygons[0]
