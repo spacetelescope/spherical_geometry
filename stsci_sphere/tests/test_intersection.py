@@ -10,6 +10,7 @@ import random
 import sys
 
 # THIRD-PARTY
+from astropy.extern.six.moves import xrange
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
