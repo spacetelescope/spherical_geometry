@@ -169,7 +169,7 @@ def test_intersection_empty():
 
 def test_difficult_intersections():
     # Tests a number of intersections of real data that have been
-    # problematic in previous revisions of stsci_sphere
+    # problematic in previous revisions of spherical_geometry
 
     def test_intersection(polys):
         A, B = polys
