@@ -3,7 +3,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-The `stsci_sphere.great_circle_arc` module contains functions for computing
+The `spherical_geometry.great_circle_arc` module contains functions for computing
 the length, intersection, angle and midpoint of great circle arcs.
 
 Great circles are circles on the unit sphere whose center is

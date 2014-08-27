@@ -7,7 +7,7 @@ this package is here:
 .. toctree::
   :maxdepth: 2
 
-  stsci_sphere/index.rst
+  spherical_geometry/index.rst
 
 .. note:: Do not edit this page - instead, place all documentation for the
           affiliated package inside ``packagename/``

@@ -9,6 +9,7 @@ __pycache__
 */version.py
 */cython_version.py
 htmlcov
+MANIFEST
 .coverage
 docs/api/
 

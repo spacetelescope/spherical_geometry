@@ -47,7 +47,7 @@ def get_extensions():
         cfg.update(setup_helpers.pkg_config([], ['qd', 'm'], 'qd-config'))
 
     return [Extension(
-        str('stsci_sphere.math_util'), sources, **cfg)]
+        str('spherical_geometry.math_util'), sources, **cfg)]
 
 
 def get_external_libraries():
