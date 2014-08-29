@@ -229,10 +229,11 @@ DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
     dd OUT[3];
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
-
     INIT_OUTER_LOOP_2
     intp is1=steps[0], is2=steps[1];
+
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_2
         char *ip1=args[0], *op=args[1];
 
@@ -264,10 +265,11 @@ DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     dd C[3];
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
-
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
+
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
@@ -304,10 +306,11 @@ DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
     dd C[3];
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
-
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1], is3=steps[2];
+
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
@@ -357,12 +360,13 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
+    INIT_OUTER_LOOP_5
+    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3], is5=steps[4];
 
     nans[0] = nans[1] = nans[2] = NPY_NAN;
 
-    INIT_OUTER_LOOP_5
-    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3], is5=steps[4];
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_5
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
 
@@ -434,10 +438,11 @@ DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
-
     INIT_OUTER_LOOP_3
     intp is1=steps[0], is2=steps[1];
+
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
 
@@ -483,10 +488,11 @@ DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UN
 
     unsigned int old_cw;
 
-    fpu_fix_start(&old_cw);
-
     INIT_OUTER_LOOP_4
     intp is1=steps[0], is2=steps[1], is3=steps[2];
+
+    fpu_fix_start(&old_cw);
+
     BEGIN_OUTER_LOOP_4
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
 
