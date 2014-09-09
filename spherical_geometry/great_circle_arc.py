@@ -304,13 +304,13 @@ def angle(A, B, C, degrees=True):
     .. [1] Miller, Robert D.  Computing the area of a spherical
        polygon.  Graphics Gems IV.  1994.  Academic Press.
     """
-    A = np.asanyarray(A)
-    B = np.asanyarray(B)
-    C = np.asanyarray(C)
-
     if HAS_C_UFUNCS:
         angle = math_util.angle(A, B, C)
     else:
+        A = np.asanyarray(A)
+        B = np.asanyarray(B)
+        C = np.asanyarray(C)
+
         A, B, C = np.broadcast_arrays(A, B, C)
 
         ABX = _fast_cross(A, B)
