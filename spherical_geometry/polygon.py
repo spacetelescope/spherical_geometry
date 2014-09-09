@@ -409,9 +409,7 @@ class _SingleSphericalPolygon(object):
                 points[:-2], points[1:-1], points[2:], degrees=False),
             great_circle_arc.angle(
                 points[-2], points[0], points[1], degrees=False)])
-        angles -= np.pi
-        sum = np.sum(angles)
-        sum = sum + (2.0 * np.pi)
+        sum = np.sum(angles) - (len(angles) - 2) * np.pi
 
         return sum
 
