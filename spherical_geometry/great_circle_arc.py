@@ -31,7 +31,7 @@ else:
 
 
 
-__all__ = ['angle', 'intersection', 'intersects', 'intersects_point', 
+__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
 
 
@@ -284,8 +284,6 @@ def angle(A, B, C, degrees=True):
     """
     Returns the angle at *B* between *AB* and *BC*.
 
-    This always returns the shortest angle < π.
-
     Parameters
     ----------
     A, B, C : (*x*, *y*, *z*) triples or Nx3 arrays of triples
@@ -298,7 +296,7 @@ def angle(A, B, C, degrees=True):
     Returns
     -------
     angle : float or array of floats
-        The angle at *B* between *AB* and *BC*.
+        The angle at *B* between *AB* and *BC*, in range 0 to 2π.
 
     References
     ----------
@@ -316,11 +314,16 @@ def angle(A, B, C, degrees=True):
     ABX = _cross_and_normalize(B, ABX)
     BCX = _fast_cross(C, B)
     BCX = _cross_and_normalize(B, BCX)
+    X = _cross_and_normalize(ABX, BCX)
+    diff = inner1d(B, X)
+    inner = inner1d(ABX, BCX)
     with np.errstate(invalid='ignore'):
-        angle = np.arccos(inner1d(ABX, BCX))
+        angle = np.arccos(inner)
+    angle = np.where(diff < 0.0, (2.0 * np.pi) - angle, angle)
 
     if degrees:
         angle = np.rad2deg(angle)
+
     return angle
 
 

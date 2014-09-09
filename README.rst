@@ -116,8 +116,8 @@ Creating spherical polygons
 
 `SphericalPolygon` objects have 4 different constructors:
 
-  - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*)
-    points and an inside point.
+  - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*) points, or a
+    list of disjoint `SphericalPolygon` instances.
 
   - `SphericalPolygon.from_radec`: Takes an array of (*ra*, *dec*)
     points and an inside point.
@@ -135,9 +135,11 @@ Operations on Spherical Polygons
 Once one has a `SphericalPolygon` object, there are a number of
 operations available:
 
-  - `~SphericalPolygon.contains_point`: Determines if the given point is inside the polygon.
+  - `~SphericalPolygon.contains_point`: Determines if the given point
+    is inside the polygon.
 
-  - `~SphericalPolygon.intersects_poly`: Determines if one polygon intersects with another.
+  - `~SphericalPolygon.intersects_poly`: Determines if one polygon
+    intersects with another.
 
   - `~SphericalPolygon.area`: Determine the area of a polygon.
 
@@ -153,11 +155,6 @@ operations available:
 
   - `~SphericalPolygon.to_radec`: Convert (*x*, *y*, *z*) points in the
     polygon to (*ra*, *dec*) points.
-
-  - `~SphericalPolygon.same_points_as`: Determines if one polygon has the
-    same points as another. When only sorted unique points are considered
-    (default behavior), polygons with same points might not be the same
-    polygons because the order of the points matter.
 
   - `~SphericalPolygon.draw`: Plots the polygon using matplotlib’s
     Basemap toolkit.  This feature is rather bare and intended
