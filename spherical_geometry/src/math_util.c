@@ -155,9 +155,9 @@ dot_dd(const dd *A, const dd *B, dd *C) {
     c_dd_add(tmp[3], tmp[2], C->x);
 }
 
-static NPY_INLINE double
+static NPY_INLINE int
 sign(const double A) {
-    return (A == 0.0) ? 0.0 : ((A < 0.0) ? -1.0 : 1.0);
+    return (A == 0.0) ? 0 : npy_signbit(A) ? -1 : 1;
 }
 
 static NPY_INLINE int
