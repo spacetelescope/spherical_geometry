@@ -433,8 +433,8 @@ class _SingleSphericalPolygon(object):
 
         Notes
         -----
-        For implementation details, see the :mod:`~stsci_sphere.graph`
-        module.
+        For implementation details, see the
+        :mod:`~spherical_geometry.graph` module.
         """
         from . import graph
         if len(self._points) < 3:
@@ -501,8 +501,8 @@ class _SingleSphericalPolygon(object):
 
         Notes
         -----
-        For implementation details, see the :mod:`~stsci_sphere.graph`
-        module.
+        For implementation details, see the
+        :mod:`~spherical_geometry.graph` module.
         """
         from . import graph
         if len(self._points) < 3 or len(other._points) < 3:
