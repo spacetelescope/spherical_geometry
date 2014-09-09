@@ -41,7 +41,7 @@ class intersection_test:
             num_permutations = math.factorial(len(polys))
             step_size = int(max(float(num_permutations) / 20.0, 1.0))
 
-            areas = [x.area() for x in polys]
+            areas = np.array([x.area() for x in polys])
 
             if GRAPH_MODE:
                 print("%d permutations" % num_permutations)

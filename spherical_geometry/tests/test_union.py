@@ -42,7 +42,7 @@ class union_test:
             if GRAPH_MODE:
                 print("%d permutations" % num_permutations)
 
-            areas = [x.area() for x in polys]
+            areas = np.array([x.area() for x in polys])
 
             for i, permutation in enumerate(
                     itertools.islice(
