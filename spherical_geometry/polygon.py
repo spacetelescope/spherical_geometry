@@ -389,7 +389,8 @@ class _SingleSphericalPolygon(object):
 
     def area(self):
         r"""
-        Returns the area of the polygon on the unit sphere.
+        Returns the area of the polygon on the unit sphere, in
+        steradians.
 
         The area is computed using a generalization of Girard's Theorem.
 
@@ -832,7 +833,8 @@ class SphericalPolygon(object):
 
     def area(self):
         r"""
-        Returns the area of the polygon on the unit sphere.
+        Returns the area of the polygon on the unit sphere in
+        steradians.
 
         The area is computed using a generalization of Girard's Theorem.
 
