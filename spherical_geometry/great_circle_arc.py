@@ -246,6 +246,9 @@ def intersects(A, B, C, D):
         If the given arcs intersect, the intersection is returned as
         `True`.
     """
+    if HAS_C_UFUNCS:
+        return math_util.intersects(A, B, C, D)
+
     with np.errstate(invalid='ignore'):
         intersections = intersection(A, B, C, D)
 
