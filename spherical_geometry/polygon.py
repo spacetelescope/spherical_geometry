@@ -466,7 +466,6 @@ class _SingleSphericalPolygon(object):
             B = points[i+1]
             C = points[(i+2) % (len(points) - 1)]
             angle = great_circle_arc.angle(A, B, C, degrees=False)
-            print(A, B, C, angle)
             if angle <= np.pi * 2.0:
                 inside = great_circle_arc.midpoint(A, C)
 
@@ -803,11 +802,9 @@ class SphericalPolygon(object):
         """
         assert isinstance(other, SphericalPolygon)
 
-        print("All combos")
         for polya in self.iter_polygons_flat():
             for polyb in other.iter_polygons_flat():
                 if polya.intersects_poly(polyb):
-                    print("Returning True")
                     return True
         return False
 
