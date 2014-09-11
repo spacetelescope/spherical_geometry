@@ -451,7 +451,7 @@ DOUBLE_intersects(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_5
-    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3], is5=steps[4];
+    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3];
 
     fpu_fix_start(&old_cw);
 
