@@ -31,7 +31,7 @@ else:
 
 
 
-__all__ = ['angle', 'intersection', 'intersects', 'intersects_point', 
+__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
 
 
@@ -246,6 +246,9 @@ def intersects(A, B, C, D):
         If the given arcs intersect, the intersection is returned as
         `True`.
     """
+    if HAS_C_UFUNCS:
+        return math_util.intersects(A, B, C, D)
+
     with np.errstate(invalid='ignore'):
         intersections = intersection(A, B, C, D)
 
@@ -284,8 +287,6 @@ def angle(A, B, C, degrees=True):
     """
     Returns the angle at *B* between *AB* and *BC*.
 
-    This always returns the shortest angle < π.
-
     Parameters
     ----------
     A, B, C : (*x*, *y*, *z*) triples or Nx3 arrays of triples
@@ -298,7 +299,7 @@ def angle(A, B, C, degrees=True):
     Returns
     -------
     angle : float or array of floats
-        The angle at *B* between *AB* and *BC*.
+        The angle at *B* between *AB* and *BC*, in range 0 to 2π.
 
     References
     ----------
@@ -306,21 +307,29 @@ def angle(A, B, C, degrees=True):
     .. [1] Miller, Robert D.  Computing the area of a spherical
        polygon.  Graphics Gems IV.  1994.  Academic Press.
     """
-    A = np.asanyarray(A)
-    B = np.asanyarray(B)
-    C = np.asanyarray(C)
+    if HAS_C_UFUNCS:
+        angle = math_util.angle(A, B, C)
+    else:
+        A = np.asanyarray(A)
+        B = np.asanyarray(B)
+        C = np.asanyarray(C)
 
-    A, B, C = np.broadcast_arrays(A, B, C)
+        A, B, C = np.broadcast_arrays(A, B, C)
 
-    ABX = _fast_cross(A, B)
-    ABX = _cross_and_normalize(B, ABX)
-    BCX = _fast_cross(C, B)
-    BCX = _cross_and_normalize(B, BCX)
-    with np.errstate(invalid='ignore'):
-        angle = np.arccos(inner1d(ABX, BCX))
+        ABX = _fast_cross(A, B)
+        ABX = _cross_and_normalize(B, ABX)
+        BCX = _fast_cross(C, B)
+        BCX = _cross_and_normalize(B, BCX)
+        X = _cross_and_normalize(ABX, BCX)
+        diff = inner1d(B, X)
+        inner = inner1d(ABX, BCX)
+        with np.errstate(invalid='ignore'):
+            angle = np.arccos(inner)
+        angle = np.where(diff < 0.0, (2.0 * np.pi) - angle, angle)
 
     if degrees:
         angle = np.rad2deg(angle)
+
     return angle
 
 

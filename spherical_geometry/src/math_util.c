@@ -63,7 +63,7 @@ typedef struct {
     double x[2];
 } dd;
 
-static inline void
+static NPY_INLINE void
 load_point(const char *in, const intp s, double* out) {
     out[0] = (*(double *)in);
     in += s;
@@ -72,7 +72,7 @@ load_point(const char *in, const intp s, double* out) {
     out[2] = (*(double *)in);
 }
 
-static inline void
+static NPY_INLINE void
 load_point_dd(const char *in, const intp s, dd* out) {
     out[0].x[0] = (*(double *)in);
     out[0].x[1] = 0.0;
@@ -84,7 +84,7 @@ load_point_dd(const char *in, const intp s, dd* out) {
     out[2].x[1] = 0.0;
 }
 
-static inline void
+static NPY_INLINE void
 save_point(const double* in, char *out, const intp s) {
     *(double *)out = in[0];
     out += s;
@@ -93,7 +93,7 @@ save_point(const double* in, char *out, const intp s) {
     *(double *)out = in[2];
 }
 
-static inline void
+static NPY_INLINE void
 save_point_dd(const dd* in, char *out, const intp s) {
     *(double *)out = in[0].x[0];
     out += s;
@@ -102,7 +102,7 @@ save_point_dd(const dd* in, char *out, const intp s) {
     *(double *)out = in[2].x[0];
 }
 
-static inline void
+static NPY_INLINE void
 cross_dd(const dd *A, const dd *B, dd *C) {
     double tmp1[2];
     double tmp2[2];
@@ -120,7 +120,7 @@ cross_dd(const dd *A, const dd *B, dd *C) {
     c_dd_sub(tmp1, tmp2, C[2].x);
 }
 
-static inline void
+static NPY_INLINE void
 normalize_dd(const dd *A, dd *B) {
     size_t i;
 
@@ -142,7 +142,7 @@ normalize_dd(const dd *A, dd *B) {
     }
 }
 
-static inline void
+static NPY_INLINE void
 dot_dd(const dd *A, const dd *B, dd *C) {
     size_t i;
     double tmp[4][2];
@@ -155,17 +155,17 @@ dot_dd(const dd *A, const dd *B, dd *C) {
     c_dd_add(tmp[3], tmp[2], C->x);
 }
 
-static inline double
+static NPY_INLINE double
 sign(const double A) {
-    return (A == 0.0) ? 0.0 : ((A < 0.0) ? -1.0 : 1.0);
+    return npy_signbit(A) ? -1.0 : 1.0;
 }
 
-static inline int
+static NPY_INLINE int
 equals_dd(const dd *A, const dd *B) {
     return memcmp(A, B, sizeof(dd) * 3) == 0;
 }
 
-static inline void
+static NPY_INLINE void
 length_dd(const dd *A, const dd *B, dd *l) {
     dd s;
 
@@ -179,6 +179,42 @@ length_dd(const dd *A, const dd *B, dd *l) {
     dot_dd(A, B, &s);
 
     return c_dd_acos(s.x, l->x);
+}
+
+static NPY_INLINE void
+intersection_dd(const dd *A, const dd *B, const dd *C, const dd *D,
+                dd *T, double *s, int *match) {
+    dd ABX[3];
+    dd CDX[3];
+    dd tmp[3];
+    dd dot;
+
+    *match = !(equals_dd(A, C) | equals_dd(A, D) | equals_dd(B, C) | equals_dd(B, D));
+
+    if (*match) {
+        cross_dd(A, B, ABX);
+        cross_dd(C, D, CDX);
+        cross_dd(ABX, CDX, T);
+        normalize_dd(T, T);
+
+        *match = 0;
+        cross_dd(ABX, A, tmp);
+        dot_dd(tmp, T, &dot);
+        *s = sign(dot.x[0]);
+        cross_dd(B, ABX, tmp);
+        dot_dd(tmp, T, &dot);
+        if (*s == sign(dot.x[0])) {
+            cross_dd(CDX, C, tmp);
+            dot_dd(tmp, T, &dot);
+            if (*s == sign(dot.x[0])) {
+                cross_dd(D, CDX, tmp);
+                dot_dd(tmp, T, &dot);
+                if (*s == sign(dot.x[0])) {
+                    *match = 1;
+                }
+            }
+        }
+    }
 }
 
 /*
@@ -347,11 +383,7 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
     dd C[3];
     dd D[3];
 
-    dd ABX[3];
-    dd CDX[3];
     dd T[3];
-    dd tmp[3];
-    dd dot;
 
     double nans[3];
 
@@ -375,32 +407,7 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
         load_point_dd(ip3, is3, C);
         load_point_dd(ip4, is4, D);
 
-        match = !(equals_dd(A, C) | equals_dd(A, D) | equals_dd(B, C) | equals_dd(B, D));
-
-        if (match) {
-            cross_dd(A, B, ABX);
-            cross_dd(C, D, CDX);
-            cross_dd(ABX, CDX, T);
-            normalize_dd(T, T);
-
-            match = 0;
-            cross_dd(ABX, A, tmp);
-            dot_dd(tmp, T, &dot);
-            s = sign(dot.x[0]);
-            cross_dd(B, ABX, tmp);
-            dot_dd(tmp, T, &dot);
-            if (s == sign(dot.x[0])) {
-                cross_dd(CDX, C, tmp);
-                dot_dd(tmp, T, &dot);
-                if (s == sign(dot.x[0])) {
-                    cross_dd(D, CDX, tmp);
-                    dot_dd(tmp, T, &dot);
-                    if (s == sign(dot.x[0])) {
-                        match = 1;
-                    }
-                }
-            }
-        }
+        intersection_dd(A, B, C, D, T, &s, &match);
 
         if (match) {
             T[0].x[0] *= s;
@@ -418,6 +425,55 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
 static void * intersection_data[] = { (void *)NULL };
 static char intersection_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+
+/*///////////////////////////////////////////////////////////////////////////
+  intersects
+*/
+
+char *intersects_signature = "(i),(i),(i),(i)->()";
+
+/*
+ * Returns True where the great circle arcs AB and CD intersects
+ */
+static void
+DOUBLE_intersects(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    dd A[3];
+    dd B[3];
+    dd C[3];
+    dd D[3];
+
+    dd T[3];
+
+    double s;
+    int match;
+
+    unsigned int old_cw;
+
+    INIT_OUTER_LOOP_5
+    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3], is5=steps[4];
+
+    fpu_fix_start(&old_cw);
+
+    BEGIN_OUTER_LOOP_5
+        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
+
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
+        load_point_dd(ip3, is3, C);
+        load_point_dd(ip4, is4, D);
+
+        intersection_dd(A, B, C, D, T, &s, &match);
+
+        *((char *)op) = match;
+    END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
+}
+
+static PyUFuncGenericFunction intersects_functions[] = { DOUBLE_intersects };
+static void * intersects_data[] = { (void *)NULL };
+static char intersects_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
 
 /*///////////////////////////////////////////////////////////////////////////
   length
@@ -465,7 +521,7 @@ static void * length_data[] = { (void *)NULL };
 static char length_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
-  length
+  intersects_point
 */
 
 char *intersects_point_signature = "(i),(i),(i)->()";
@@ -523,6 +579,78 @@ static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects
 static void * intersects_point_data[] = { (void *)NULL };
 static char intersects_point_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
 
+/*///////////////////////////////////////////////////////////////////////////
+  angle
+*/
+
+char *angle_signature = "(i),(i),(i)->()";
+
+/*
+ * Finds the angle at *B* between *AB* and *BC*.
+ */
+static void
+DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    dd A[3];
+    dd B[3];
+    dd C[3];
+
+    dd ABX[3];
+    dd BCX[3];
+    dd TMP[3];
+    dd X[3];
+
+    dd diff;
+    dd inner;
+    dd angle;
+
+    double dangle;
+
+    unsigned int old_cw;
+
+    INIT_OUTER_LOOP_4
+    intp is1=steps[0], is2=steps[1], is3=steps[2];
+
+    fpu_fix_start(&old_cw);
+
+    BEGIN_OUTER_LOOP_4
+        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+
+        load_point_dd(ip1, is1, A);
+        load_point_dd(ip2, is2, B);
+        load_point_dd(ip3, is3, C);
+
+        cross_dd(A, B, TMP);
+        cross_dd(B, TMP, ABX);
+        normalize_dd(ABX, ABX);
+
+        cross_dd(C, B, TMP);
+        cross_dd(B, TMP, BCX);
+        normalize_dd(BCX, BCX);
+
+        cross_dd(ABX, BCX, X);
+        normalize_dd(X, X);
+
+        dot_dd(B, X, &diff);
+        dot_dd(ABX, BCX, &inner);
+
+        c_dd_acos(inner.x, angle.x);
+        dangle = angle.x[0];
+
+        if (diff.x[0] < 0.0) {
+            dangle = 2.0 * NPY_PI - dangle;
+        }
+
+        *((double *)op) = dangle;
+    END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
+}
+
+static PyUFuncGenericFunction angle_functions[] = { DOUBLE_angle };
+static void * angle_data[] = { (void *)NULL };
+static char angle_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+
 /*
  *****************************************************************************
  **                            MODULE                                       **
@@ -579,6 +707,15 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
+        intersects_functions, intersects_data, intersects_signatures, 2, 4, 1,
+        PyUFunc_None, "intersects",
+        "true where AB intersects CD \n" \
+        "     \"(i),(i),(i),(i)->()\" \n",
+        0, intersects_signature);
+    PyDict_SetItemString(dictionary, "intersects", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
         length_functions, length_data, length_signatures, 2, 2, 1,
         PyUFunc_None, "length",
         "length of great circle arc \n" \
@@ -594,6 +731,15 @@ addUfuncs(PyObject *dictionary) {
         "     \"(i),(i),(i)->()\" \n",
         0, intersects_point_signature);
     PyDict_SetItemString(dictionary, "intersects_point", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
+        angle_functions, angle_data, angle_signatures, 2, 3, 1,
+        PyUFunc_None, "angle",
+        "Calculate the angle at B between AB and BC.\n" \
+        "     \"(i),(i),(i)->()\" \n",
+        0, angle_signature);
+    PyDict_SetItemString(dictionary, "angle", f);
     Py_DECREF(f);
 }
 
