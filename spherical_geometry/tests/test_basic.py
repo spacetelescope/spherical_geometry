@@ -171,8 +171,8 @@ def test_point_in_poly_lots():
     points = get_point_set()
     count = 0
     for point in points:
-        if (poly1.contains_point(point) or poly2.contains_point(point) or 
-               poly3.contains_point(point)):
+        if (poly1.contains_point(point) or poly2.contains_point(point) or
+            poly3.contains_point(point)):
             count += 1
 
     assert count == 5
@@ -250,7 +250,7 @@ def test_great_circle_arc_angle():
     A = [1, 0, 0]
     B = [0, 1, 0]
     C = [0, 0, 1]
-    assert great_circle_arc.angle(A, B, C) == 90.0
+    assert great_circle_arc.angle(A, B, C) == 270.0
 
     # TODO: More angle tests
 
@@ -265,17 +265,18 @@ def test_cone():
 
 def test_area():
     triangles = [
-        ([[90, 0], [0, -45], [0, 45], [90, 0]], np.pi * 0.5),
-        ([[90, 0], [0, -22.5], [0, 22.5], [90, 0]], np.pi * 0.25),
-        ([[90, 0], [0, -11.25], [0, 11.25], [90, 0]], np.pi * 0.125)
+        ([[90, 0], [0, 45], [0, -45], [90, 0]], np.pi * 0.5),
+        ([[90, 0], [0, 22.5], [0, -22.5], [90, 0]], np.pi * 0.25),
+        ([[90, 0], [0, 11.25], [0, -11.25], [90, 0]], np.pi * 0.125)
         ]
 
     for tri, area in triangles:
         tri = np.array(tri)
-        x, y, z = vector.radec_to_vector(tri[:,1], tri[:,0])
+        x, y, z = vector.radec_to_vector(tri[:, 1], tri[:, 0])
         points = np.dstack((x, y, z))[0]
         poly = polygon.SphericalPolygon(points)
         calc_area = poly.area()
+        assert_almost_equal(calc_area, area)
 
 
 def test_fast_area():
@@ -304,6 +305,14 @@ def test_fast_area():
         [ 0.3536442 ,  0.63515101, -0.68667239],
         [ 0.35331737,  0.6351013 , -0.68688658]])
 
-    assert graph.Graph._fast_area(a) > 0
-    assert graph.Graph._fast_area(b) > 0
-    assert graph.Graph._fast_area(c) < 0
+    apoly = polygon._SingleSphericalPolygon(a)
+    bpoly = polygon._SingleSphericalPolygon(b)
+    cpoly = polygon._SingleSphericalPolygon(c)
+
+    aarea = apoly.area()
+    barea = bpoly.area()
+    carea = cpoly.area()
+
+    assert aarea > 0 and aarea < np.pi * 2.0
+    assert barea > 0 and barea < np.pi * 2.0
+    assert carea > np.pi * 2.0 and carea < np.pi * 4.0

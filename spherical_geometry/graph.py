@@ -54,7 +54,7 @@ class Graph:
             self._point = np.asanyarray(point)
             self._source_polygons = set(source_polygons)
             self._edges = weakref.WeakSet()
-            
+
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
@@ -676,8 +676,7 @@ class Graph:
                 # Delete CD, and push the new edges to the
                 # front so they will be tested for intersection
                 # against all remaining edges.
-                del edges[j]  # CD
-                edges = new_edges + edges
+                edges = new_edges + edges[:j] + edges[j+1:]
                 new_starts, new_ends = self._get_edge_points(new_edges)
                 starts = np.vstack(
                     (new_starts, starts[:j], starts[j+1:]))
@@ -787,156 +786,40 @@ class Graph:
             else:
                 break
 
-    @staticmethod
-    def _fast_area(points):
-        """
-        Calculates an approximate area of a polygon.  Unlike the area
-        calculation in `SphericalPolygon`, this does not interpolate
-        along the arcs, so is not useful for getting an actual area,
-        but only whether the area is positive or negative, telling us
-        whether the points proceed clockwise or counter-clockwise
-        respectively.
-        """
-        # Rotate polygon so that center of polygon is at north pole
-        centroid = np.mean(points[:-1], axis=0)
-        centroid = vector.normalize_vector(centroid)
-        points = points - (centroid + np.array([0, 0, 1]))
-        vector.normalize_vector(points, output=points)
-
-        XY = vector.equal_area_proj(points)
-        X = XY[..., 0]
-        Y = XY[..., 1]
-
-        return np.sum(X[:-1] * Y[1:] - X[1:] * Y[:-1])
-
     def _trace(self):
         """
         Given a graph that has had cutlines removed and all
         intersections found, traces it to find a resulting single
         polygon.
         """
+        from . import polygon as mpolygon
+
         polygons = []
         edges = set(self._edges)  # copy
         while len(edges):
-            polygon = []
+            points = []
             edge = edges.pop()
             start_node = node = edge._nodes[0]
             while True:
                 # TODO: Do we need this if clause any more?
-                if len(polygon):
-                    if not np.array_equal(polygon[-1], node._point):
-                        polygon.append(node._point)
+                if len(points):
+                    if not np.array_equal(points[-1], node._point):
+                        points.append(node._point)
                 else:
-                    polygon.append(node._point)
+                    points.append(node._point)
                 edge = node.follow(edge)
                 edges.discard(edge)
                 node = edge.follow(node)
                 if node is start_node:
-                    polygon.append(node._point)
+                    points.append(node._point)
                     break
 
-            polygon = np.asarray(polygon)
-            area = self._fast_area(polygon)
-            if area < 0:
-                # Reverse the points
-                polygon = polygon[::-1, ...]
-
+            polygon = mpolygon._SingleSphericalPolygon(points)
+            area = polygon.area()
+            reverse_polygon = mpolygon._SingleSphericalPolygon(points[::-1])
+            reverse_area = reverse_polygon.area()
+            if reverse_area < area:
+                polygon = reverse_polygon
             polygons.append(polygon)
 
-        if len(polygons) == 1:
-            return polygons[0]
-        elif len(polygons) == 0:
-            return []
-        else:
-            return self._join(polygons)
-
-    def _join(self, polygons):
-        """
-        If the graph is disjunct, joins the parts with cutlines.
-
-        The closest nodes between each pair that don't intersect
-        any other edges are used as cutlines.
-
-        TODO: This is not optimal, because the closest distance
-        between two polygons may not in fact be between two vertices,
-        but may be somewhere along an edge.
-        """
-        def do_join(polygons):
-            all_polygons = polygons[:]
-
-            skipped = 0
-
-            polyA = polygons.pop(0)
-            while len(polygons):
-                polyB = polygons.pop(0)
-
-                # If fewer than 3 edges, it's not a polygon,
-                # just throw it out
-                if len(polyB) < 4:
-                    continue
-
-                # Find the closest set of vertices between polyA and
-                # polyB that don't cross any of the edges in *any* of
-                # the polygons
-                closest = np.inf
-                closest_pair_idx = (None, None)
-                for a in xrange(len(polyA) - 1):
-                    A = polyA[a]
-                    distances = great_circle_arc.length(A, polyB[:-1])
-                    b = np.argmin(distances)
-                    distance = distances[b]
-                    if distance < closest:
-                        B = polyB[b]
-                        # Does this candidate line cross other edges?
-                        crosses = False
-                        for poly in all_polygons:
-                            if np.any(
-                                great_circle_arc.intersects(
-                                    A, B, poly[:-1], poly[1:])):
-                                crosses = True
-                                break
-                        if not crosses:
-                            closest = distance
-                            closest_pair_idx = (a, b)
-
-                if not np.isfinite(closest):
-                    # We didn't find a pair of points that don't cross
-                    # something else, so we want to try to join another
-                    # polygon.  Defer the current polygon until later.
-                    if len(polygons) in (0, skipped):
-                        return None
-                    polygons.append(polyB)
-                    skipped += 1
-                else:
-                    # Splice the two polygons together using a cut
-                    # line
-                    a, b = closest_pair_idx
-                    new_poly = np.vstack((
-                        # polyA up to and including the cut point
-                        polyA[:a+1],
-
-                        # polyB starting with the cut point and
-                        # wrapping around back to the cut point.
-                        # Ignore the last point in polyB, because it
-                        # is the same as the first
-                        np.roll(polyB[:-1], -b, 0),
-
-                        # The cut point on polyB
-                        polyB[b:b+1],
-
-                        # the rest of polyA, starting with the cut
-                        # point
-                        polyA[a:]
-                        ))
-
-                    skipped = 0
-                    polyA = new_poly
-
-            return polyA
-
-        for permutation in itertools.permutations(polygons):
-            poly = do_join(list(permutation))
-            if poly is not None:
-                return poly
-
-        raise RuntimeError("Could not find cut points")
+        return mpolygon.SphericalPolygon(polygons)

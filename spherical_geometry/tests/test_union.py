@@ -42,7 +42,7 @@ class union_test:
             if GRAPH_MODE:
                 print("%d permutations" % num_permutations)
 
-            areas = [x.area() for x in polys]
+            areas = np.array([x.area() for x in polys])
 
             for i, permutation in enumerate(
                     itertools.islice(
@@ -56,8 +56,6 @@ class union_test:
                     permutation)
                 unions.append(union)
                 union_area = union.area()
-                print(union._points)
-                print(permutation[0]._points)
 
                 if GRAPH_MODE:
                     fig = plt.figure()
@@ -74,10 +72,11 @@ class union_test:
                     plt.savefig(filename)
                     fig.clear()
 
-                print(union_area, areas)
                 assert np.all(union_area * 1.1 >= areas)
 
-            lengths = np.array([len(x._points) for x in unions])
+            lengths = np.array([
+                np.sum(len(x._points) for x in y.iter_polygons_flat())
+                for y in unions])
             assert np.all(lengths == [lengths[0]])
             areas = np.array([x.area() for x in unions])
             assert_array_almost_equal(areas, areas[0], 1)
@@ -188,7 +187,8 @@ def test_union_empty():
 
     p2 = p.union(polygon.SphericalPolygon([]))
 
-    assert_array_almost_equal(p2._points, p._points)
+    assert len(p2.polygons) == 1
+    assert_array_almost_equal(p2.polygons[0].points, p.polygons[0].points)
 
 
 def test_difficult_unions():
