@@ -31,6 +31,8 @@ See https://github.com/astropy/astropy-helpers for more details, and for the
 latest version of this module.
 """
 
+# Newer version from astropy library added to work around Mac locale bug
+
 import contextlib
 import errno
 import imp
