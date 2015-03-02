@@ -213,6 +213,67 @@ def test_difficult_unions():
     polygon.SphericalPolygon.multi_union(polys[:len(polys)//2])
 
 
+def test_inside_point():
+    p = np.array(
+        [[ 0.9990579 , -0.02407018,  0.03610999],
+         [ 0.9990579 ,  0.02407018,  0.03610999],
+         [ 0.9990579 ,  0.02407018, -0.03610999],
+         [ 0.9990579 , -0.02407018, -0.03610999],
+         [ 0.9990579 , -0.02407018,  0.03610999]])
+    c = np.array([  1.00000000e+00,   0.00000000e+00,   6.12323400e-17])
+
+    p1 = np.array(
+        [[ 0.98452721,  0.16685201,  0.05354046],
+         [ 0.9753416 ,  0.2141079 ,  0.05354046],
+         [ 0.97657885,  0.2143484 , -0.01866853],
+         [ 0.98576447,  0.1670925 , -0.01866853],
+         [ 0.98452721,  0.16685201,  0.05354046]])
+    c1 = np.array([ 0.98147768,  0.19077993,  0.01745241])
+
+    p2 = np.array(
+        [[ 0.99099541,  0.13258803,  0.01866853],
+         [ 0.9834646 ,  0.18013571,  0.01866853],
+         [ 0.9822197 ,  0.17993854, -0.05354046],
+         [ 0.98975051,  0.13239086, -0.05354046],
+         [ 0.99099541,  0.13258803,  0.01866853]])
+    c2 = np.array([ 0.98753791,  0.15641064, -0.01745241])
+
+    p3 = np.array(
+        [[ 0.99501898,  0.09792202,  0.01866853],
+         [ 0.98915214,  0.14570356,  0.01866853],
+         [ 0.98790112,  0.14554995, -0.05354046],
+         [ 0.99376796,  0.09776842, -0.05354046],
+         [ 0.99501898,  0.09792202,  0.01866853]])
+    c3 = np.array([ 0.99239498,  0.12185078, -0.01745241])
+
+    p4 = np.array(
+        [[ 0.98728923,  0.14964423,  0.05354046],
+         [ 0.97892974,  0.19705323,  0.05354046],
+         [ 0.98017101,  0.1972721 , -0.01866853],
+         [ 0.98853049,  0.14986309, -0.01866853],
+         [ 0.98728923,  0.14964423,  0.05354046]])
+    c4 = np.array([ 0.98465776,  0.17362173,  0.01745241])
+
+    testFoV = polygon.SphericalPolygon(p, inside=c)
+    poly1 = polygon.SphericalPolygon(p1, inside=c1)
+    poly2 = polygon.SphericalPolygon(p2, inside=c2)
+    poly3 = polygon.SphericalPolygon(p3, inside=c3)
+    poly4 = polygon.SphericalPolygon(p4, inside=c4)
+
+    polys = [poly1, poly2, poly3, poly4]
+
+    unionpoly = poly1.multi_union(polys)
+    insides = list(unionpoly.inside)
+    assert len(insides) == 1
+    assert insides[0].shape == (3,)
+
+    unionpoly2 = poly3.union(poly4)
+    assert not testFoV.intersects_poly(unionpoly2)
+
+    unionpoly3 = poly1.union(poly2)
+    assert not testFoV.intersects_poly(unionpoly3)
+
+
 if __name__ == '__main__':
     if '--profile' not in sys.argv:
         GRAPH_MODE = True

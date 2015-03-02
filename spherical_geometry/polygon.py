@@ -58,7 +58,7 @@ class _SingleSphericalPolygon(object):
         else:
             assert np.array_equal(points[0], points[-1]), 'Polygon is not closed'
 
-        self._points = np.asanyarray(points)
+        self._points = points = np.asanyarray(points)
 
         if inside is None:
             self._inside = self._find_new_inside(points)
@@ -476,7 +476,7 @@ class _SingleSphericalPolygon(object):
                     return inside
 
         # Fallback to the mean
-        return np.sum(points[:-1]) / (len(points) - 1)
+        return np.sum(points[:-1], axis=0) / (len(points) - 1)
 
     def intersection(self, other):
         """
@@ -647,7 +647,7 @@ class SphericalPolygon(object):
         Iterate over the inside point of each of the polygons.
         """
         for polygon in self.iter_polygons_flat():
-            yield polygon.points
+            yield polygon.inside
 
     @property
     def polygons(self):
