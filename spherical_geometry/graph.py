@@ -58,27 +58,6 @@ class Graph:
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
-        def follow(self, edge):
-            """
-            Follows from one edge to another across this node.
-
-            Parameters
-            ----------
-            edge : `~Graph.Edge` instance
-                The edge to follow away from.
-
-            Returns
-            -------
-            other : `~Graph.Edge` instance
-                The other edge.
-            """
-            edges = list(self._edges)
-            assert len(edges) == 2
-            try:
-                return edges[not edges.index(edge)]
-            except IndexError:
-                raise ValueError("Following from disconnected edge")
-
         def equals(self, other, thres=2e-8):
             """
             Returns `True` if the location of this and the *other*
@@ -398,7 +377,7 @@ class Graph:
 
             for node in self._nodes:
                 if node_is_2:
-                    assert len(node._edges) == 2
+                    assert len(node._edges) % 2 == 0
                 else:
                     assert len(node._edges) >= 2
                 for edge in node._edges:
@@ -796,6 +775,9 @@ class Graph:
 
         polygons = []
         edges = set(self._edges)  # copy
+        for edge in self._edges:
+            edge._followed = False
+
         while len(edges):
             points = []
             edge = edges.pop()
@@ -807,7 +789,12 @@ class Graph:
                         points.append(node._point)
                 else:
                     points.append(node._point)
-                edge = node.follow(edge)
+                for edge in node._edges:
+                    if edge._followed is False:
+                        break
+                else:
+                    raise ValueError("No more edges to follow")
+                edge._followed = True
                 edges.discard(edge)
                 node = edge.follow(node)
                 if node is start_node:
