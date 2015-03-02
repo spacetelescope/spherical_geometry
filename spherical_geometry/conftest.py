@@ -10,3 +10,12 @@ import astropy
 from astropy import __version__
 if astropy.__version__ >= '0.4':
     enable_deprecations_as_exceptions()
+
+## Uncomment and customize the following lines to add/remove entries
+## from the list of packages for which version numbers are displayed
+## when running the tests
+# try:
+#     PYTEST_HEADER_MODULES['scikit-image'] = 'skimage'
+#     del PYTEST_HEADER_MODULES['h5py']
+# except NameError:  # needed to support Astropy < 1.0
+#     pass

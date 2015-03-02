@@ -12,9 +12,19 @@ htmlcov
 MANIFEST
 .coverage
 docs/api/
+MANIFEST
 
 # Sphinx
-_build
+docs/api
+docs/_build
+
+# Eclipse editor project files
+.project
+.pydevproject
+.settings
+
+# Pycharm editor project files
+.idea
 
 # Packages/installer info
 *.egg
