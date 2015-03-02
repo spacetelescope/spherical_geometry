@@ -3,11 +3,14 @@ from __future__ import absolute_import
 import os
 import random
 
+from astropy.tests.helper import raises
+
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_less
 
 from .. import graph
 from .. import great_circle_arc
+from .. import math_util
 from .. import polygon
 from .. import vector
 
@@ -316,3 +319,14 @@ def test_fast_area():
     assert aarea > 0 and aarea < np.pi * 2.0
     assert barea > 0 and barea < np.pi * 2.0
     assert carea > np.pi * 2.0 and carea < np.pi * 4.0
+
+
+@raises(ValueError)
+def test_math_util_angle_domain():
+    # Before a fix, this would segfault
+    math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])
+
+
+@raises(ValueError)
+def test_math_util_length_domain():
+    math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
