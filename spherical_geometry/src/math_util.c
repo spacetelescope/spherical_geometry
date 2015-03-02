@@ -120,7 +120,7 @@ cross_dd(const dd *A, const dd *B, dd *C) {
     c_dd_sub(tmp1, tmp2, C[2].x);
 }
 
-static NPY_INLINE void
+static NPY_INLINE int
 normalize_dd(const dd *A, dd *B) {
     size_t i;
 
@@ -135,11 +135,17 @@ normalize_dd(const dd *A, dd *B) {
     c_dd_add(T[3], T[2], T[3]);
 
     if (!(T[3][0] == 1.0 && T[3][1] == 0.0)) {
+        if (T[3][0] < -0.0) {
+            PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
+            return 1;
+        }
         c_dd_sqrt(T[3], l);
         for (i = 0; i < 3; ++i) {
             c_dd_div(A[i].x, l, B[i].x);
         }
     }
+
+    return 0;
 }
 
 static NPY_INLINE void
@@ -165,7 +171,7 @@ equals_dd(const dd *A, const dd *B) {
     return memcmp(A, B, sizeof(dd) * 3) == 0;
 }
 
-static NPY_INLINE void
+static NPY_INLINE int
 length_dd(const dd *A, const dd *B, dd *l) {
     dd s;
 
@@ -173,12 +179,20 @@ length_dd(const dd *A, const dd *B, dd *l) {
     if (equals_dd(A, B)) {
         l->x[0] = 0.0;
         l->x[1] = 0.0;
-        return;
+        return 0;
     }
 
     dot_dd(A, B, &s);
 
-    return c_dd_acos(s.x, l->x);
+    if (s.x[0] != s.x[0] ||
+        s.x[0] < -1.0 ||
+        s.x[0] > 1.0) {
+        PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
+        return 1;
+    }
+
+    c_dd_acos(s.x, l->x);
+    return 0;
 }
 
 static NPY_INLINE void
@@ -195,7 +209,7 @@ intersection_dd(const dd *A, const dd *B, const dd *C, const dd *D,
         cross_dd(A, B, ABX);
         cross_dd(C, D, CDX);
         cross_dd(ABX, CDX, T);
-        normalize_dd(T, T);
+        if (normalize_dd(T, T)) return;
 
         *match = 0;
         cross_dd(ABX, A, tmp);
@@ -275,7 +289,7 @@ DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 
         load_point_dd(ip1, is1, IN);
 
-        normalize_dd(IN, OUT);
+        if (normalize_dd(IN, OUT)) return;
 
         save_point_dd(OUT, op, is2);
     END_OUTER_LOOP
@@ -354,7 +368,7 @@ DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
         load_point_dd(ip2, is2, B);
 
         cross_dd(A, B, C);
-        normalize_dd(C, C);
+        if (normalize_dd(C, C)) return;
 
         save_point_dd(C, op, is3);
     END_OUTER_LOOP
@@ -505,10 +519,10 @@ DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
         load_point_dd(ip1, is1, A);
         load_point_dd(ip2, is2, B);
 
-        normalize_dd(A, A);
-        normalize_dd(B, B);
+        if (normalize_dd(A, A)) return;
+        if (normalize_dd(B, B)) return;
 
-        length_dd(A, B, &s);
+        if (length_dd(A, B, &s)) return;
 
         *((double *)op) = s.x[0];
     END_OUTER_LOOP
@@ -556,13 +570,13 @@ DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UN
         load_point_dd(ip2, is2, B);
         load_point_dd(ip3, is3, C);
 
-        normalize_dd(A, A);
-        normalize_dd(B, B);
-        normalize_dd(C, C);
+        if (normalize_dd(A, A)) return;
+        if (normalize_dd(B, B)) return;
+        if (normalize_dd(C, C)) return;
 
-        length_dd(A, B, &total);
-        length_dd(A, C, &left);
-        length_dd(C, B, &right);
+        if (length_dd(A, B, &total)) return;
+        if (length_dd(A, C, &left)) return;
+        if (length_dd(C, B, &right)) return;
 
         c_dd_add(left.x, right.x, t1);
         c_dd_sub(t1, total.x, t2);
@@ -622,17 +636,24 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 
         cross_dd(A, B, TMP);
         cross_dd(B, TMP, ABX);
-        normalize_dd(ABX, ABX);
+        if (normalize_dd(ABX, ABX)) return;
 
         cross_dd(C, B, TMP);
         cross_dd(B, TMP, BCX);
-        normalize_dd(BCX, BCX);
+        if (normalize_dd(BCX, BCX)) return;
 
         cross_dd(ABX, BCX, X);
-        normalize_dd(X, X);
+        if (normalize_dd(X, X)) return;
 
         dot_dd(B, X, &diff);
         dot_dd(ABX, BCX, &inner);
+
+        if (inner.x[0] != inner.x[0] ||
+            inner.x[0] < -1.0 ||
+            inner.x[0] > 1.0) {
+            PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
+            return;
+        }
 
         c_dd_acos(inner.x, angle.x);
         dangle = angle.x[0];
