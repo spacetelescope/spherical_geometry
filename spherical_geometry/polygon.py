@@ -190,7 +190,7 @@ class _SingleSphericalPolygon(object):
 
         # Get an arbitrary perpendicular vector.  This be be obtained
         # by crossing (u, v, w) with any unit vector that is not itself.
-        which_min = np.argmin([u, v, w])
+        which_min = np.argmin([u*u, v*v, w*w])
         if which_min == 0:
             perp = np.cross([u, v, w], [1., 0., 0.])
         elif which_min == 1:
