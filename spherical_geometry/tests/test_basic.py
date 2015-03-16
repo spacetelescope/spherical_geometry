@@ -281,6 +281,15 @@ def test_area():
         calc_area = poly.area()
         assert_almost_equal(calc_area, area)
 
+def test_cone_area():
+    dec = 0
+    saved_area = None
+    for ra in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
+        area = polygon.SphericalPolygon.from_cone(ra, dec, 30, steps=64).area()
+        if saved_area:
+            assert_almost_equal(area, saved_area)
+        else:
+            saved_area = area
 
 def test_fast_area():
     a = np.array(  # Clockwise
