@@ -197,7 +197,8 @@ class _SingleSphericalPolygon(object):
             perp = np.cross([u, v, w], [0., 1., 0.])
         else:
             perp = np.cross([u, v, w], [0., 0., 1.])
-
+        perp = vector.normalize_vector(perp)
+        
         # Rotate by radius around the perpendicular vector to get the
         # "pen"
         x, y, z = vector.rotate_around(

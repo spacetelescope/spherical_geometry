@@ -134,11 +134,9 @@ normalize_dd(const dd *A, dd *B) {
     c_dd_add(T[0], T[1], T[3]);
     c_dd_add(T[3], T[2], T[3]);
 
-    if (!(T[3][0] == 1.0 && T[3][1] == 0.0)) {
-        c_dd_sqrt(T[3], l);
-        for (i = 0; i < 3; ++i) {
-            c_dd_div(A[i].x, l, B[i].x);
-        }
+    c_dd_sqrt(T[3], l);
+    for (i = 0; i < 3; ++i) {
+        c_dd_div(A[i].x, l, B[i].x);
     }
 }
 
