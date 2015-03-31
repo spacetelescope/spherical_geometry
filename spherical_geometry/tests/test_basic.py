@@ -27,6 +27,13 @@ def test_normalize_vector():
     l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
     assert_almost_equal(l, 1.0)
 
+def test_normalize_unit_vector():
+    for i in range(3):
+        xyz = [0.0, 0.0, 0.0]
+        xyz[i] = 1.0
+        xyzn = vector.normalize_vector(xyz)
+        l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
+        assert_almost_equal(l, 1.0)
 
 def test_radec_to_vector():
     npx, npy, npz = vector.radec_to_vector(np.arange(-360, 360, 1), 90)
@@ -282,14 +289,12 @@ def test_area():
         assert_almost_equal(calc_area, area)
 
 def test_cone_area():
-    dec = 0
     saved_area = None
     for ra in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
-        area = polygon.SphericalPolygon.from_cone(ra, dec, 30, steps=64).area()
-        if saved_area:
+        for dec in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
+            area = polygon.SphericalPolygon.from_cone(ra, dec, 30, steps=64).area()
+            if saved_area is None: saved_area = area 
             assert_almost_equal(area, saved_area)
-        else:
-            saved_area = area
 
 def test_fast_area():
     a = np.array(  # Clockwise
