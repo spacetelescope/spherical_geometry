@@ -478,7 +478,7 @@ class _SingleSphericalPolygon(object):
             # Fallback to the mean
             return np.sum(points[:-1], axis=0) / (len(points) - 1)
         else:
-            return candidates[0][1]
+            return np.array(candidates[0][1])
 
     def intersection(self, other):
         """
