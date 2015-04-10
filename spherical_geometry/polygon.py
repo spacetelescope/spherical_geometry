@@ -462,6 +462,7 @@ class _SingleSphericalPolygon(object):
         if len(points) == 4:
             return np.sum(points[:3]) / 3.0
 
+        candidates = []
         for i in range(len(points) - 1):
             A = points[i]
             B = points[i+1]
@@ -469,15 +470,15 @@ class _SingleSphericalPolygon(object):
             angle = great_circle_arc.angle(A, B, C, degrees=False)
             if angle <= np.pi * 2.0:
                 inside = great_circle_arc.midpoint(A, C)
+                poly = _SingleSphericalPolygon(points, inside)
+                candidates.append((poly.area(), list(inside)))
 
-                for point in points[:-1]:
-                    if not cls._contains_point(point, points, inside):
-                        break
-                else:
-                    return inside
-
-        # Fallback to the mean
-        return np.sum(points[:-1], axis=0) / (len(points) - 1)
+        candidates.sort()
+        if candidates[0][0] > np.pi * 2:
+            # Fallback to the mean
+            return np.sum(points[:-1], axis=0) / (len(points) - 1)
+        else:
+            return np.array(candidates[0][1])
 
     def intersection(self, other):
         """
