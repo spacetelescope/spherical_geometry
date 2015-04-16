@@ -42,7 +42,8 @@ def get_extensions():
         cfg['include_dirs'].extend([
             qd_library_include_path,
             str(os.path.join(ROOT, 'src'))])
-        cfg['libraries'].append('m')
+        if not sys.platform.startswith('win'):
+            cfg['libraries'].append('m')
     else:
         cfg.update(setup_helpers.pkg_config([], ['qd', 'm'], 'qd-config'))
 
