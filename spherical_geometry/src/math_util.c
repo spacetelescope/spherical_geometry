@@ -162,7 +162,7 @@ dot_dd(const dd *A, const dd *B, dd *C) {
 
 static NPY_INLINE double
 sign(const double A) {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__MINGW32__)
     return (A < 0) ? -1.0 : 1.0;
 #else
     return npy_signbit(A) ? -1.0 : 1.0;
