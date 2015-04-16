@@ -138,7 +138,7 @@ normalize_dd(const dd *A, dd *B) {
         PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
         return 1;
     }
-    
+
     c_dd_sqrt(T[3], l);
     for (i = 0; i < 3; ++i) {
         c_dd_div(A[i].x, l, B[i].x);
@@ -162,7 +162,11 @@ dot_dd(const dd *A, const dd *B, dd *C) {
 
 static NPY_INLINE double
 sign(const double A) {
+#if defined(_MSC_VER) || defined(__MINGW32__)
+    return (A < 0) ? -1.0 : 1.0;
+#else
     return npy_signbit(A) ? -1.0 : 1.0;
+#endif
 }
 
 static NPY_INLINE int
@@ -582,7 +586,7 @@ DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UN
         c_dd_abs(t2, t1);
 
         c_dd_comp_dd_d(t1, 1e-10, &result);
-        *((uint8_t *)op) = (result == -1);
+        *((npy_bool *)op) = (result == -1);
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
