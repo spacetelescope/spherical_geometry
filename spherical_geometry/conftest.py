@@ -26,8 +26,8 @@ if astropy.__version__ >= '0.4':
 ## running the tests.
 import os
 
-This is to figure out the affiliated package version, rather than
-using Astropy's
+# This is to figure out the affiliated package version, rather than
+# using Astropy's
 from . import version
 
 try:
