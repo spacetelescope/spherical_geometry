@@ -330,9 +330,9 @@ def test_fast_area():
     barea = bpoly.area()
     carea = cpoly.area()
 
-    assert aarea > 0 and aarea < np.pi * 2.0
-    assert barea > 0 and barea < np.pi * 2.0
-    assert carea > np.pi * 2.0 and carea < np.pi * 4.0
+    assert aarea > 0.0 and aarea < 2.0 * np.pi
+    assert barea > 0.0 and barea < 2.0 * np.pi
+    assert carea > -2.0 * np.pi and carea < 0.0
 
 
 @raises(ValueError)

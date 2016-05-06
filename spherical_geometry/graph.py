@@ -823,10 +823,8 @@ class Graph:
 
             polygon = mpolygon._SingleSphericalPolygon(points)
             area = polygon.area()
-            reverse_polygon = mpolygon._SingleSphericalPolygon(points[::-1])
-            reverse_area = reverse_polygon.area()
-            if reverse_area < area:
-                polygon = reverse_polygon
+            if area < 0.0:
+                polygon = mpolygon._SingleSphericalPolygon(points[::-1])
             polygons.append(polygon)
 
         return mpolygon.SphericalPolygon(polygons)
