@@ -401,6 +401,9 @@ class _SingleSphericalPolygon(object):
         .. math::
 
             S = \theta - (n - 2) \pi
+        
+        The area can be negative if the points on the polygon are ordered
+        counter-clockwise. Take the absolute value if that is not desired.
         """
         if len(self._points) < 3:
             return np.array(0.0)
@@ -412,7 +415,10 @@ class _SingleSphericalPolygon(object):
             great_circle_arc.angle(
                 points[-2], points[0], points[1], degrees=False)])
         sum = np.sum(angles) - (len(angles) - 2) * np.pi
-
+        # Negative areas preferred to positive for many use cases
+        # TODO: This code should check the inside point, but not yet
+        if sum > 2.0 * np.pi:
+            sum = sum - 4.0 * np.pi
         return sum
 
     def union(self, other):
@@ -470,15 +476,16 @@ class _SingleSphericalPolygon(object):
             angle = great_circle_arc.angle(A, B, C, degrees=False)
             if angle <= np.pi * 2.0:
                 inside = great_circle_arc.midpoint(A, C)
-                poly = _SingleSphericalPolygon(points, inside)
-                candidates.append((poly.area(), list(inside)))
+                area = _SingleSphericalPolygon(points, inside).area()
+                if area >= 0.0:
+                    candidates.append((area, list(inside)))
 
-        candidates.sort()
-        if candidates[0][0] > np.pi * 2:
+        if len(candidates) > 0:
+            candidates.sort()
+            return np.array(candidates[0][1])
+        else:
             # Fallback to the mean
             return np.sum(points[:-1], axis=0) / (len(points) - 1)
-        else:
-            return np.array(candidates[0][1])
 
     def intersection(self, other):
         """
@@ -536,7 +543,7 @@ class _SingleSphericalPolygon(object):
         s1 = self.area()
         intersection = self.intersection(other)
         s2 = intersection.area()
-        return s2 / s1
+        return abs(s2 / s1)
 
     def draw(self, m, **plot_args):
         """
@@ -1030,7 +1037,7 @@ class SphericalPolygon(object):
         s1 = self.area()
         intersection = self.intersection(other)
         s2 = intersection.area()
-        return s2 / s1
+        return abs(s2 / s1)
 
     def draw(self, m, **plot_args):
         """
