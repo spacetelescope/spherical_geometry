@@ -31,8 +31,6 @@ See https://github.com/astropy/astropy-helpers for more details, and for the
 latest version of this module.
 """
 
-# Newer version from astropy library added to work around Mac locale bug
-
 import contextlib
 import errno
 import imp
@@ -411,7 +409,7 @@ class _Bootstrapper(object):
     def get_index_dist(self):
         if not self.download:
             log.warn('Downloading {0!r} disabled.'.format(DIST_NAME))
-            return False
+            return None
 
         log.warn(
             "Downloading {0!r}; run setup.py with the --offline option to "
