@@ -1,0 +1,16 @@
+# Sphinx inventory version 2
+# Project: Python
+# Version: 2.7 and 3.5
+# The remainder of this file should be compressed using zlib.
+# python2 only links
+cPickle py:module -1 2/library/pickle.html#module-cPickle -
+unicode py:function -1 2/library/functions.html#unicode -
+bsddb py:module -1 2/library/bsddb.html#module-bsddb -
+dict.has_key py:method -1 2/library/stdtypes.html#dict.has_key -
+dict.iteritems py:method -1 2/library/stdtypes.html#dict.iteritems -
+dict.iterkeys py:method -1 2/library/stdtypes.html#dict.iterkeys -
+dict.itervalues py:method -1 2/library/stdtypes.html#dict.itervalues -
+urllib2.urlopen py:function -1 2/library/urllib2.html#urllib2.urlopen -
+# python3
+print() py:function -1 3/library/functions.html#print -
+collections.Mapping py:class -1 3/library/collections.abc.html#collections.abc.Mapping -

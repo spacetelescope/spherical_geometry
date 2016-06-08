@@ -1,0 +1,11 @@
+include README.rst
+include CHANGES.rst
+include LICENSE.rst
+recursive-include licenses *
+
+include ez_setup.py
+include ah_bootstrap.py
+
+exclude *.pyc *.o
+prune build
+prune astropy_helpers/tests

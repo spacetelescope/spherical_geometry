@@ -1,0 +1,18 @@
+# Sphinx inventory version 2
+# Project: Python
+# Version: 2.7 and 3.5
+# The remainder of this file should be compressed using zlib.
+# python2
+IndexError py:exception -1 2/library/exceptions.html#IndexError -
+IOError py:exception -1 2/library/exceptions.html#IOError -
+KeyError py:exception -1 2/library/exceptions.html#KeyError -
+ValueError py:exception -1 2/library/exceptions.html#ValueError -
+TypeError py:exception -1 2/library/exceptions.html#TypeError -
+# python3 only
+TimeoutError py:exception -1 3/library/exceptions.html#TimeoutError -
+bytes py:function -1 3/library/functions.html#bytes -
+urllib.request.urlopen py:function -1 3/library/urllib.request.html#urllib.request.urlopen -
+concurrent.futures.Future py:class -1 3/library/concurrent.futures.html#concurrent.futures.Future -
+concurrent.futures.ThreadPoolExecutor py:class -1 3/library/concurrent.futures.html#concurrent.futures.ThreadPoolExecutor -
+queue.Queue py:class -1 3/library/queue.html#queue.Queue -
+print() py:function -1 3/library/functions.html#print -
