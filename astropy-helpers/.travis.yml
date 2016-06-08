@@ -1,0 +1,69 @@
+# We set the language to c because python isn't supported on the MacOS X nodes
+# on Travis. However, the language ends up being irrelevant anyway, since we
+# install Python ourselves using conda.
+language: c
+
+os:
+    - osx
+    - linux
+
+# Setting sudo to false opts in to Travis-CI container-based builds.
+sudo: false
+
+# The apt packages below are needed for sphinx builds, which can no longer
+# be installed with sudo apt-get.
+addons:
+    apt:
+        packages:
+            - graphviz
+
+env:
+  matrix:
+    - PYTHON_VERSION=2.7
+    - PYTHON_VERSION=3.3
+    - PYTHON_VERSION=3.4
+    - PYTHON_VERSION=3.5
+  global:
+    - CONDA_DEPENDENCIES="setuptools pytest sphinx cython numpy"
+    - PIP_DEPENDENCIES="coveralls pytest-cov"
+
+matrix:
+    include:
+
+        - os: linux
+          env: PYTHON_VERSION=2.7 SETUPTOOLS_VERSION=20
+
+        - os: linux
+          env: PYTHON_VERSION=2.7 SETUPTOOLS_VERSION=dev DEBUG=True
+               CONDA_DEPENDENCIES='pytest sphinx cython numpy'
+
+    allow_failures:
+        - os: linux
+          env: PYTHON_VERSION=2.7 SETUPTOOLS_VERSION=dev DEBUG=True
+               CONDA_DEPENDENCIES='pytest sphinx cython numpy'
+
+before_install:
+    - if [[ $TRAVIS_OS_NAME == osx ]]; then brew update; brew install graphviz; fi
+
+install:
+
+    - git clone git://github.com/astropy/ci-helpers.git
+    - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
+
+    # We cannot install the developer version of setuptools using pip because
+    # pip tries to remove the previous version of setuptools before the
+    # installation is complete, which causes issues. Instead, we just install
+    # setuptools manually.
+    - if [[ $SETUPTOOLS_VERSION == dev ]]; then git clone http://github.com/pypa/setuptools.git; cd setuptools; python setup.py install; cd ..; fi
+
+before_script:
+    # Some of the tests use git commands that require a user to be configured
+    - git config --global user.name "A U Thor"
+    - git config --global user.email "author@example.com"
+
+script:
+    # Use full path for coveragerc; see issue #193
+    - py.test --cov astropy_helpers --cov-config $(pwd)/astropy_helpers/tests/coveragerc astropy_helpers
+
+after_success:
+    - coveralls
