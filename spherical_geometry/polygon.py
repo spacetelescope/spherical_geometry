@@ -943,7 +943,6 @@ class SphericalPolygon(object):
         For implementation details, see the
         :mod:`~spherical_geometry.graph` module.
         """
-        # from . import graph
 
         if self.area() == 0.0:
             return SphericalPolygon([])
