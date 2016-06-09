@@ -19,13 +19,60 @@ except ImportError:
     HAS_C_UFUNCS = False
 
 
-__all__ = ['radec_to_vector', 'vector_to_radec', 'normalize_vector',
-           'rotate_around']
+__all__ = ['lonlat_to_vector', 'vector_to_lonlat', 'normalize_vector',
+           'radec_to_vector', 'vector_to_radec', 'rotate_around']
+
+
+def lonlat_to_vector(lon, lat, degrees=True):
+    r"""
+    Converts a location on the unit sphere from longitude and
+    latitude to an *x*, *y*, *z* vector.
+
+    Parameters
+    ----------
+    lon, lat : scalars or 1-D arrays
+
+    degrees : bool, optional
+
+       If `True`, (default) *lon* and *lat* are in decimal degrees,
+       otherwise in radians.
+
+    Returns
+    -------
+    x, y, z : tuple of scalars or 1-D arrays of the same length
+
+    Notes
+    -----
+    Where longitude is *l* and latitude is *b*:
+
+    .. math::
+        x = \cos l \cos b
+
+        y = \sin l \cos b
+
+        z = \sin b
+    """
+    lon = np.asanyarray(lon)
+    lat = np.asanyarray(lat)
+
+    if degrees:
+        lon_rad = np.deg2rad(lon)
+        lat_rad = np.deg2rad(lat)
+    else:
+        lon_rad = lon
+        lat_rad = lat
+
+    cos_lat = np.cos(lat_rad)
+
+    return (
+        np.cos(lon_rad) * cos_lat,
+        np.sin(lon_rad) * cos_lat,
+        np.sin(lat_rad))
 
 
 def radec_to_vector(ra, dec, degrees=True):
     r"""
-    Converts a location on the unit sphere from right-ascension and
+    Converts a location on the unit sphere from right ascension and
     declination to an *x*, *y*, *z* vector.
 
     Parameters
@@ -41,38 +88,13 @@ def radec_to_vector(ra, dec, degrees=True):
     -------
     x, y, z : tuple of scalars or 1-D arrays of the same length
 
-    Notes
-    -----
-    Where right-ascension is *α* and declination is *δ*:
-
-    .. math::
-        x = \cos\alpha \cos\delta
-
-        y = \sin\alpha \cos\delta
-
-        z = \sin\delta
     """
-    ra = np.asanyarray(ra)
-    dec = np.asanyarray(dec)
-
-    if degrees:
-        ra_rad = np.deg2rad(ra)
-        dec_rad = np.deg2rad(dec)
-    else:
-        ra_rad = ra
-        dec_rad = dec
-
-    cos_dec = np.cos(dec_rad)
-
-    return (
-        np.cos(ra_rad) * cos_dec,
-        np.sin(ra_rad) * cos_dec,
-        np.sin(dec_rad))
+    return lonlat_to_vector(ra, dec, degrees=degrees)
 
 
-def vector_to_radec(x, y, z, degrees=True):
+def vector_to_lonlat(x, y, z, degrees=True):
     r"""
-    Converts a vector to right-ascension and declination.
+    Converts a vector to longitude and latitude.
 
     Parameters
     ----------
@@ -85,17 +107,16 @@ def vector_to_radec(x, y, z, degrees=True):
 
     Returns
     -------
-    ra, dec : tuple of scalars or arrays of the same length
+    lon, lat : tuple of scalars or arrays of the same length
 
     Notes
     -----
-    Where right-ascension is *α* and declination is
-    *δ*:
+    Where longitude is *l* and latitude is *b*:
 
     .. math::
-        \alpha = \arctan2(y, x)
+        l = \arctan2(y, x)
 
-        \delta = \arctan2(z, \sqrt{x^2 + y^2})
+        b = \arctan2(z, \sqrt{x^2 + y^2})
     """
     x = np.asanyarray(x, dtype=np.float64)
     y = np.asanyarray(y, dtype=np.float64)
@@ -109,6 +130,26 @@ def vector_to_radec(x, y, z, degrees=True):
         return np.rad2deg(result[0]), np.rad2deg(result[1])
     else:
         return result
+
+
+def vector_to_radec(x, y, z, degrees=True):
+    r"""
+    Converts a vector to longitude and latitude.
+
+    Parameters
+    ----------
+    x, y, z : scalars or 1-D arrays
+        The input vectors
+
+    degrees : bool, optional
+        If `True` (default) the result is returned in decimal degrees,
+        otherwise radians.
+
+    Returns
+    -------
+    ra, dec : tuple of scalars or arrays of the same length
+    """
+    return vector_to_lonlat(x, y, z, degrees=degrees)
 
 
 def normalize_vector(xyz, output=None):
