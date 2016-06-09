@@ -45,35 +45,34 @@ class intersection_test:
 
             if GRAPH_MODE:
                 print("%d permutations" % num_permutations)
-            for method in ('parallel', 'serial'):
-                for i, permutation in enumerate(
-                    itertools.islice(
-                        itertools.permutations(polys),
-                        None, None, step_size)):
-                    filename = '%s_%s_intersection_%04d.svg' % (
-                        func.__name__, method, i)
-                    print(filename)
 
-                    intersection = polygon.SphericalPolygon.multi_intersection(
-                        permutation, method=method)
-                    intersections.append(intersection)
-                    intersection_area = intersection.area()
-                    if GRAPH_MODE:
-                        fig = plt.figure()
-                        m = Basemap(projection=self._proj,
-                                    lon_0=self._lon_0,
-                                    lat_0=self._lat_0)
-                        m.drawparallels(np.arange(-90., 90., 20.))
-                        m.drawmeridians(np.arange(0., 420., 20.))
-                        m.drawmapboundary(fill_color='white')
+            for i, permutation in enumerate(
+                itertools.islice(
+                    itertools.permutations(polys),
+                    None, None, step_size)):
+                filename = '%s_intersection_%04d.svg' % (func.__name__, i)
+                print(filename)
 
-                        intersection.draw(m, color='red', linewidth=3)
-                        for poly in permutation:
-                            poly.draw(m, color='blue', alpha=0.5)
-                        plt.savefig(filename)
-                        fig.clear()
+                intersection = polygon.SphericalPolygon.multi_intersection(
+                    permutation)
+                intersections.append(intersection)
+                intersection_area = intersection.area()
+                if GRAPH_MODE:
+                    fig = plt.figure()
+                    m = Basemap(projection=self._proj,
+                                lon_0=self._lon_0,
+                                lat_0=self._lat_0)
+                    m.drawparallels(np.arange(-90., 90., 20.))
+                    m.drawmeridians(np.arange(0., 420., 20.))
+                    m.drawmapboundary(fill_color='white')
 
-                    assert np.all(intersection_area * 0.9 <= areas)
+                    intersection.draw(m, color='red', linewidth=3)
+                    for poly in permutation:
+                        poly.draw(m, color='blue', alpha=0.5)
+                    plt.savefig(filename)
+                    fig.clear()
+
+                assert np.all(intersection_area * 0.9 <= areas)
 
             lengths = np.array([
                 np.sum(len(x._points) for x in y.iter_polygons_flat())
@@ -193,6 +192,22 @@ def test_difficult_intersections():
         polyB = polygon._SingleSphericalPolygon(Bpoints, Binside)
         yield test_intersection, (polyA, polyB)
 
+def test_self_intersection():
+    # Tests intersection between a disjoint polygon and itself
+    ra1 = [150.15056635,  150.18472797,  150.18472641, 150.15056557, 150.15056635]
+    dec1 = [2.33675579,  2.33675454,  2.30262137,  2.3026226 ,  2.33675579]
+    ra2 = [150.18472955,  150.18472798,  150.15056635, 150.15056714, 150.18472955]
+    dec2 = [2.37105428,  2.33692121,  2.33692245,  2.37105554,  2.37105428]
+     # create a union polygon
+    s1 = polygon.SphericalPolygon.from_radec(np.array(ra1), np.array(dec1))
+    s2 = polygon.SphericalPolygon.from_radec(np.array(ra2), np.array(dec2))
+    s12 = s2.union(s1)
+    # asserts self-intersection is same as original 
+    s12int = s12.intersection(s12)
+    assert(abs(s12.area() - s12int.area()) < 1.0e-6)
+    # same, with multi_intersection method
+    s12int = polygon.SphericalPolygon.multi_intersection([s12, s12, s12])
+    assert(abs(s12.area() - s12int.area()) < 1.0e-6)
 
 def test_ordering():
     nrepeat = 10

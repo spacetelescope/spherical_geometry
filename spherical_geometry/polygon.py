@@ -943,21 +943,23 @@ class SphericalPolygon(object):
         For implementation details, see the
         :mod:`~spherical_geometry.graph` module.
         """
-        from . import graph
 
         if self.area() == 0.0:
             return SphericalPolygon([])
         elif other.area() == 0.0:
             return SphericalPolygon([])
 
-        g = graph.Graph(
-            list(self.iter_polygons_flat()) +
-            list(other.iter_polygons_flat()))
-
-        return g.intersection()
+        all_polygons = []
+        for polya in self.iter_polygons_flat():
+            for polyb in other.iter_polygons_flat():
+                if polya.intersects_poly(polyb):
+                    subpolygons = polya.intersection(polyb)
+                    all_polygons.extend(subpolygons.iter_polygons_flat())
+                
+        return SphericalPolygon(all_polygons)
 
     @classmethod
-    def multi_intersection(cls, polygons, method='parallel'):
+    def multi_intersection(cls, polygons):
         """
         Return a new `SphericalPolygon` that is the intersection of
         all of the polygons in *polygons*.
@@ -965,23 +967,6 @@ class SphericalPolygon(object):
         Parameters
         ----------
         polygons : sequence of `SphericalPolygon`
-
-        method : 'parallel' or 'serial', optional
-            Specifies the method that is used to perform the
-            intersections:
-
-               - 'parallel' (default): A graph is built using all of
-                 the polygons, and the intersection operation is computed on
-                 the entire thing globally.
-
-               - 'serial': The polygon is built in steps by adding one
-                 polygon at a time and computing the intersection at
-                 each step.
-
-            This option is provided because one may be faster than the
-            other depending on context, but it primarily exposed for
-            testing reasons.  Both modes should theoretically provide
-            equivalent results.
 
         Returns
         -------
@@ -991,28 +976,16 @@ class SphericalPolygon(object):
         for polygon in polygons:
             assert isinstance(polygon, SphericalPolygon)
 
-        from . import graph
-
-        all_polygons = []
+        results = None
         for polygon in polygons:
-            if polygon.area() == 0.0:
-                return SphericalPolygon([])
-            all_polygons.extend(polygon.iter_polygons_flat())
-
-        if method.lower() == 'parallel':
-            g = graph.Graph(all_polygons)
-            return g.intersection()
-        elif method.lower() == 'serial':
-            results = copy(all_polygons[0])
-            for polygon in all_polygons[1:]:
+            if results is None:
+                results = polygon
+            elif len(results.polygons) == 0:
+                return results
+            else:
                 results = results.intersection(polygon)
-                # If we have a null intersection already, we don't
-                # need to go any further.
-                if len(results.polygons) == 0:
-                    return results
-            return results
-        else:
-            raise ValueError("method must be 'parallel' or 'serial'")
+
+        return results                
 
     def overlap(self, other):
         r"""
