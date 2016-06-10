@@ -35,6 +35,33 @@ def test_normalize_unit_vector():
         l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
         assert_almost_equal(l, 1.0)
 
+def test_lonlat_to_vector():
+    npx, npy, npz = vector.lonlat_to_vector(np.arange(-360, 360, 1), 90)
+    assert_almost_equal(npx, 0.0)
+    assert_almost_equal(npy, 0.0)
+    assert_almost_equal(npz, 1.0)
+
+    spx, spy, spz = vector.lonlat_to_vector(np.arange(-360, 360, 1), -90)
+    assert_almost_equal(spx, 0.0)
+    assert_almost_equal(spy, 0.0)
+    assert_almost_equal(spz, -1.0)
+
+    eqx, eqy, eqz = vector.lonlat_to_vector(np.arange(-360, 360, 1), 0)
+    assert_almost_equal(eqz, 0.0)
+
+
+def test_vector_to_lonlat():
+    lon, lat = vector.vector_to_lonlat(0, 0, 1)
+    assert_almost_equal(lat, 90)
+
+    lon, lat = vector.vector_to_lonlat(0, 0, -1)
+    assert_almost_equal(lat, -90)
+
+    lon, lat = vector.vector_to_lonlat(1, 1, 0)
+    assert_almost_equal(lon, 45.0)
+    assert_almost_equal(lat, 0.0)
+
+
 def test_radec_to_vector():
     npx, npy, npz = vector.radec_to_vector(np.arange(-360, 360, 1), 90)
     assert_almost_equal(npx, 0.0)
@@ -51,21 +78,21 @@ def test_radec_to_vector():
 
 
 def test_vector_to_radec():
-    ra, dec = vector.vector_to_radec(0, 0, 1)
-    assert_almost_equal(dec, 90)
+    lon, lat = vector.vector_to_radec(0, 0, 1)
+    assert_almost_equal(lat, 90)
 
-    ra, dec = vector.vector_to_radec(0, 0, -1)
-    assert_almost_equal(dec, -90)
+    lon, lat = vector.vector_to_radec(0, 0, -1)
+    assert_almost_equal(lat, -90)
 
-    ra, dec = vector.vector_to_radec(1, 1, 0)
-    assert_almost_equal(ra, 45.0)
-    assert_almost_equal(dec, 0.0)
+    lon, lat = vector.vector_to_radec(1, 1, 0)
+    assert_almost_equal(lon, 45.0)
+    assert_almost_equal(lat, 0.0)
 
 
 def test_intersects_poly_simple():
-    ra1 = [-10, 10, 10, -10, -10]
-    dec1 = [30, 30, 0, 0, 30]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = [-10, 10, 10, -10, -10]
+    lat1 = [30, 30, 0, 0, 30]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
     ra2 = [-5, 15, 15, -5, -5]
     dec2 = [20, 20, -10, -10, 20]
@@ -74,9 +101,9 @@ def test_intersects_poly_simple():
     assert poly1.intersects_poly(poly2)
 
     # Make sure it isn't order-dependent
-    ra1 = ra1[::-1]
-    dec1 = dec1[::-1]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = lon1[::-1]
+    lat1 = lat1[::-1]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
     ra2 = ra2[::-1]
     dec2 = dec2[::-1]
@@ -86,70 +113,70 @@ def test_intersects_poly_simple():
 
 
 def test_intersects_poly_fully_contained():
-    ra1 = [-10, 10, 10, -10, -10]
-    dec1 = [30, 30, 0, 0, 30]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = [-10, 10, 10, -10, -10]
+    lat1 = [30, 30, 0, 0, 30]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = [-5, 5, 5, -5, -5]
-    dec2 = [20, 20, 10, 10, 20]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = [-5, 5, 5, -5, -5]
+    lat2 = [20, 20, 10, 10, 20]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert poly1.intersects_poly(poly2)
 
     # Make sure it isn't order-dependent
-    ra1 = ra1[::-1]
-    dec1 = dec1[::-1]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = lon1[::-1]
+    lat1 = lat1[::-1]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = ra2[::-1]
-    dec2 = dec2[::-1]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = lon2[::-1]
+    lat2 = lat2[::-1]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert poly1.intersects_poly(poly2)
 
 
 def test_hard_intersects_poly():
-    ra1 = [-10, 10, 10, -10, -10]
-    dec1 = [30, 30, 0, 0, 30]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = [-10, 10, 10, -10, -10]
+    lat1 = [30, 30, 0, 0, 30]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = [-20, 20, 20, -20, -20]
-    dec2 = [20, 20, 10, 10, 20]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = [-20, 20, 20, -20, -20]
+    lat2 = [20, 20, 10, 10, 20]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert poly1.intersects_poly(poly2)
 
     # Make sure it isn't order-dependent
-    ra1 = ra1[::-1]
-    dec1 = dec1[::-1]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = lon1[::-1]
+    lat1 = lat1[::-1]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = ra2[::-1]
-    dec2 = dec2[::-1]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = lon2[::-1]
+    lat2 = lat2[::-1]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert poly1.intersects_poly(poly2)
 
 
 def test_not_intersects_poly():
-    ra1 = [-10, 10, 10, -10, -10]
-    dec1 = [30, 30, 5, 5, 30]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = [-10, 10, 10, -10, -10]
+    lat1 = [30, 30, 5, 5, 30]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = [-20, 20, 20, -20, -20]
-    dec2 = [-20, -20, -10, -10, -20]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = [-20, 20, 20, -20, -20]
+    lat2 = [-20, -20, -10, -10, -20]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert not poly1.intersects_poly(poly2)
 
     # Make sure it isn't order-dependent
-    ra1 = ra1[::-1]
-    dec1 = dec1[::-1]
-    poly1 = polygon.SphericalPolygon.from_radec(ra1, dec1)
+    lon1 = lon1[::-1]
+    lat1 = lat1[::-1]
+    poly1 = polygon.SphericalPolygon.from_lonlat(lon1, lat1)
 
-    ra2 = ra2[::-1]
-    dec2 = dec2[::-1]
-    poly2 = polygon.SphericalPolygon.from_radec(ra2, dec2)
+    lon2 = lon2[::-1]
+    lat2 = lat2[::-1]
+    poly2 = polygon.SphericalPolygon.from_lonlat(lon2, lat2)
 
     assert not poly1.intersects_poly(poly2)
 
@@ -203,12 +230,12 @@ def test_great_circle_arc_intersection():
 
     correct = [0.99912414, -0.02936109, -0.02981403]
 
-    A = vector.radec_to_vector(*A)
-    B = vector.radec_to_vector(*B)
-    C = vector.radec_to_vector(*C)
-    D = vector.radec_to_vector(*D)
-    E = vector.radec_to_vector(*E)
-    F = vector.radec_to_vector(*F)
+    A = vector.lonlat_to_vector(*A)
+    B = vector.lonlat_to_vector(*B)
+    C = vector.lonlat_to_vector(*C)
+    D = vector.lonlat_to_vector(*D)
+    E = vector.lonlat_to_vector(*E)
+    F = vector.lonlat_to_vector(*F)
 
     assert great_circle_arc.intersects(A, B, C, D)
     r = great_circle_arc.intersection(A, B, C, D)
@@ -239,20 +266,20 @@ def test_great_circle_arc_intersection():
 def test_great_circle_arc_length():
     A = [90, 0]
     B = [-90, 0]
-    A = vector.radec_to_vector(*A)
-    B = vector.radec_to_vector(*B)
+    A = vector.lonlat_to_vector(*A)
+    B = vector.lonlat_to_vector(*B)
     assert great_circle_arc.length(A, B) == 180.0
 
     A = [135, 0]
     B = [-90, 0]
-    A = vector.radec_to_vector(*A)
-    B = vector.radec_to_vector(*B)
+    A = vector.lonlat_to_vector(*A)
+    B = vector.lonlat_to_vector(*B)
     assert_almost_equal(great_circle_arc.length(A, B), 135.0)
 
     A = [0, 0]
     B = [0, 90]
-    A = vector.radec_to_vector(*A)
-    B = vector.radec_to_vector(*B)
+    A = vector.lonlat_to_vector(*A)
+    B = vector.lonlat_to_vector(*B)
     assert_almost_equal(great_circle_arc.length(A, B), 90.0)
 
 
@@ -268,9 +295,9 @@ def test_great_circle_arc_angle():
 def test_cone():
     random.seed(0)
     for i in range(50):
-        ra = random.randrange(-180, 180)
-        dec = random.randrange(20, 90)
-        cone = polygon.SphericalPolygon.from_cone(ra, dec, 8, steps=64)
+        lon = random.randrange(-180, 180)
+        lat = random.randrange(20, 90)
+        cone = polygon.SphericalPolygon.from_cone(lon, lat, 8, steps=64)
 
 
 def test_area():
@@ -282,7 +309,7 @@ def test_area():
 
     for tri, area in triangles:
         tri = np.array(tri)
-        x, y, z = vector.radec_to_vector(tri[:, 1], tri[:, 0])
+        x, y, z = vector.lonlat_to_vector(tri[:, 1], tri[:, 0])
         points = np.dstack((x, y, z))[0]
         poly = polygon.SphericalPolygon(points)
         calc_area = poly.area()
@@ -290,9 +317,9 @@ def test_area():
 
 def test_cone_area():
     saved_area = None
-    for ra in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
-        for dec in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
-            area = polygon.SphericalPolygon.from_cone(ra, dec, 30, steps=64).area()
+    for lon in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
+        for lat in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
+            area = polygon.SphericalPolygon.from_cone(lon, lat, 30, steps=64).area()
             if saved_area is None: saved_area = area 
             assert_almost_equal(area, saved_area)
 

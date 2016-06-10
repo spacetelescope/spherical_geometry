@@ -99,42 +99,42 @@ class _SingleSphericalPolygon(object):
         """
         yield self
 
-    def to_radec(self):
+    def to_lonlat(self):
         """
-        Convert `_SingleSphericalPolygon` footprint to RA and DEC.
+        Convert `_SingleSphericalPolygon` footprint to longitude and latitutde.
 
         Returns
         -------
-        ra, dec : list of float
-            List of *ra* and *dec* in degrees corresponding
+        lon, lat : list of float
+            List of *lon* and *lat* in degrees corresponding
             to `points`.
         """
         if len(self.points) == 0:
             return np.array([])
-        return vector.vector_to_radec(self.points[:,0], self.points[:,1],
+        return vector.vector_to_lonlat(self.points[:,0], self.points[:,1],
                                       self.points[:,2], degrees=True)
 
     @classmethod
-    def from_radec(cls, ra, dec, center=None, degrees=True):
+    def from_lonlat(cls, lon, lat, center=None, degrees=True):
         r"""
-        Create a new `SphericalPolygon` from a list of (*ra*, *dec*)
+        Create a new `SphericalPolygon` from a list of (*longitude*, *latitude*)
         points.
 
         Parameters
         ----------
-        ra, dec : 1-D arrays of the same length
-            The vertices of the polygon in right-ascension and
-            declination.  It must be \"closed\", i.e., that is, the
+        lon, lat : 1-D arrays of the same length
+            The vertices of the polygon in longitude and
+            latitude.  It must be \"closed\", i.e., that is, the
             last point is the same as the first.
 
-        center : (*ra*, *dec*) pair, optional
+        center : (*lon*, *lat*) pair, optional
             A point inside of the polygon to define its inside.  If no
             *center* point is provided, the mean of the polygon's
             points in vector space will be used.  That approach may
             not work for concave polygons.
 
         degrees : bool, optional
-            If `True`, (default) *ra* and *dec* are in decimal degrees,
+            If `True`, (default) *lon* and *lat* are in decimal degrees,
             otherwise in radians.
 
         Returns
@@ -142,7 +142,7 @@ class _SingleSphericalPolygon(object):
         polygon : `SphericalPolygon` object
         """
         # Convert to Cartesian
-        x, y, z = vector.radec_to_vector(ra, dec, degrees=degrees)
+        x, y, z = vector.lonlat_to_vector(lon, lat, degrees=degrees)
 
         points = np.dstack((x, y, z))[0]
 
@@ -150,15 +150,15 @@ class _SingleSphericalPolygon(object):
             center = points.mean(axis=0)
             vector.normalize_vector(center, output=center)
         else:
-            center = vector.radec_to_vector(*center, degrees=degrees)
+            center = vector.lonlat_to_vector(*center, degrees=degrees)
 
         return cls(points, center)
 
     @classmethod
-    def from_cone(cls, ra, dec, radius, degrees=True, steps=16.0):
+    def from_cone(cls, lon, lat, radius, degrees=True, steps=16.0):
         r"""
         Create a new `_SingleSphericalPolygon` from a cone (otherwise known
-        as a "small circle") defined using (*ra*, *dec*, *radius*).
+        as a "small circle") defined using (*lon*, *lat*, *radius*).
 
         The cone is not represented as an ideal circle on the sphere,
         but as a series of great circle arcs.  The resolution of this
@@ -166,14 +166,14 @@ class _SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        ra, dec : float scalars
+        lon, lat : float scalars
             This defines the center of the cone
 
         radius : float scalar
             The radius of the cone
 
         degrees : bool, optional
-            If `True`, (default) *ra*, *dec* and *radius* are in
+            If `True`, (default) *lon*, *lat* and *radius* are in
             decimal degrees, otherwise in radians.
 
         steps : int, optional
@@ -184,7 +184,7 @@ class _SingleSphericalPolygon(object):
         -------
         polygon : `_SingleSphericalPolygon` object
         """
-        u, v, w = vector.radec_to_vector(ra, dec, degrees=degrees)
+        u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
         if degrees:
             radius = np.deg2rad(radius)
 
@@ -267,15 +267,15 @@ class _SingleSphericalPolygon(object):
         X[-1]              = 1
         Y[-1]              = 1
 
-        # Use wcslib to convert to (ra, dec)
-        ra, dec = wcs.all_pix2world(X, Y, 1)
+        # Use wcslib to convert to (lon, lat)
+        lon, lat = wcs.all_pix2world(X, Y, 1)
 
         # Convert to Cartesian
-        x, y, z = vector.radec_to_vector(ra, dec)
+        x, y, z = vector.lonlat_to_vector(lon, lat)
 
         # Calculate an inside point
-        ra, dec = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
-        xc, yc, zc = vector.radec_to_vector(ra, dec)
+        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
+        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
 
         return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
 
@@ -569,16 +569,16 @@ class _SingleSphericalPolygon(object):
             if not np.isfinite(length):
                 length = 2
             interpolated = great_circle_arc.interpolate(A, B, length * 4)
-            ra, dec = vector.vector_to_radec(
+            lon, lat = vector.vector_to_lonlat(
                 interpolated[:, 0], interpolated[:, 1], interpolated[:, 2],
                 degrees=True)
-            for r0, d0, r1, d1 in zip(ra[0:-1], dec[0:-1], ra[1:], dec[1:]):
-                m.drawgreatcircle(r0, d0, r1, d1, alpha=alpha, **plot_args)
+            for lon0, lat0, lon1, lat1 in zip(lon[0:-1], lat[0:-1], lon[1:], lat[1:]):
+                m.drawgreatcircle(lon0, lat0, lon1, lat1, alpha=alpha, **plot_args)
             alpha -= 1.0 / len(points)
 
-        ra, dec = vector.vector_to_radec(
+        lon, lat = vector.vector_to_lonlat(
             *self._inside, degrees=True)
-        x, y = m(ra, dec)
+        x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
 
@@ -667,19 +667,63 @@ class SphericalPolygon(object):
         """
         return self._polygons
 
-    def to_radec(self):
+    def to_lonlat(self):
         """
-        Convert the `SphericalPolygon` footprint to RA and DEC
+        Convert the `SphericalPolygon` footprint to longitude and latitude
         coordinates.
 
         Returns
         -------
         polyons : iterator
-            Each element in the iterator is a tuple of the form (*ra*,
-            *dec*), where each is an array of points.
+            Each element in the iterator is a tuple of the form (*lon*,
+            *lat*), where each is an array of points.
         """
         for polygon in self.iter_polygons_flat():
-            yield polygon.to_radec()
+            yield polygon.to_lonlat()
+
+    def to_radec(self):
+        """
+        Convert the `SphericalPolygon` footprint to right ascension and 
+        declination coordinates.
+
+        Returns
+        -------
+        polyons : iterator
+            Each element in the iterator is a tuple of the form (*lon*,
+            *lat*), where each is an array of points.
+        """
+        yield self.to_lonlat()
+
+    @classmethod
+    def from_lonlat(cls, lon, lat, center=None, degrees=True):
+        r"""
+        Create a new `SphericalPolygon` from a list of (*lon*, *lat*)
+        points.
+
+        Parameters
+        ----------
+        lon, lat : 1-D arrays of the same length
+            The vertices of the polygon in longitude and
+            latitude.  It must be \"closed\", i.e., that is, the
+            last point is the same as the first.
+
+        center : (*lon*, *lat*) pair, optional
+            A point inside of the polygon to define its inside.  If no
+            *center* point is provided, the mean of the polygon's
+            points in vector space will be used.  That approach may
+            not work for concave polygons.
+
+        degrees : bool, optional
+            If `True`, (default) *lon* and *lat* are in decimal degrees,
+            otherwise in radians.
+
+        Returns
+        -------
+        polygon : `SphericalPolygon` object
+        """
+        return cls([
+            _SingleSphericalPolygon.from_lonlat(
+                lon, lat, center=center, degrees=degrees)])
 
     @classmethod
     def from_radec(cls, ra, dec, center=None, degrees=True):
@@ -690,7 +734,7 @@ class SphericalPolygon(object):
         Parameters
         ----------
         ra, dec : 1-D arrays of the same length
-            The vertices of the polygon in right-ascension and
+            The vertices of the polygon in right ascension and
             declination.  It must be \"closed\", i.e., that is, the
             last point is the same as the first.
 
@@ -709,14 +753,14 @@ class SphericalPolygon(object):
         polygon : `SphericalPolygon` object
         """
         return cls([
-            _SingleSphericalPolygon.from_radec(
+            _SingleSphericalPolygon.from_lonlat(
                 ra, dec, center=center, degrees=degrees)])
 
     @classmethod
-    def from_cone(cls, ra, dec, radius, degrees=True, steps=16.0):
+    def from_cone(cls, lon, lat, radius, degrees=True, steps=16.0):
         r"""
         Create a new `SphericalPolygon` from a cone (otherwise known
-        as a "small circle") defined using (*ra*, *dec*, *radius*).
+        as a "small circle") defined using (*lon*, *lat*, *radius*).
 
         The cone is not represented as an ideal circle on the sphere,
         but as a series of great circle arcs.  The resolution of this
@@ -724,14 +768,14 @@ class SphericalPolygon(object):
 
         Parameters
         ----------
-        ra, dec : float scalars
+        lon, lat : float scalars
             This defines the center of the cone
 
         radius : float scalar
             The radius of the cone
 
         degrees : bool, optional
-            If `True`, (default) *ra*, *dec* and *radius* are in
+            If `True`, (default) *lon*, *lat* and *radius* are in
             decimal degrees, otherwise in radians.
 
         steps : int, optional
@@ -744,7 +788,7 @@ class SphericalPolygon(object):
         """
         return cls([
             _SingleSphericalPolygon.from_cone(
-                ra, dec, radius, degrees=degrees, steps=steps)])
+                lon, lat, radius, degrees=degrees, steps=steps)])
 
     @classmethod
     def from_wcs(cls, fitspath, steps=1, crval=None):

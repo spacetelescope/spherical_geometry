@@ -405,7 +405,7 @@ class Graph:
         for polygon in self._source_polygons:
             polygon.draw(m, lw=10, alpha=0.1, color="black")
             v = polygon._points
-            ra, dec = vector.vector_to_radec(v[:, 0], v[:, 1], v[:, 2])
+            ra, dec = vector.vector_to_lonlat(v[:, 0], v[:, 1], v[:, 2])
             x, y = m(ra, dec)
             for x0 in x:
                 minx = min(x0, minx)
@@ -422,19 +422,19 @@ class Graph:
 
         for edge in list(self._edges):
             A, B = [x._point for x in edge._nodes]
-            r0, d0 = vector.vector_to_radec(A[0], A[1], A[2])
-            r1, d1 = vector.vector_to_radec(B[0], B[1], B[2])
+            lon0, lat0 = vector.vector_to_lonlat(A[0], A[1], A[2])
+            lon1, lat1 = vector.vector_to_lonlat(B[0], B[1], B[2])
             if edge is highlight_edge:
                 color = 'red'
                 lw = 2
             else:
                 color = 'blue'
                 lw = 0.5
-            m.drawgreatcircle(r0, d0, r1, d1, color=color, lw=lw)
+            m.drawgreatcircle(lon0, lat0, lon1, lat1, color=color, lw=lw)
 
         for k, v in counts.items():
             v = np.array(v)
-            ra, dec = vector.vector_to_radec(v[:, 0], v[:, 1], v[:, 2])
+            ra, dec = vector.vector_to_lonlat(v[:, 0], v[:, 1], v[:, 2])
             x, y = m(ra, dec)
             m.plot(x, y, 'o', label=str(k))
             for x0 in x:
@@ -446,7 +446,7 @@ class Graph:
 
         for v in intersections:
             if np.all(np.isfinite(v)):
-                ra, dec = vector.vector_to_radec(v[0], v[1], v[2])
+                ra, dec = vector.vector_to_lonlat(v[0], v[1], v[2])
                 x, y = m(ra, dec)
                 m.plot(x, y, 'x', markersize=20)
 
