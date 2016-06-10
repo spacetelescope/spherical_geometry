@@ -121,10 +121,13 @@ def vector_to_lonlat(x, y, z, degrees=True):
     x = np.asanyarray(x, dtype=np.float64)
     y = np.asanyarray(y, dtype=np.float64)
     z = np.asanyarray(z, dtype=np.float64)
+    
+    lon = np.arctan2(y, x)
+    if lon < 0.0:
+        lon += np.pi * 2.0
 
-    result = (
-        np.arctan2(y, x),
-        np.arctan2(z, np.sqrt(x ** 2 + y ** 2)))
+    lat = np.arctan2(z, np.sqrt(x ** 2 + y ** 2))
+    result = (lon, lat)
 
     if degrees:
         return np.rad2deg(result[0]), np.rad2deg(result[1])

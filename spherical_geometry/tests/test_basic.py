@@ -61,6 +61,9 @@ def test_vector_to_lonlat():
     assert_almost_equal(lon, 45.0)
     assert_almost_equal(lat, 0.0)
 
+    lon, lat = vector.vector_to_lonlat(1, -1, 0)
+    assert_almost_equal(lon, 315.0)
+    assert_almost_equal(lat, 0.0)
 
 def test_radec_to_vector():
     npx, npy, npz = vector.radec_to_vector(np.arange(-360, 360, 1), 90)
@@ -86,6 +89,10 @@ def test_vector_to_radec():
 
     lon, lat = vector.vector_to_radec(1, 1, 0)
     assert_almost_equal(lon, 45.0)
+    assert_almost_equal(lat, 0.0)
+
+    lon, lat = vector.vector_to_radec(1, -1, 0)
+    assert_almost_equal(lon, 315.0)
     assert_almost_equal(lat, 0.0)
 
 
