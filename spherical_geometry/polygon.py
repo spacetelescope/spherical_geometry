@@ -304,6 +304,28 @@ class _SingleSphericalPolygon(object):
         """
         return self._contains_point(point, self._points, self._inside)
 
+    def contains_lonlat(self, lon, lat, degrees=True):
+        r"""
+        Determines if this `_SingleSphericalPolygon` contains a given
+        longitude and latitude.
+
+        Parameters
+        ----------
+        lon, lat: Longitude and latitude. Must be scalars.
+
+        degrees : bool, optional
+
+       If `True`, (default) *lon* and *lat* are in decimal degrees,
+       otherwise in radians.
+       
+        Returns
+        -------
+        contains : bool
+            Returns `True` if the polygon contains the given *point*.
+        """
+        point = vector.lonlat_to_vector(lon, lat, degrees=degrees)
+        return self._contains_point(point, self._points, self._inside)
+
     def intersects_poly(self, other):
         r"""
         Determines if this `_SingleSphericalPolygon` intersects another
@@ -832,6 +854,30 @@ class SphericalPolygon(object):
         """
         for polygon in self.iter_polygons_flat():
             if polygon.contains_point(point):
+                return True
+        return False
+
+    def contains_lonlat(self, lon, lat, degrees=True):
+        r"""
+        Determines if this `SphericalPolygon` contains a given
+        longitude and latitude.
+
+        Parameters
+        ----------
+        lon, lat: Longitude and latitude. Must be scalars.
+
+        degrees : bool, optional
+
+       If `True`, (default) *lon* and *lat* are in decimal degrees,
+       otherwise in radians.
+       
+        Returns
+        -------
+        contains : bool
+            Returns `True` if the polygon contains the given *point*.
+        """
+        for polygon in self.iter_polygons_flat():
+            if polygon.contains_lonlat(lon, lat, degrees=degrees):
                 return True
         return False
 

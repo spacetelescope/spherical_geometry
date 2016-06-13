@@ -199,6 +199,8 @@ def test_point_in_poly():
     poly = polygon.SphericalPolygon(points, inside)
     assert not poly.contains_point(point)
 
+    lon, lat = vector.vector_to_lonlat(point[0], point[1], point[2])
+    assert not poly.contains_lonlat(lon, lat)
 
 def test_point_in_poly_lots():
     from astropy.io import fits
