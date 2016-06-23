@@ -95,7 +95,24 @@ def test_vector_to_radec():
     assert_almost_equal(lon, 315.0)
     assert_almost_equal(lat, 0.0)
 
-
+def test_is_clockwise():
+    clockwise_poly = polygon._SingleSphericalPolygon.from_cone(0.0, 90.0, 1.0)
+    assert clockwise_poly.is_clockwise()
+    
+    outside = [-1.0  * x for x in clockwise_poly.inside]
+    complement_poly = polygon._SingleSphericalPolygon(clockwise_poly.points,
+                                                      inside=outside)
+    assert not complement_poly.is_clockwise()
+    
+    rpoints = clockwise_poly.points[::-1]
+    reverse_poly = polygon._SingleSphericalPolygon(rpoints,
+                                                  inside=clockwise_poly.inside)
+    assert not reverse_poly.is_clockwise()
+    
+    reverse_complement_poly = polygon._SingleSphericalPolygon(rpoints,
+                                                              inside=outside)
+    assert reverse_complement_poly.is_clockwise()
+    
 def test_intersects_poly_simple():
     lon1 = [-10, 10, 10, -10, -10]
     lat1 = [30, 30, 0, 0, 30]
