@@ -821,10 +821,7 @@ class Graph:
                     points.append(node._point)
                     break
 
-            polygon = mpolygon._SingleSphericalPolygon(points)
-            area = polygon.area()
-            if area < 0.0:
-                polygon = mpolygon._SingleSphericalPolygon(points[::-1])
+            polygon = mpolygon._SingleSphericalPolygon(points, auto_orient=True)
             polygons.append(polygon)
 
         return mpolygon.SphericalPolygon(polygons)

@@ -271,7 +271,7 @@ def test_ordering():
         BS = roll_polygon(B, i)
 
         C = AS.intersection(BS)
-
+        
         Aareas.append(A.area())
         Bareas.append(B.area())
         Careas.append(C.area())
