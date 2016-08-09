@@ -477,6 +477,8 @@ class Graph:
         self._sanity_check("union - find all intersections")
         self._remove_interior_edges()
         self._sanity_check("union - remove interior edges")
+        self._remove_degenerate_edges()
+        self._sanity_check("union - remove degenerate edges")
         self._remove_3ary_edges()
         self._sanity_check("union - remove 3ary edges")
         self._remove_orphaned_nodes()
@@ -725,6 +727,19 @@ class Graph:
                 self._remove_edge(edge)
 
         self._remove_orphaned_nodes()
+
+    def _remove_degenerate_edges(self):
+        """
+        Remove edges where both endpoints are the same point
+        """
+        removals = []
+        for edge in list(self._edges):
+            if edge._nodes[0].equals(edge._nodes[1]):
+                removals.append(edge)
+ 
+        for edge in removals:
+            if edge in self._edges:
+                self._remove_edge(edge)
 
     def _remove_3ary_edges(self):
         """
