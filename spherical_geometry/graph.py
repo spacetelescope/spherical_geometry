@@ -667,7 +667,7 @@ class Graph:
                 # Delete CD, and push the new edges to the
                 # front so they will be tested for intersection
                 # against all remaining edges.
-                edges = new_edges + edges[:j] + edges[j+1:]
+                edges = edges[:j] + edges[j+1:] + new_edges
                 new_starts, new_ends = self._get_edge_points(new_edges)
                 starts = np.vstack(
                     (starts[:j], starts[j+1:], new_starts))
