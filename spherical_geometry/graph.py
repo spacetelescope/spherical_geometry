@@ -26,6 +26,15 @@ __all__ = ['Graph']
 # Set to True to enable some sanity checks
 DEBUG = True
 
+# The following two functions are called by sorted to provide a consistent
+# ordering of nodes and edges retrieved from the graph, since values are
+# retrieved from sets in an order that varies from run to run
+
+def node_order(node):
+    return hash(tuple(node._point))
+
+def edge_order(edge):
+    return node_order(edge._nodes[0]) + node_order(edge._nodes[1])
 
 class Graph:
     """
@@ -568,10 +577,10 @@ class Graph:
         # intersection between an edge and all other nodes becomes a
         # fast, vectorized operation.
 
-        edges = list(self._edges)
+        edges = sorted(self._edges, key=edge_order)
         starts, ends = self._get_edge_points(edges)
 
-        nodes = list(self._nodes)
+        nodes = sorted(self._nodes, key=node_order) ## DBG FIX
         nodes_array = np.array([x._point for x in nodes])
 
         # Split all edges by any nodes that intersect them
@@ -595,7 +604,7 @@ class Graph:
                     for end_point in AB._nodes:
                         node._source_polygons.update(
                             end_point._source_polygons)
-                    edges = new_edges + edges
+                    edges = edges + new_edges
                     break
 
     def _find_arc_to_arc_intersections(self):
@@ -606,7 +615,7 @@ class Graph:
         # time to keep them in sync, but of course the interface for
         # doing so is different between Python lists and numpy arrays.
 
-        edges = list(self._edges)
+        edges = sorted(self._edges, key=edge_order)
         starts, ends = self._get_edge_points(edges)
 
         # Calculate edge-to-edge intersections and break
@@ -658,12 +667,12 @@ class Graph:
                 # Delete CD, and push the new edges to the
                 # front so they will be tested for intersection
                 # against all remaining edges.
-                edges = new_edges + edges[:j] + edges[j+1:]
+                edges = edges[:j] + edges[j+1:] + new_edges
                 new_starts, new_ends = self._get_edge_points(new_edges)
                 starts = np.vstack(
-                    (new_starts, starts[:j], starts[j+1:]))
+                    (starts[:j], starts[j+1:], new_starts))
                 ends = np.vstack(
-                    (new_ends, ends[:j], ends[j+1:]))
+                    (ends[:j], ends[j+1:], new_ends))
                 break
 
     def _find_all_intersections(self):
@@ -733,7 +742,7 @@ class Graph:
         Remove edges where both endpoints are the same point
         """
         removals = []
-        for edge in list(self._edges):
+        for edge in self._edges:
             if edge._nodes[0].equals(edge._nodes[1]):
                 removals.append(edge)
  
@@ -747,7 +756,7 @@ class Graph:
         edges.  This removes triangles that can't be traced.
         """
         removals = []
-        for edge in list(self._edges):
+        for edge in self._edges:
             nedges_a = len(edge._nodes[0]._edges)
             nedges_b = len(edge._nodes[1]._edges)
             if (nedges_a % 2 == 1 and nedges_a >= 3 and
