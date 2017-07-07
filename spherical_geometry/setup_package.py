@@ -30,9 +30,11 @@ def get_extensions():
 
         qd_sources = [
             'bits.cpp',
-            'c_dd.cpp',
+            'c_qd.cpp',
             'dd_real.cpp',
+            'qd_real.cpp',
             'dd_const.cpp',
+            'qd_const.cpp',
             'fpu.cpp',
             'util.cpp']
 
