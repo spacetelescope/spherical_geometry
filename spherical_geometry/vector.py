@@ -121,7 +121,7 @@ def vector_to_lonlat(x, y, z, degrees=True):
     x = np.asanyarray(x, dtype=np.float64)
     y = np.asanyarray(y, dtype=np.float64)
     z = np.asanyarray(z, dtype=np.float64)
-    
+
     lon = np.arctan2(y, x)
     lon = np.remainder(lon, 2.0 * np.pi)
 
@@ -248,11 +248,11 @@ def equal_area_proj(points):
 
     .. math::
 
-        X = \sqrt{\frac{2}{1-z}}x
+        X = \\sqrt{\\frac{2}{1-z}}x
 
     .. math::
 
-        Y = \sqrt{\frac{2}{1-z}}y
+        Y = \\sqrt{\\frac{2}{1-z}}y
     """
     scale = np.sqrt(2.0 / (1.0 - points[..., 2]))
     return np.expand_dims(scale, 2) * points[:, 0:2]
