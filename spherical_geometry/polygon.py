@@ -199,7 +199,7 @@ class _SingleSphericalPolygon(object):
                    auto_orient=auto_orient)
 
     @classmethod
-    def from_cone(cls, lon, lat, radius, degrees=True, steps=16.0):
+    def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
         r"""
         Create a new `_SingleSphericalPolygon` from a cone (otherwise known
         as a "small circle") defined using (*lon*, *lat*, *radius*).
