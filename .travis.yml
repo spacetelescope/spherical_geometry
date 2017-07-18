@@ -55,11 +55,6 @@ matrix:
         - python: 2.7
           env: NUMPY_VERSION=1.9 SETUP_CMD='test'
 
-    # Remove this when DeprecationWarning is fixed
-    allow_failures:
-        - python: 3.6
-          env: NUMPY_VERSION=1.12 SETUP_CMD='test'
-
 before_install:
 
     # Use utf8 encoding. Should be default, but this is insurance against
