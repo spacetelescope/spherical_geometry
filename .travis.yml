@@ -10,9 +10,7 @@ env:
         # The following versions are the 'default' for tests, unless
         # overidden underneath. They are defined here in order to save having
         # to repeat them for all configurations.
-        #
-        # Change to Numpy 1.12 when DeprecationWarning is fixed
-        - NUMPY_VERSION=1.11
+        - NUMPY_VERSION=stable
         - ASTROPY_VERSION=stable
         - CONDA_INSTALL='conda install -c astropy-ci-extras --yes'
         - PIP_INSTALL='pip install'
@@ -47,9 +45,8 @@ matrix:
           env: SETUP_CMD='test'
 
         # Try older numpy versions
-        # Switch 1.12 with 1.11 when DeprecationWarning is fixed
         - python: 3.6
-          env: NUMPY_VERSION=1.12 SETUP_CMD='test'
+          env: NUMPY_VERSION=1.11 SETUP_CMD='test'
         - python: 3.5
           env: NUMPY_VERSION=1.10 SETUP_CMD='test'
         - python: 2.7
