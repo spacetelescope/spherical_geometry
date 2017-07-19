@@ -9,7 +9,7 @@ polygons that represent arbitrary regions of the sky.
 Requirements
 ------------
 
-- Python 2.7, 3.3 or 3.4
+- Python 2.7, 3.5 or later
 
 - Numpy 1.5.0 or later
 
@@ -99,15 +99,21 @@ white region.
 The inside point of the the polygon can be obtained from the
 `~polygon.SphericalPolygon.inside` property.
 
-Cut lines
-^^^^^^^^^
+Disjoint Polygons
+^^^^^^^^^^^^^^^^^
 
-If the polygon represents two disjoint areas or the polygon has holes,
-those areas will be connected by cut lines.  The following image shows
-a polygon made from the union of a number of cone areas which has both
-a hole and a disjoint region connected by cut lines.
+If a polygon is the result of the intersection of polygons, it may be disjoint.
+Disjoint polygons are represented as a list of spherical polygons. The library
+handles the details of this internally. However, the user must be aware that
+several of the properties of polygons are generators and return the value for a
+single polygon at a time. To access all the values of a proeprty, either use a
+for loop, or coerce the property to a list. The properties which are generators
+are;
 
-.. image:: cutlines.png
+  - `SphericalPolygon.points`: The points defining each polygon
+  
+  - `SphericalPolygon.inside` : The inside point of each polygon
+
 
 Creating spherical polygons
 ```````````````````````````
