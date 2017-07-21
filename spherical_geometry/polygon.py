@@ -74,6 +74,7 @@ class _SingleSphericalPolygon(object):
 
         self._points = points = np.asanyarray(points)
 
+        # Find an interior point if none was passed as an argument
         if inside is None:
             self._inside = self._find_new_inside(points)
         else:
@@ -81,6 +82,9 @@ class _SingleSphericalPolygon(object):
 
         if auto_orient and not self.is_clockwise():
             self._points = points = points[::-1]
+            # Inside point may have changed if points re-ordered
+            if inside is None:
+                self._inside = self._find_new_inside(points)
 
         # TODO: Detect self-intersection and fix
 
@@ -116,9 +120,11 @@ class _SingleSphericalPolygon(object):
         count = 0
         npoints = len(self.points) - 1
         if npoints > 2:
-            for i in range(npoints):
-                angle = great_circle_arc.angle(self._points[i+1], self._inside, 
-                                               self._points[i], degrees=False)
+            for i in range(npoints): 
+                angle = great_circle_arc.angle(self._points[i+1],
+                                               self._inside, 
+                                               self._points[i],
+                                               degrees=False)
                 # Keep count of the number of clockwise turns
                 if angle <= np.pi:
                     count += 1
@@ -528,10 +534,7 @@ class _SingleSphericalPolygon(object):
         algorithm and the area computation.
         """
         npoints = len(points)
-        if npoints < 4:
-            return points[0]
-
-        elif npoints > 4:
+        if npoints > 4:
             candidates = []
             for i in range(npoints - 1):
                 A = points[i]
@@ -741,6 +744,15 @@ class SphericalPolygon(object):
         base polygons, use `iter_polygons_flat`.
         """
         return self._polygons
+
+    def is_clockwise(self):
+        """
+        Return True if all subpolygons are clockwise
+        """
+        for polygon in self._polygons:
+            if not polygon.is_clockwise():
+                return False
+        return True
 
     def to_lonlat(self):
         """
