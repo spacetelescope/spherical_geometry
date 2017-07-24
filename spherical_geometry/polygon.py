@@ -75,16 +75,16 @@ class _SingleSphericalPolygon(object):
         self._points = points = np.asanyarray(points)
 
         # Find an interior point if none was passed as an argument
-        if inside is None:
-            self._inside = self._find_new_inside(points)
-        else:
-            self._inside = np.asanyarray(inside)
+        if inside is None:  
+            self._inside = self._find_new_inside(points)  
+        else:  
+            self._inside = np.asanyarray(inside)  
 
         if auto_orient and not self.is_clockwise():
             self._points = points = points[::-1]
-            # Inside point may have changed if points re-ordered
-            if inside is None:
-                self._inside = self._find_new_inside(points)
+            # Inside point may have changed if points re-ordered  
+            if inside is None:  
+                self._inside = self._find_new_inside(points)  
 
         # TODO: Detect self-intersection and fix
 
