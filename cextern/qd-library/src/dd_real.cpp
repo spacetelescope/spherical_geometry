@@ -1057,8 +1057,8 @@ string dd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
       int d = precision + off;
 
       int d_with_extra = d;
-      if(fixed)
-    	  d_with_extra = std::max(60, d); // longer than the max accuracy for DD
+      if(fixed && d > 60)
+          d_with_extra = 60; // longer than the max accuracy for DD
 
       // highly special case - fixed mode, precision is zero, abs(*this) < 1.0
       // without this trap a number like 0.9 printed fixed with 0 precision prints as 0
