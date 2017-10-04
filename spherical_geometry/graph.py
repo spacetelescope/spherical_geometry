@@ -480,8 +480,6 @@ class Graph:
             original polygons are disjunct or contain holes, cut lines
             will be included in the output.
         """
-        self._remove_cut_lines()
-        self._sanity_check("union - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("union - find all intersections")
         self._remove_interior_edges()
@@ -507,64 +505,13 @@ class Graph:
             resulting polygons are disjunct or contain holes, cut lines
             will be included in the output.
         """
-        self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("intersection - find all intersections")
         self._remove_exterior_edges()
         self._sanity_check("intersection - remove exterior edges")
-        self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines [2]")
         self._remove_orphaned_nodes()
         self._sanity_check("intersection - remove orphan nodes", True)
         return self._trace()
-
-    def _remove_cut_lines(self):
-        """
-        Removes any cutlines that may already have existed in the
-        input polygons.  This is so any cutlines in the final result
-        will be optimized to be as short as possible and won't
-        intersect each other.
-
-        This works by finding coincident edges that are reverse to
-        each other, and then splicing around them.
-        """
-        # As this proceeds, edges are removed from the graph.  It
-        # iterates over a static list of all edges that exist at the
-        # start, so each time one is selected, we need to ensure it
-        # still exists as part of the graph.
-
-        # This transforms the following (where = is the cut line)
-        #
-        #     \                    /
-        #  A' +                    + B'
-        #     |                    |
-        #  A  +====================+ B
-        #
-        #  D  +====================+ C
-        #     |                    |
-        #  D' +                    + C'
-        #     /                    \
-        #
-        # to this:
-        #
-        #     \                    /
-        #  A' +                    + B'
-        #     |                    |
-        #  A  +                    + C
-        #     |                    |
-        #  D' +                    + C'
-        #     /                    \
-        #
-
-        edges = list(self._edges)
-        for i in xrange(len(edges)):
-            AB = edges[i]
-            if AB not in self._edges:
-                continue
-            A, B = AB._nodes
-            if len(A._edges) == 3 and len(B._edges) == 3:
-                self._remove_edge(AB)
 
     def _get_edge_points(self, edges):
         return (np.array([x._nodes[0]._point for x in edges]),
