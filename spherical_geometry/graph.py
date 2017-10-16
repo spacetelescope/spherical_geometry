@@ -480,12 +480,12 @@ class Graph:
             original polygons are disjunct or contain holes, cut lines
             will be included in the output.
         """
-        self._remove_cut_lines()
-        self._sanity_check("union - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("union - find all intersections")
         self._remove_interior_edges()
         self._sanity_check("union - remove interior edges")
+        self._remove_cut_lines()
+        self._sanity_check("union - remove cut lines")
         self._remove_degenerate_edges()
         self._sanity_check("union - remove degenerate edges")
         self._remove_3ary_edges()
@@ -507,14 +507,12 @@ class Graph:
             resulting polygons are disjunct or contain holes, cut lines
             will be included in the output.
         """
-        self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("intersection - find all intersections")
         self._remove_exterior_edges()
         self._sanity_check("intersection - remove exterior edges")
         self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines [2]")
+        self._sanity_check("intersection - remove cut lines")
         self._remove_orphaned_nodes()
         self._sanity_check("intersection - remove orphan nodes", True)
         return self._trace()
