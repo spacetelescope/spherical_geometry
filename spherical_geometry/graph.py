@@ -14,7 +14,6 @@ from .utils.compat import weakref
 
 # THIRD-PARTY
 import numpy as np
-from astropy.extern.six.moves import xrange
 
 # LOCAL
 from . import great_circle_arc
@@ -560,16 +559,19 @@ class Graph:
         #     /                    \
         #
 
+        cut_lines = []
         changed = False
-        edges = list(self._edges)
-        for i in xrange(len(edges)):
-            AB = edges[i]
-            if AB not in self._edges:
-                continue
-            A, B = AB._nodes
+
+        for edge in self._edges:
+            A, B = edge._nodes
             if len(A._edges) == 3 and len(B._edges) == 3:
-                self._remove_edge(AB)
+                cut_lines.append(edge)
                 changed = True
+                
+        for edge in cut_lines:
+            if edge in self._edges:
+                self._remove_edge(edge)
+
         return changed
 
     def _get_edge_points(self, edges):
