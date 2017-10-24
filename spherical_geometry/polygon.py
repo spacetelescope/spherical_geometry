@@ -692,6 +692,7 @@ class SphericalPolygon(object):
             If True and input polygon is counter-clockwise w.r.t the interior
             point, reverse it.
         """
+        from . import graph
         for polygon in init:
             if not isinstance(polygon, (SphericalPolygon, _SingleSphericalPolygon)):
                 break
@@ -702,6 +703,13 @@ class SphericalPolygon(object):
         self._polygons = (_SingleSphericalPolygon(init, inside,
                                                   auto_close=auto_close,
                                                   auto_orient=auto_orient),)
+
+        polygons = []
+        for polygon in self.iter_polygons_flat():
+            g = graph.Graph((polygon,))
+            polygons.extend(g.disjoint_polygons())
+        self._polygons = polygons
+
 
     def __copy__(self):
         return deepcopy(self)

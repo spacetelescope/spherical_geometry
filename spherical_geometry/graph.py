@@ -476,12 +476,8 @@ class Graph:
         -------
         points : Nx3 array of (*x*, *y*, *z*) points
             This is a list of points outlining the union of the
-            polygons that were given to the constructor.  If the
-            original polygons are disjunct or contain holes, cut lines
-            will be included in the output.
+            polygons that were given to the constructor. 
         """
-        self._remove_cut_lines()
-        self._sanity_check("union - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("union - find all intersections")
         self._remove_interior_edges()
@@ -503,22 +499,29 @@ class Graph:
         -------
         points : Nx3 array of (*x*, *y*, *z*) points
             This is a list of points outlining the intersection of the
-            polygons that were given to the constructor.  If the
-            resulting polygons are disjunct or contain holes, cut lines
-            will be included in the output.
+            polygons that were given to the constructor.
         """
-        self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines")
         self._find_all_intersections()
         self._sanity_check("intersection - find all intersections")
         self._remove_exterior_edges()
         self._sanity_check("intersection - remove exterior edges")
         self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines [2]")
+        self._sanity_check("intersection - remove cut lines")
         self._remove_orphaned_nodes()
         self._sanity_check("intersection - remove orphan nodes", True)
         return self._trace()
 
+    def disjoint_polygons(self):
+        """
+        Convert a graph containing cut lines into a list of disjoint polygons
+        """
+        if self._remove_cut_lines():
+            self._sanity_check("disjoint - remove cut lines")
+            polygons = self._trace_polygons()
+        else:
+            polygons = list(self._source_polygons)
+        return polygons
+    
     def _remove_cut_lines(self):
         """
         Removes any cutlines that may already have existed in the
@@ -557,6 +560,7 @@ class Graph:
         #     /                    \
         #
 
+        changed = False
         edges = list(self._edges)
         for i in xrange(len(edges)):
             AB = edges[i]
@@ -565,6 +569,8 @@ class Graph:
             A, B = AB._nodes
             if len(A._edges) == 3 and len(B._edges) == 3:
                 self._remove_edge(AB)
+                changed = True
+        return changed
 
     def _get_edge_points(self, edges):
         return (np.array([x._nodes[0]._point for x in edges]),
@@ -689,6 +695,7 @@ class Graph:
         Removes any nodes that are contained inside other polygons.
         What's left is the (possibly disjunct) outline.
         """
+        changed = False
         polygons = self._source_polygons
 
         for edge in self._edges:
@@ -707,14 +714,17 @@ class Graph:
         for edge in list(self._edges):
             if edge._count >= 1:
                 self._remove_edge(edge)
-
-        self._remove_orphaned_nodes()
+                changed = True
+                
+        changed = self._remove_orphaned_nodes() or changed
+        return changed
 
     def _remove_exterior_edges(self):
         """
         Removes any edges that are not contained in all of the source
         polygons.  What's left is the (possibly disjunct) outline.
         """
+        changed = False
         polygons = self._source_polygons
 
         for edge in self._edges:
@@ -734,27 +744,33 @@ class Graph:
         for edge in list(self._edges):
             if edge._count < len(polygons):
                 self._remove_edge(edge)
+                changed = True
 
-        self._remove_orphaned_nodes()
+        changed = self._remove_orphaned_nodes() or changed
+        return changed
 
     def _remove_degenerate_edges(self):
         """
         Remove edges where both endpoints are the same point
         """
+        changed = False
         removals = []
         for edge in self._edges:
             if edge._nodes[0].equals(edge._nodes[1]):
                 removals.append(edge)
+                changed = True
  
         for edge in removals:
             if edge in self._edges:
                 self._remove_edge(edge)
+        return changed
 
     def _remove_3ary_edges(self):
         """
         Remove edges between pairs of nodes that have odd numbers of
         edges.  This removes triangles that can't be traced.
         """
+        changed = False
         removals = []
         for edge in self._edges:
             nedges_a = len(edge._nodes[0]._edges)
@@ -762,32 +778,37 @@ class Graph:
             if (nedges_a % 2 == 1 and nedges_a >= 3 and
                 nedges_b % 2 == 1 and nedges_b >= 3):
                 removals.append(edge)
+                changed = True
 
         for edge in removals:
             if edge in self._edges:
                 self._remove_edge(edge)
+        return changed
 
     def _remove_orphaned_nodes(self):
         """
         Remove nodes with fewer than 2 edges.
         """
+        changed = False
         while True:
             removes = []
             for node in list(self._nodes):
                 if len(node._edges) < 2:
                     removes.append(node)
+                    changed = True
             if len(removes):
                 for node in removes:
                     if node in self._nodes:
                         self._remove_node(node)
             else:
                 break
+        return changed
 
-    def _trace(self):
+    def _trace_polygons(self):
         """
         Given a graph that has had cutlines removed and all
-        intersections found, traces it to find a resulting single
-        polygon.
+        intersections found, traces it to find a list of
+        disjoint polygons
         """
         from . import polygon as mpolygon
 
@@ -848,4 +869,13 @@ class Graph:
             polygon = mpolygon._SingleSphericalPolygon(points, auto_orient=True)
             polygons.append(polygon)
 
-        return mpolygon.SphericalPolygon(polygons)
+        return polygons
+
+    def _trace(self):
+        """
+        Given a graph that has had cutlines removed and all
+        intersections found, traces it to find a resulting single
+        polygon.
+        """
+        from . import polygon as mpolygon
+        return mpolygon.SphericalPolygon(self._trace_polygons())

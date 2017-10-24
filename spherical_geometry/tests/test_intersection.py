@@ -188,8 +188,8 @@ def test_difficult_intersections():
     for i in range(0, len(lines), 4):
         Apoints, Ainside, Bpoints, Binside = [
             to_array(line) for line in lines[i:i+4]]
-        polyA = polygon._SingleSphericalPolygon(Apoints, Ainside)
-        polyB = polygon._SingleSphericalPolygon(Bpoints, Binside)
+        polyA = polygon.SphericalPolygon(Apoints, Ainside)
+        polyB = polygon.SphericalPolygon(Bpoints, Binside)
         yield test_intersection, (polyA, polyB)
 
 def test_self_intersection():
