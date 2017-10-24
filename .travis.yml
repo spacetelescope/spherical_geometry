@@ -1,7 +1,6 @@
 language: python
 
 python:
-    - 2.7
     - 3.5
     - 3.6
     # This is just for "egg_info".  All other builds are explicitly given in the matrix
@@ -21,26 +20,20 @@ env:
 matrix:
     include:
         # Try Astropy development version
-        - python: 2.7
-          env: ASTROPY_VERSION=development SETUP_CMD='test'
         - python: 3.6
           env: ASTROPY_VERSION=development SETUP_CMD='test'
 
         # Try all python versions with the latest numpy
-        - python: 2.7
-          env: SETUP_CMD='test'
         - python: 3.5
           env: SETUP_CMD='test'
         - python: 3.6
           env: SETUP_CMD='test'
 
         # Try older numpy versions
-        - python: 3.6
+        - python: 3.5
           env: NUMPY_VERSION=1.11 SETUP_CMD='test'
         - python: 3.5
           env: NUMPY_VERSION=1.10 SETUP_CMD='test'
-        - python: 2.7
-          env: NUMPY_VERSION=1.9 SETUP_CMD='test'
 
 before_install:
     
