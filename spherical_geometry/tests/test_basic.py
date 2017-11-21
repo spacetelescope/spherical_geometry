@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import os.path
 import random
 
 from astropy.tests.helper import raises
@@ -18,7 +19,7 @@ from .test_util import *
 from .test_shared import resolve_imagename
 
 graph.DEBUG = True
-
+ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 def test_normalize_vector():
     x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
@@ -64,6 +65,7 @@ def test_vector_to_lonlat():
     lon, lat = vector.vector_to_lonlat(1, -1, 0)
     assert_almost_equal(lon, 315.0)
     assert_almost_equal(lat, 0.0)
+
 
 def test_radec_to_vector():
     npx, npy, npz = vector.radec_to_vector(np.arange(-360, 360, 1), 90)
@@ -112,7 +114,87 @@ def test_is_clockwise():
     reverse_complement_poly = polygon._SingleSphericalPolygon(rpoints,
                                                               inside=outside)
     assert reverse_complement_poly.is_clockwise()
+
+
+def test_midpoint():
+    avec = [(float(i+7), float(j+7))
+            for i in range(0, 11, 5)
+            for j in range(0, 11, 5)]
     
+    bvec = [(float(i+10), float(j+10))
+             for i in range(0, 11, 5)
+             for j in range(0, 11, 5)]
+    
+    for a in avec:
+        A = np.asarray(vector.lonlat_to_vector(a[0], a[1]))
+        for b in bvec:
+            B = np.asarray(vector.lonlat_to_vector(b[0], b[1]))
+            C = great_circle_arc.midpoint(A, B)
+            aclen = great_circle_arc.length(A, C)
+            bclen = great_circle_arc.length(B, C)
+            assert abs(aclen - bclen) < 1.0e-10
+
+    
+def test_intersects_point():
+    A = np.asarray(vector.lonlat_to_vector(60.0, 0.0))
+    B = np.asarray(vector.lonlat_to_vector(60.0, 30.0))
+    for i in range(1, 29):
+        C = vector.lonlat_to_vector(60.0, float(i))
+        assert great_circle_arc.intersects_point(A, B, C)
+
+    A = vector.lonlat_to_vector(0.0, 60.0)
+    B = vector.lonlat_to_vector(30.0, 60.0)
+    for i in range(1, 29):
+        C = vector.lonlat_to_vector(float(i), 60.0)
+        assert not great_circle_arc.intersects_point(A, B, C)
+
+
+def test_interpolate():
+    A = np.asarray(vector.lonlat_to_vector(60.0, 0.0))
+    B = np.asarray(vector.lonlat_to_vector(60.0, 30.0))
+    cvec = great_circle_arc.interpolate(A, B, steps=10)
+
+    first_length = great_circle_arc.length(cvec[0], cvec[1])
+    for i in range(1, 9):
+        length = great_circle_arc.length(cvec[i], cvec[i+1])
+        assert abs(length - first_length) < 1.0e-10
+
+
+def test_overlap():
+    def build_polygon(offset):
+        points = []
+        corners = [(0.0, 0.0), (0.0, 10.0), (10.0, 10.0), (10.0, 0.0)]
+        for corner in corners:
+            point = np.asarray(corner)
+            point[0] += offset
+            points.append(np.asarray(vector.lonlat_to_vector(point[0],
+                                                             point[1])))
+        poly = polygon.SphericalPolygon(points, auto_close=True)
+        return poly
+
+    first_poly = build_polygon(0.0)
+    for i in range(11):
+        offset = float(i)
+        second_poly = build_polygon(offset)
+        overlap_area = first_poly.overlap(second_poly)
+        calculated_area = (10.0 - offset) / 10.0
+        assert abs(overlap_area - calculated_area) < 0.0005
+
+
+def test_from_wcs():
+    from astropy.io import fits
+    
+    filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
+    hdulist = fits.open(filename)
+    header = hdulist['SCI'].header
+
+    poly = polygon.SphericalPolygon.from_wcs(header)
+    for lonlat in poly.to_lonlat():
+        lon = lonlat[0]
+        lat = lonlat[1]
+        assert np.all(np.absolute(lon - 6.027148333333) < 0.2)
+        assert np.all(np.absolute(lat + 72.08351111111) < 0.2)
+        
 def test_intersects_poly_simple():
     lon1 = [-10, 10, 10, -10, -10]
     lat1 = [30, 30, 0, 0, 30]
