@@ -186,9 +186,9 @@ def test_from_wcs():
     
     filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
     hdulist = fits.open(filename)
-    hdu = hdulist['SCI']
+    header = hdulist['SCI'].header
 
-    poly = polygon.SphericalPolygon.from_wcs(hdu)
+    poly = polygon.SphericalPolygon.from_wcs(header)
     for lonlat in poly.to_lonlat():
         lon = lonlat[0]
         lat = lonlat[1]
