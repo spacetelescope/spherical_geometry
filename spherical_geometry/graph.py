@@ -67,7 +67,7 @@ class Graph:
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
-        def equals(self, other, thres=2e-8):
+        def equals(self, other, thresh=1.e-9):
             """
             Returns `True` if the location of this and the *other*
             `~Graph.Node` are the same.
@@ -83,7 +83,8 @@ class Graph:
                 empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
-            return np.array_equal(self._point, other._point)
+            return great_circle_arc.same_point(self._point, other._point,
+                                               tol=thresh)
 
 
     class Edge:
@@ -475,7 +476,7 @@ class Graph:
         -------
         points : Nx3 array of (*x*, *y*, *z*) points
             This is a list of points outlining the union of the
-            polygons that were given to the constructor. 
+            polygons that were given to the constructor.
         """
         self._find_all_intersections()
         self._sanity_check("union - find all intersections")
@@ -520,7 +521,7 @@ class Graph:
         else:
             polygons = list(self._source_polygons)
         return polygons
-    
+
     def _remove_cut_lines(self):
         """
         Removes any cutlines that may already have existed in the
@@ -567,7 +568,7 @@ class Graph:
             if len(A._edges) == 3 and len(B._edges) == 3:
                 cut_lines.append(edge)
                 changed = True
-                
+
         for edge in cut_lines:
             if edge in self._edges:
                 self._remove_edge(edge)
@@ -717,7 +718,7 @@ class Graph:
             if edge._count >= 1:
                 self._remove_edge(edge)
                 changed = True
-                
+
         changed = self._remove_orphaned_nodes() or changed
         return changed
 
@@ -761,7 +762,7 @@ class Graph:
             if edge._nodes[0].equals(edge._nodes[1]):
                 removals.append(edge)
                 changed = True
- 
+
         for edge in removals:
             if edge in self._edges:
                 self._remove_edge(edge)
@@ -868,7 +869,7 @@ class Graph:
                     points.append(node._point)
                     break
 
-            polygon = mpolygon._SingleSphericalPolygon(points, auto_orient=True)
+            polygon = mpolygon._SingleSphericalPolygon(points)
             polygons.append(polygon)
 
         return polygons

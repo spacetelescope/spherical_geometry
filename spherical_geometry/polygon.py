@@ -30,7 +30,7 @@ class _SingleSphericalPolygon(object):
     therefore we need a way of specifying which is which.
     """
 
-    def __init__(self, points, inside=None, auto_close=False, auto_orient=False):
+    def __init__(self, points, inside=None, auto_close=False):
         r"""
         Parameters
         ----------
@@ -44,16 +44,12 @@ class _SingleSphericalPolygon(object):
             polygon must be closed.
 
         inside : An (*x*, *y*, *z*) triple, optional
-            This point must be inside the polygon.  If not provided, the
-            mean of the points will be used.
-        
+            This point must be inside the polygon.  If not provided, an
+            interior point will be calculated
+
         auto_close : bool, optional
-            If True, input polygon is not closed, add the initial point
-            to the polygon.
-            
-        auto_orient : bool, optional
-            If True and input polygon is counter-clockwise w.r.t the interior
-            point, reverse it.
+            If True, and the input polygon is not closed,
+            add the initial point to the polygon.
 
         """
         if len(points) == 0:
@@ -73,18 +69,18 @@ class _SingleSphericalPolygon(object):
             assert np.array_equal(points[0], points[-1]), 'Polygon is not closed'
 
         self._points = points = np.asanyarray(points)
+        new_inside = self._find_new_inside()
 
-        # Find an interior point if none was passed as an argument
-        if inside is None:  
-            self._inside = self._find_new_inside(points)  
-        else:  
-            self._inside = np.asanyarray(inside)  
+        if inside is None:
+            self._inside = np.asanyarray(new_inside)
 
-        if auto_orient and not self.is_clockwise():
-            self._points = points = points[::-1]
-            # Inside point may have changed if points re-ordered  
-            if inside is None:  
-                self._inside = self._find_new_inside(points)  
+            if not self.is_clockwise():
+                self._points = points[::-1]
+        else:
+            self._inside = np.asanyarray(inside)
+
+            if self.contains_point(new_inside) != self.is_clockwise():
+                self._points = points[::-1]
 
         # TODO: Detect self-intersection and fix
 
@@ -115,23 +111,24 @@ class _SingleSphericalPolygon(object):
 
     def is_clockwise(self):
         """
-        Return True if the points in this polygon are in clockwise order
+        Return True if the points in this polygon are in clockwise order.
+
+        The normal vector to the two arcs containing a vertes points outward
+        from the sphere if the angle is clockwise and inward if the angle is
+        counter-clockwise. The sign of the inner product of the normal vector
+        with the vertex tells you this. The polygon is ordered clockwise if
+        the vertices are predominantly clockwise and counter-clockwise if
+        the reverse.
+
         """
-        count = 0
-        npoints = len(self.points) - 1
-        if npoints > 2:
-            for i in range(npoints): 
-                angle = great_circle_arc.angle(self._points[i+1],
-                                               self._inside, 
-                                               self._points[i],
-                                               degrees=False)
-                # Keep count of the number of clockwise turns
-                if angle <= np.pi:
-                    count += 1
-                else:
-                    count -= 1
-        return count >= 0
-            
+
+        points = np.vstack((self._points, self._points[1]))
+        A = points[:-2]
+        B = points[1:-1]
+        C = points[2:]
+        orient = great_circle_arc.triple_product(A-B, C-B, B)
+        return np.sum(orient) > 0.0
+
     def iter_polygons_flat(self):
         """
         Iterate over all base polygons that make up this multi-polygon
@@ -156,7 +153,7 @@ class _SingleSphericalPolygon(object):
 
     @classmethod
     def from_lonlat(cls, lon, lat, center=None, degrees=True,
-                    auto_close=False, auto_orient=False):
+                    auto_close=False):
         r"""
         Create a new `SphericalPolygon` from a list of (*longitude*, *latitude*)
         points.
@@ -177,14 +174,10 @@ class _SingleSphericalPolygon(object):
         degrees : bool, optional
             If `True`, (default) *lon* and *lat* are in decimal degrees,
             otherwise in radians.
-    
+
         auto_close : bool, optional
             If True, input polygon is not closed, add the initial lon, lat pair
             to the polygon.
-            
-        auto_orient: bool, optional
-            If True and input polygon is counter-clockwise w.r.t the interior
-            point, reverse it.
 
         Returns
         -------
@@ -201,8 +194,7 @@ class _SingleSphericalPolygon(object):
         else:
             center = vector.lonlat_to_vector(*center, degrees=degrees)
 
-        return cls(points, center, auto_close=auto_close,
-                   auto_orient=auto_orient)
+        return cls(points, center, auto_close=auto_close)
 
     @classmethod
     def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
@@ -248,7 +240,7 @@ class _SingleSphericalPolygon(object):
         else:
             perp = np.cross([u, v, w], [0., 0., 1.])
         perp = vector.normalize_vector(perp)
-        
+
         # Rotate by radius around the perpendicular vector to get the
         # "pen"
         x, y, z = vector.rotate_around(
@@ -329,9 +321,10 @@ class _SingleSphericalPolygon(object):
 
         return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
 
-    @classmethod
-    def _contains_point(cls, point, P, r):
+    def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
+        if np.array_equal(r, point):
+            return True
 
         intersects = great_circle_arc.intersects(P[:-1], P[1:], r, point)
         crossings = np.sum(intersects)
@@ -367,7 +360,7 @@ class _SingleSphericalPolygon(object):
 
        If `True`, (default) *lon* and *lat* are in decimal degrees,
        otherwise in radians.
-       
+
         Returns
         -------
         contains : bool
@@ -473,7 +466,7 @@ class _SingleSphericalPolygon(object):
         .. math::
 
             S = \theta - (n - 2) \pi
-        
+
         The area can be negative if the points on the polygon are ordered
         counter-clockwise. Take the absolute value if that is not desired.
         """
@@ -486,13 +479,7 @@ class _SingleSphericalPolygon(object):
                 points[:-2], points[1:-1], points[2:], degrees=False),
             great_circle_arc.angle(
                 points[-2], points[0], points[1], degrees=False)])
-        sum = np.sum(angles) - (len(angles) - 2) * np.pi
-
-        # Return a negative area if the points in the polygon
-        # are counter-clockwise
-        if not self.is_clockwise():
-            sum = sum - 4.0 * np.pi
-        return sum
+        return np.sum(angles) - (len(angles) - 2) * np.pi
 
     def union(self, other):
         """
@@ -526,32 +513,28 @@ class _SingleSphericalPolygon(object):
 
         return g.union()
 
-    @classmethod
-    def _find_new_inside(cls, points):
+    def _find_new_inside(self):
         """
         Finds an acceptable inside point inside of *points* that is
         also inside of *polygons*.  Used by the intersection
         algorithm and the area computation.
         """
-        npoints = len(points)
+        npoints = len(self._points)
         if npoints > 4:
-            candidates = []
-            for i in range(npoints - 1):
-                A = points[i]
-                B = points[i+1]
-                C = points[(i+2) % (len(points) - 1)]
-                angle = great_circle_arc.angle(A, B, C, degrees=False)
-                if angle <= np.pi:
-                    inside = great_circle_arc.midpoint(A, C)
-                    candidates.append((angle, list(inside)))
-
-            if len(candidates) > 0:
-                candidates.sort()
-                return np.array(candidates[0][1])
-
-        # Fall back on computing the mean point
-        inside = points.mean(axis=0)
-        vector.normalize_vector(inside, output=inside)
+            points = np.vstack((self._points, self._points[1]))
+            A = points[:-2]
+            B = points[1:-1]
+            C = points[2:]
+            orient = great_circle_arc.triple_product(A-B, C-B, B)
+            if np.sum(orient) < 0.0:
+                orient = -1.0 * orient
+            midpoint = great_circle_arc.midpoint(A, C)
+            candidate = max(zip(orient, midpoint), key=lambda x: x[0])
+            inside = candidate[1]
+        else:
+            # Fall back on computing the mean point
+            inside = self._points.mean(axis=0)
+            vector.normalize_vector(inside, output=inside)
         return inside
 
 
@@ -661,7 +644,7 @@ class SphericalPolygon(object):
     This class contains a list of disjoint closed polygons.
     """
 
-    def __init__(self, init, inside=None, auto_close=False, auto_orient=False):
+    def __init__(self, init, inside=None, auto_close=False):
         r"""
         Parameters
         ----------
@@ -687,10 +670,8 @@ class SphericalPolygon(object):
         auto_close : bool, optional
             If True, input polygon is not closed, add the initial point
             to the polygon.
-            
-        auto_orient: bool, optional
-            If True and input polygon is counter-clockwise w.r.t the interior
-            point, reverse it.
+
+
         """
         from . import graph
         for polygon in init:
@@ -701,8 +682,7 @@ class SphericalPolygon(object):
             return
 
         self._polygons = (_SingleSphericalPolygon(init, inside,
-                                                  auto_close=auto_close,
-                                                  auto_orient=auto_orient),)
+                                                  auto_close=auto_close),)
 
         polygons = []
         for polygon in self.iter_polygons_flat():
@@ -757,10 +737,20 @@ class SphericalPolygon(object):
         """
         Return True if all subpolygons are clockwise
         """
+        all = True
+        any = False
         for polygon in self._polygons:
-            if not polygon.is_clockwise():
-                return False
-        return True
+            cw = polygon.is_clockwise()
+            all = all and cw
+            any = any or cw
+
+        if all and any:
+            cw = True
+        elif not all and not any:
+            cw = False
+        else:
+            cw = None
+        return cw
 
     def to_lonlat(self):
         """
@@ -778,7 +768,7 @@ class SphericalPolygon(object):
 
     def to_radec(self):
         """
-        Convert the `SphericalPolygon` footprint to right ascension and 
+        Convert the `SphericalPolygon` footprint to right ascension and
         declination coordinates.
 
         Returns
@@ -791,7 +781,7 @@ class SphericalPolygon(object):
 
     @classmethod
     def from_lonlat(cls, lon, lat, center=None, degrees=True,
-                    auto_close=False, auto_orient=False):
+                    auto_close=False):
         r"""
         Create a new `SphericalPolygon` from a list of (*lon*, *lat*)
         points.
@@ -816,10 +806,7 @@ class SphericalPolygon(object):
         auto_close : bool, optional
             If True, input polygon is not closed, add the initial ;pn, lat pair
             to the polygon.
-            
-        auto_orient: bool, optional
-            If True and input polygon is counter-clockwise w.r.t the interior
-            point, reverse it.
+
 
         Returns
         -------
@@ -828,11 +815,11 @@ class SphericalPolygon(object):
         return cls([
             _SingleSphericalPolygon.from_lonlat(
                 lon, lat, center=center, degrees=degrees,
-                auto_close=auto_close, auto_orient=auto_orient)])
+                auto_close=auto_close)])
 
     @classmethod
     def from_radec(cls, ra, dec, center=None, degrees=True,
-                   auto_close=False, auto_orient=False):
+                   auto_close=False):
         r"""
         Create a new `SphericalPolygon` from a list of (*ra*, *dec*)
         points.
@@ -857,10 +844,6 @@ class SphericalPolygon(object):
         auto_close : bool, optional
             If True, input polygon is not closed, add the initial ra, dec pair
             to the polygon.
-            
-        auto_orient: bool, optional
-            If True and input polygon is counter-clockwise w.r.t the interior
-            point, reverse it.
 
         Returns
         -------
@@ -869,10 +852,10 @@ class SphericalPolygon(object):
         return cls([
             _SingleSphericalPolygon.from_lonlat(
                 ra, dec, center=center, degrees=degrees,
-                auto_close=auto_close, auto_orient=auto_orient)])
+                auto_close=auto_close)])
 
     @classmethod
-    def from_cone(cls, lon, lat, radius, degrees=True, steps=16.0):
+    def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
         r"""
         Create a new `SphericalPolygon` from a cone (otherwise known
         as a "small circle") defined using (*lon*, *lat*, *radius*).
@@ -963,7 +946,7 @@ class SphericalPolygon(object):
 
        If `True`, (default) *lon* and *lat* are in decimal degrees,
        otherwise in radians.
-       
+
         Returns
         -------
         contains : bool
@@ -1138,7 +1121,7 @@ class SphericalPolygon(object):
                 if polya.intersects_poly(polyb):
                     subpolygons = polya.intersection(polyb)
                     all_polygons.extend(subpolygons.iter_polygons_flat())
-                
+
         return SphericalPolygon(all_polygons)
 
     @classmethod
@@ -1168,7 +1151,7 @@ class SphericalPolygon(object):
             else:
                 results = results.intersection(polygon)
 
-        return results                
+        return results
 
     def overlap(self, other):
         r"""
