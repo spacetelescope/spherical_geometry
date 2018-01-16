@@ -323,7 +323,7 @@ class _SingleSphericalPolygon(object):
 
     def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
-        if np.array_equal(r, point):
+        if great_circle_arc.same_point(r, point):
             return True
 
         intersects = great_circle_arc.intersects(P[:-1], P[1:], r, point)
