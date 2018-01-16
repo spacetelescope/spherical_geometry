@@ -80,6 +80,10 @@ def triple_product(A, B, C):
     return inner1d(C, _fast_cross(A, B))
 
 
+if HAS_C_UFUNCS:
+    triple_product = math_util.triple_product
+
+
 def same_point(A, B, tol=1.0e-9):
     r"""
     Returns true if two points, or arrays of points considered pairwise
