@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import os.path
+import math
 import random
 
 from astropy.tests.helper import raises
@@ -35,6 +36,30 @@ def test_normalize_unit_vector():
         xyzn = vector.normalize_vector(xyz)
         l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
         assert_almost_equal(l, 1.0)
+
+def test_same_point():
+    angle = 1.0
+    A = np.asarray([1.0, 0.0, 0.0])
+    B = []
+    for i in range(20):
+        B.append([math.cos(angle), math.sin(angle), 0])
+        angle = angle / 10.0
+    B = np.asanyarray(B)
+    same = great_circle_arc.same_point(A, B, tol=2.0e-8)
+    assert np.all(same[8:])
+
+def test_same_arc():
+    angle = 1.0
+    root2 = 0.5 * math.sqrt(2.0)
+    A = np.asarray([root2, 0.0, root2])
+    B = np.asarray([0.0, 0.0, 1.0])
+    C = []
+    for i in range(20):
+        C.append([math.cos(angle), math.sin(angle), 0])
+        angle = angle / 10.0
+    C = np.asarray(C)
+    same = great_circle_arc.same_arc(A, B, C, tol=2.0e-8)
+    assert np.all(same[8:])
 
 def test_lonlat_to_vector():
     npx, npy, npz = vector.lonlat_to_vector(np.arange(-360, 360, 1), 90)
@@ -98,33 +123,30 @@ def test_vector_to_radec():
     assert_almost_equal(lat, 0.0)
 
 def test_is_clockwise():
-    clockwise_poly = polygon._SingleSphericalPolygon.from_cone(0.0, 90.0, 1.0)
+    clockwise_poly = polygon.SphericalPolygon.from_cone(0.0, 90.0, 1.0)
     assert clockwise_poly.is_clockwise()
-    
-    outside = [-1.0  * x for x in clockwise_poly.inside]
-    complement_poly = polygon._SingleSphericalPolygon(clockwise_poly.points,
-                                                      inside=outside)
+
+    points = list(clockwise_poly.points)[0]
+    inside = list(clockwise_poly.inside)[0]
+    outside = -1.0 * inside
+
+    rpoints = points[::-1]
+    reverse_poly = polygon.SphericalPolygon(rpoints, inside=inside)
+    assert reverse_poly.is_clockwise()
+
+    complement_poly = polygon.SphericalPolygon(points, inside=outside)
     assert not complement_poly.is_clockwise()
-    
-    rpoints = clockwise_poly.points[::-1]
-    reverse_poly = polygon._SingleSphericalPolygon(rpoints,
-                                                  inside=clockwise_poly.inside)
-    assert not reverse_poly.is_clockwise()
-    
-    reverse_complement_poly = polygon._SingleSphericalPolygon(rpoints,
-                                                              inside=outside)
-    assert reverse_complement_poly.is_clockwise()
 
 
 def test_midpoint():
     avec = [(float(i+7), float(j+7))
             for i in range(0, 11, 5)
             for j in range(0, 11, 5)]
-    
+
     bvec = [(float(i+10), float(j+10))
              for i in range(0, 11, 5)
              for j in range(0, 11, 5)]
-    
+
     for a in avec:
         A = np.asarray(vector.lonlat_to_vector(a[0], a[1]))
         for b in bvec:
@@ -134,7 +156,7 @@ def test_midpoint():
             bclen = great_circle_arc.length(B, C)
             assert abs(aclen - bclen) < 1.0e-10
 
-    
+
 def test_intersects_point():
     A = np.asarray(vector.lonlat_to_vector(60.0, 0.0))
     B = np.asarray(vector.lonlat_to_vector(60.0, 30.0))
@@ -183,7 +205,7 @@ def test_overlap():
 
 def test_from_wcs():
     from astropy.io import fits
-    
+
     filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
     hdulist = fits.open(filename)
     header = hdulist['SCI'].header
@@ -194,7 +216,7 @@ def test_from_wcs():
         lat = lonlat[1]
         assert np.all(np.absolute(lon - 6.027148333333) < 0.2)
         assert np.all(np.absolute(lat + 72.08351111111) < 0.2)
-        
+
 def test_intersects_poly_simple():
     lon1 = [-10, 10, 10, -10, -10]
     lat1 = [30, 30, 0, 0, 30]
@@ -428,7 +450,7 @@ def test_cone_area():
     for lon in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
         for lat in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
             area = polygon.SphericalPolygon.from_cone(lon, lat, 30, steps=64).area()
-            if saved_area is None: saved_area = area 
+            if saved_area is None: saved_area = area
             assert_almost_equal(area, saved_area)
 
 def test_fast_area():
@@ -449,17 +471,17 @@ def test_fast_area():
         [ 0.35331737,  0.6351013 , -0.68688658]])
 
     c = np.array([  # Counterclockwise
-        [ 0.35331737,  0.6351013 , -0.68688658],
-        [ 0.35328374,  0.63515279, -0.68685627],
-        [ 0.35328614,  0.63515318, -0.68685467],
-        [ 0.35328338,  0.63515742, -0.68685217],
-        [ 0.35360581,  0.63521041, -0.68663722],
-        [ 0.3536442 ,  0.63515101, -0.68667239],
-        [ 0.35331737,  0.6351013 , -0.68688658]])
+         [ 0.35327617,  0.6351561 , -0.6868571 ],
+         [ 0.35331262,  0.63510039, -0.68688987],
+         [ 0.35298984,  0.63505081, -0.68710162],
+         [ 0.35295533,  0.63510299, -0.68707112],
+         [ 0.35327617,  0.6351561 , -0.6868571 ]])
 
-    apoly = polygon._SingleSphericalPolygon(a)
-    bpoly = polygon._SingleSphericalPolygon(b)
-    cpoly = polygon._SingleSphericalPolygon(c)
+    c_inside = [ -0.35327617, -0.6351561 , 0.6868571 ]
+
+    apoly = polygon.SphericalPolygon(a)
+    bpoly = polygon.SphericalPolygon(b)
+    cpoly = polygon.SphericalPolygon(c, inside=c_inside)
 
     aarea = apoly.area()
     barea = bpoly.area()
@@ -467,7 +489,7 @@ def test_fast_area():
 
     assert aarea > 0.0 and aarea < 2.0 * np.pi
     assert barea > 0.0 and barea < 2.0 * np.pi
-    assert carea > -2.0 * np.pi and carea < 0.0
+    assert carea > 2.0 * np.pi and carea < 4.0 * np.pi
 
 
 @raises(ValueError)

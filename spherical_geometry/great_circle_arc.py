@@ -13,6 +13,8 @@ section of those circles between two points on the unit sphere.
 
 from __future__ import with_statement, division, absolute_import, unicode_literals
 
+import math
+
 # THIRD-PARTY
 import numpy as np
 
@@ -29,11 +31,8 @@ if HAS_C_UFUNCS:
 else:
     from numpy.core.umath_tests import inner1d
 
-
-
 __all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
-
 
 def _fast_cross(a, b):
     """
@@ -75,6 +74,43 @@ if HAS_C_UFUNCS:
     def _cross_and_normalize(A, B):
         with np.errstate(invalid='ignore'):
             return math_util.cross_and_norm(A, B)
+
+
+def triple_product(A, B, C):
+    return inner1d(C, _fast_cross(A, B))
+
+
+if HAS_C_UFUNCS:
+    triple_product = math_util.triple_product
+
+
+def same_point(A, B, tol=1.0e-9):
+    r"""
+    Returns true if two points, or arrays of points considered pairwise
+    are close enough to be considered the same point
+
+    Parameters
+    ----------
+    A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
+
+    tol : If distance between two points is < tol (in radians), they are
+          considered the same
+    """
+    return inner1d(A, B) >= math.cos(tol)
+
+def same_arc(A, B, C, tol=1.0e-9):
+    r"""
+    Returns true if C is close enough to be considered to be on the
+    same great circle arc as A and B. This does not test if C is
+    between A and B.
+
+    Parameters
+    ----------
+    A, B: Endpoints of the arc
+
+    C:    Point which may lie on the arc
+    """
+    return abs(triple_product(A, B, C)) <= math.sin(tol)
 
 
 def intersection(A, B, C, D):

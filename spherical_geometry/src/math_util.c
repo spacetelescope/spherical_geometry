@@ -392,6 +392,52 @@ static void * cross_and_norm_data[] = { (void *)NULL };
 static char cross_and_norm_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
+  triple_product
+*/
+
+char *triple_product_signature = "(i),(i),(i)->()";
+
+/*
+ * Finds the triple_product at *B* between *A*, *B*,  and *C*.
+ */
+static void
+DOUBLE_triple_product(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    qd A[3];
+    qd B[3];
+    qd C[3];
+
+    qd ABX[3];
+    qd prod;
+
+    unsigned int old_cw;
+
+    INIT_OUTER_LOOP_4
+    intp is1=steps[0], is2=steps[1], is3=steps[2];
+
+    fpu_fix_start(&old_cw);
+
+    BEGIN_OUTER_LOOP_4
+        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+
+        load_point_qd(ip1, is1, A);
+        load_point_qd(ip2, is2, B);
+        load_point_qd(ip3, is3, C);
+
+        cross_qd(A, B, ABX);
+        dot_qd(ABX, C, &prod);
+
+        *(double *)op = prod.x[0];
+    END_OUTER_LOOP
+
+    fpu_fix_end(&old_cw);
+}
+
+static PyUFuncGenericFunction triple_product_functions[] = { DOUBLE_triple_product };
+static void * triple_product_data[] = { (void *)NULL };
+static char triple_product_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+
+/*///////////////////////////////////////////////////////////////////////////
   intersection
 */
 
@@ -730,6 +776,16 @@ addUfuncs(PyObject *dictionary) {
         "     \"(i),(i)->(i)\" \n",
         0, cross_and_norm_signature);
     PyDict_SetItemString(dictionary, "cross_and_norm", f);
+    Py_DECREF(f);
+
+    f = PyUFunc_FromFuncAndDataAndSignature(
+        triple_product_functions, triple_product_data, triple_product_signatures, 2, 3, 1,
+        PyUFunc_None, "triple_product",
+        "Calculate the triple_product between A, B and C.\n" \
+        "     \"(i),(i),(i)->()\" \n",
+        0, triple_product_signature);
+
+    PyDict_SetItemString(dictionary, "triple_product", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
