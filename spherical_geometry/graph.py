@@ -22,6 +22,7 @@ from . import vector
 
 __all__ = ['Graph']
 
+
 # Set to True to enable some sanity checks
 DEBUG = True
 
@@ -83,8 +84,7 @@ class Graph:
                 empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
-            return great_circle_arc.same_point(self._point, other._point,
-                                               tol=thresh)
+            return np.array_equal(self._point, other._point)
 
 
     class Edge:
@@ -589,7 +589,7 @@ class Graph:
         edges = sorted(self._edges, key=edge_order)
         starts, ends = self._get_edge_points(edges)
 
-        nodes = sorted(self._nodes, key=node_order) ## DBG FIX
+        nodes = sorted(self._nodes, key=node_order)
         nodes_array = np.array([x._point for x in nodes])
 
         # Split all edges by any nodes that intersect them
@@ -815,6 +815,11 @@ class Graph:
         """
         from . import polygon as mpolygon
 
+        def edge_normal(edge):
+            # THe normal vector to the plane defining the arc
+            return great_circle_arc._cross_and_normalize(edge._nodes[0]._point,
+                                                         edge._nodes[1]._point)
+
         def pick_next_edge(node, last_edge):
             # Pick the next edge when arriving at a node from
             # last_edge.  If there's only one other edge, the choice
@@ -828,22 +833,18 @@ class Graph:
                     candidates.append(edge)
             if len(candidates) == 0:
                 raise ValueError("No more edges to follow")
-            elif len(candidates) == 1:
+            elif len(candidates) == 1 or last_edge is None:
                 return candidates[0]
 
-            for edge in candidates:
-                last_edge_cross = math_util.cross(
-                    last_edge._nodes[0]._point, last_edge._nodes[1]._point)
-                if (not
-                    np.all(math_util.cross(
-                        edge._nodes[0]._point, edge._nodes[1]._point) ==
-                           last_edge_cross) or
-                    np.all(math_util.cross(
-                        edge._nodes[0]._point, edge._nodes[1]._point) ==
-                           last_edge_cross)):
-                    return edge
+            last_edge_cross = edge_normal(last_edge)
+            edge_cross = [edge_normal(edge) for edge in candidates]
+            edge_cross = np.asanyarray(edge_cross)
+            dot = great_circle_arc.inner1d(edge_cross, last_edge_cross)
 
-            return candidates[0]
+            schwartz = zip(dot, candidates)
+            schwartz = sorted(schwartz, key=lambda x: x[0])
+            middle = len(candidates) // 2
+            return schwartz[middle][1]
 
         polygons = []
         edges = set(self._edges)  # copy
@@ -853,14 +854,15 @@ class Graph:
         while len(edges):
             points = []
             edge = edges.pop()
+            edge._followed = True
             start_node = node = edge._nodes[0]
+            points.append(node._point)
+            node = edge._nodes[1]
+            points.append(node._point)
             while True:
-                # TODO: Do we need this if clause any more?
-                if len(points):
-                    if not np.array_equal(points[-1], node._point):
-                        points.append(node._point)
-                else:
+                if not np.array_equal(points[-1], node._point):
                     points.append(node._point)
+
                 edge = pick_next_edge(node, edge)
                 edge._followed = True
                 edges.discard(edge)

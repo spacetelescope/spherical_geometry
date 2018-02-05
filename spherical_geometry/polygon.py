@@ -323,7 +323,7 @@ class _SingleSphericalPolygon(object):
 
     def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
-        if great_circle_arc.same_point(r, point):
+        if np.array_equal(r, point):
             return True
 
         intersects = great_circle_arc.intersects(P[:-1], P[1:], r, point)
@@ -473,12 +473,10 @@ class _SingleSphericalPolygon(object):
         if len(self._points) < 3:
             return np.array(0.0)
 
-        points = self._points
-        angles = np.hstack([
-            great_circle_arc.angle(
-                points[:-2], points[1:-1], points[2:], degrees=False),
-            great_circle_arc.angle(
-                points[-2], points[0], points[1], degrees=False)])
+        points = np.vstack((self._points, self._points[1]))
+        angles = great_circle_arc.angle(points[:-2], points[1:-1],
+                                        points[2:], degrees=False)
+
         return np.sum(angles) - (len(angles) - 2) * np.pi
 
     def union(self, other):
