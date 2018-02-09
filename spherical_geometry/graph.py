@@ -515,8 +515,11 @@ class Graph:
         """
         Convert a graph containing cut lines into a list of disjoint polygons
         """
-        if self._remove_cut_lines():
-            self._sanity_check("disjoint - remove cut lines")
+        changed = self._remove_cut_lines()
+        self._sanity_check("disjoint - remove cut lines")
+        changed = self._find_all_intersections() or changed
+        self._sanity_check("disjoint - find all intersections")
+        if changed:
             polygons = self._trace_polygons()
         else:
             polygons = list(self._source_polygons)
@@ -593,6 +596,7 @@ class Graph:
         nodes_array = np.array([x._point for x in nodes])
 
         # Split all edges by any nodes that intersect them
+        changed = False
         while len(edges) > 1:
             AB = edges.pop(0)
             A, B = list(AB._nodes)
@@ -604,6 +608,7 @@ class Graph:
             for index in intersection_indices:
                 node = nodes[index]
                 if node not in AB._nodes:
+                    changed = True
                     newA, newB = self._split_edge(AB, node)
 
                     new_edges = [
@@ -615,6 +620,7 @@ class Graph:
                             end_point._source_polygons)
                     edges = edges + new_edges
                     break
+        return changed
 
     def _find_arc_to_arc_intersections(self):
         # For speed, we want to vectorize all of the intersection
@@ -629,6 +635,7 @@ class Graph:
 
         # Calculate edge-to-edge intersections and break
         # edges on the intersection point.
+        changed = False
         while len(edges) > 1:
             AB = edges.pop(0)
             A = starts[0]; starts = starts[1:]  # numpy equiv of "pop(0)"
@@ -649,6 +656,7 @@ class Graph:
             # we want to eliminate intersections that only intersect
             # at the end points
             for j in intersection_indices:
+                changed = True
                 CD = edges[j]
                 E = intersections[j]
 
@@ -683,6 +691,7 @@ class Graph:
                 ends = np.vstack(
                     (ends[:j], ends[j+1:], new_ends))
                 break
+        return changed
 
     def _find_all_intersections(self):
         """
@@ -690,8 +699,9 @@ class Graph:
         intersecting pair, four new edges are created around the
         intersection point.
         """
-        self._find_point_to_arc_intersections()
-        self._find_arc_to_arc_intersections()
+        changed = self._find_point_to_arc_intersections()
+        changed = self._find_arc_to_arc_intersections() or changed
+        return changed
 
     def _remove_interior_edges(self):
         """
