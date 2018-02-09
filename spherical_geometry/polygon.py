@@ -82,8 +82,6 @@ class _SingleSphericalPolygon(object):
             if self.contains_point(new_inside) != self.is_clockwise():
                 self._points = points[::-1]
 
-        # TODO: Detect self-intersection and fix
-
     def __copy__(self):
         return deepcopy(self)
 
@@ -693,6 +691,9 @@ class SphericalPolygon(object):
         return deepcopy(self)
 
     copy = __copy__
+
+    def __len__(self):
+        return len(self._polygons)
 
     def iter_polygons_flat(self):
         """
