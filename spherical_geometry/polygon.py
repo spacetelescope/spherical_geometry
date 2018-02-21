@@ -30,7 +30,7 @@ class _SingleSphericalPolygon(object):
     therefore we need a way of specifying which is which.
     """
 
-    def __init__(self, points, inside=None, auto_close=False):
+    def __init__(self, points, inside=None):
         r"""
         Parameters
         ----------
@@ -47,9 +47,6 @@ class _SingleSphericalPolygon(object):
             This point must be inside the polygon.  If not provided, an
             interior point will be calculated
 
-        auto_close : bool, optional
-            If True, and the input polygon is not closed,
-            add the initial point to the polygon.
 
         """
         if len(points) == 0:
@@ -59,14 +56,12 @@ class _SingleSphericalPolygon(object):
             self._points = np.asanyarray(points)
             return
 
-        if auto_close:
+        if not np.array_equal(points[0], points[-1]):
             points = list(points[:])
             points.append(points[0])
 
         if len(points) < 3:
             raise ValueError("Polygon made of too few points")
-        else:
-            assert np.array_equal(points[0], points[-1]), 'Polygon is not closed'
 
         self._points = points = np.asanyarray(points)
         new_inside = self._find_new_inside()
@@ -148,176 +143,6 @@ class _SingleSphericalPolygon(object):
             return np.array([])
         return vector.vector_to_lonlat(self.points[:,0], self.points[:,1],
                                       self.points[:,2], degrees=True)
-
-    @classmethod
-    def from_lonlat(cls, lon, lat, center=None, degrees=True,
-                    auto_close=False):
-        r"""
-        Create a new `SphericalPolygon` from a list of (*longitude*, *latitude*)
-        points.
-
-        Parameters
-        ----------
-        lon, lat : 1-D arrays of the same length
-            The vertices of the polygon in longitude and
-            latitude.  It must be \"closed\", i.e., that is, the
-            last point is the same as the first.
-
-        center : (*lon*, *lat*) pair, optional
-            A point inside of the polygon to define its inside.  If no
-            *center* point is provided, the mean of the polygon's
-            points in vector space will be used.  That approach may
-            not work for concave polygons.
-
-        degrees : bool, optional
-            If `True`, (default) *lon* and *lat* are in decimal degrees,
-            otherwise in radians.
-
-        auto_close : bool, optional
-            If True, input polygon is not closed, add the initial lon, lat pair
-            to the polygon.
-
-        Returns
-        -------
-        polygon : `SphericalPolygon` object
-        """
-        # Convert to Cartesian
-        x, y, z = vector.lonlat_to_vector(lon, lat, degrees=degrees)
-
-        points = np.dstack((x, y, z))[0]
-
-        if center is None:
-            center = points.mean(axis=0)
-            vector.normalize_vector(center, output=center)
-        else:
-            center = vector.lonlat_to_vector(*center, degrees=degrees)
-
-        return cls(points, center, auto_close=auto_close)
-
-    @classmethod
-    def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
-        r"""
-        Create a new `_SingleSphericalPolygon` from a cone (otherwise known
-        as a "small circle") defined using (*lon*, *lat*, *radius*).
-
-        The cone is not represented as an ideal circle on the sphere,
-        but as a series of great circle arcs.  The resolution of this
-        conversion can be controlled using the *steps* parameter.
-
-        Parameters
-        ----------
-        lon, lat : float scalars
-            This defines the center of the cone
-
-        radius : float scalar
-            The radius of the cone
-
-        degrees : bool, optional
-            If `True`, (default) *lon*, *lat* and *radius* are in
-            decimal degrees, otherwise in radians.
-
-        steps : int, optional
-            The number of steps to use when converting the small
-            circle to a polygon.
-
-        Returns
-        -------
-        polygon : `_SingleSphericalPolygon` object
-        """
-        u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
-        if degrees:
-            radius = np.deg2rad(radius)
-
-        # Get an arbitrary perpendicular vector.  This be be obtained
-        # by crossing (u, v, w) with any unit vector that is not itself.
-        which_min = np.argmin([u*u, v*v, w*w])
-        if which_min == 0:
-            perp = np.cross([u, v, w], [1., 0., 0.])
-        elif which_min == 1:
-            perp = np.cross([u, v, w], [0., 1., 0.])
-        else:
-            perp = np.cross([u, v, w], [0., 0., 1.])
-        perp = vector.normalize_vector(perp)
-
-        # Rotate by radius around the perpendicular vector to get the
-        # "pen"
-        x, y, z = vector.rotate_around(
-            u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
-
-        # Then rotate the pen around the center point all 360 degrees
-        C = np.linspace(0, np.pi * 2.0, steps)
-        # Ensure that the first and last elements are exactly the
-        # same.  2π should equal 0, but with rounding error that isn't
-        # always the case.
-        C[-1] = 0
-        C = C[::-1]
-        X, Y, Z = vector.rotate_around(x, y, z, u, v, w, C, degrees=False)
-
-        return cls(np.dstack((X, Y, Z))[0], (u, v, w))
-
-    @classmethod
-    def from_wcs(cls, fitspath, steps=1, crval=None):
-        r"""
-        Create a new `_SingleSphericalPolygon` from the footprint of a FITS
-        WCS specification.
-
-        This method requires having `astropy <http://astropy.org>`__
-        installed.
-
-        Parameters
-        ----------
-        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
-            Refers to a FITS header containing a WCS specification.
-
-        steps : int, optional
-            The number of steps along each edge to convert into
-            polygon edges.
-
-        Returns
-        -------
-        polygon : `_SingleSphericalPolygon` object
-        """
-        from astropy import wcs as pywcs
-        from astropy.io import fits
-
-        if isinstance(fitspath, fits.Header):
-            header = fitspath
-            wcs = pywcs.WCS(header)
-        elif isinstance(fitspath, pywcs.WCS):
-            wcs = fitspath
-        else:
-            wcs = pywcs.WCS(fitspath)
-        if crval is not None:
-            wcs.wcs.crval = crval
-        xa, ya = [wcs._naxis1, wcs._naxis2]
-
-        length = steps * 4 + 1
-        X = np.empty(length)
-        Y = np.empty(length)
-
-        # Now define each of the 4 edges of the quadrilateral
-        X[0      :steps  ] = np.linspace(1, xa, steps, False)
-        Y[0      :steps  ] = 1
-        X[steps  :steps*2] = xa
-        Y[steps  :steps*2] = np.linspace(1, ya, steps, False)
-        X[steps*2:steps*3] = np.linspace(xa, 1, steps, False)
-        Y[steps*2:steps*3] = ya
-        X[steps*3:steps*4] = 1
-        Y[steps*3:steps*4] = np.linspace(ya, 1, steps, False)
-        X[-1]              = 1
-        Y[-1]              = 1
-
-        # Use wcslib to convert to (lon, lat)
-        lon, lat = wcs.all_pix2world(X, Y, 1)
-
-        # Convert to Cartesian
-        x, y, z = vector.lonlat_to_vector(lon, lat)
-
-        # Calculate an inside point
-        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
-        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
-
-        return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
 
     def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
@@ -640,7 +465,7 @@ class SphericalPolygon(object):
     This class contains a list of disjoint closed polygons.
     """
 
-    def __init__(self, init, inside=None, auto_close=False):
+    def __init__(self, init, inside=None):
         r"""
         Parameters
         ----------
@@ -663,11 +488,6 @@ class SphericalPolygon(object):
             the polygon.  If not provided, the mean of the points will
             be used.
 
-        auto_close : bool, optional
-            If True, input polygon is not closed, add the initial point
-            to the polygon.
-
-
         """
         from . import graph
         for polygon in init:
@@ -677,8 +497,7 @@ class SphericalPolygon(object):
             self._polygons = tuple(init)
             return
 
-        self._polygons = (_SingleSphericalPolygon(init, inside,
-                                                  auto_close=auto_close),)
+        self._polygons = (_SingleSphericalPolygon(init, inside),)
 
         polygons = []
         for polygon in self.iter_polygons_flat():
@@ -765,24 +584,13 @@ class SphericalPolygon(object):
         for polygon in self.iter_polygons_flat():
             yield polygon.to_lonlat()
 
-    def to_radec(self):
-        """
-        Convert the `SphericalPolygon` footprint to right ascension and
-        declination coordinates.
-
-        Returns
-        -------
-        polyons : iterator
-            Each element in the iterator is a tuple of the form (*lon*,
-            *lat*), where each is an array of points.
-        """
-        yield self.to_lonlat()
+    # to_ra_dec is an alias for to_lonlat
+    to_radec = to_lonlat
 
     @classmethod
-    def from_lonlat(cls, lon, lat, center=None, degrees=True,
-                    auto_close=False):
+    def from_lonlat(cls, lon, lat, center=None, degrees=True):
         r"""
-        Create a new `SphericalPolygon` from a list of (*lon*, *lat*)
+        Create a new `SphericalPolygon` from a list of (*longitude*, *latitude*)
         points.
 
         Parameters
@@ -793,70 +601,33 @@ class SphericalPolygon(object):
             last point is the same as the first.
 
         center : (*lon*, *lat*) pair, optional
-            A point inside of the polygon to define its inside.  If no
-            *center* point is provided, the mean of the polygon's
-            points in vector space will be used.  That approach may
-            not work for concave polygons.
+            A point inside of the polygon to define its inside.
 
         degrees : bool, optional
             If `True`, (default) *lon* and *lat* are in decimal degrees,
             otherwise in radians.
 
-        auto_close : bool, optional
-            If True, input polygon is not closed, add the initial ;pn, lat pair
-            to the polygon.
-
-
         Returns
         -------
         polygon : `SphericalPolygon` object
         """
-        return cls([
-            _SingleSphericalPolygon.from_lonlat(
-                lon, lat, center=center, degrees=degrees,
-                auto_close=auto_close)])
+        # Convert to Cartesian
+        x, y, z = vector.lonlat_to_vector(lon, lat, degrees=degrees)
 
-    @classmethod
-    def from_radec(cls, ra, dec, center=None, degrees=True,
-                   auto_close=False):
-        r"""
-        Create a new `SphericalPolygon` from a list of (*ra*, *dec*)
-        points.
+        points = np.dstack((x, y, z))[0]
 
-        Parameters
-        ----------
-        ra, dec : 1-D arrays of the same length
-            The vertices of the polygon in right ascension and
-            declination.  It must be \"closed\", i.e., that is, the
-            last point is the same as the first.
+        if center is not None:
+            center = vector.lonlat_to_vector(*center, degrees=degrees)
 
-        center : (*ra*, *dec*) pair, optional
-            A point inside of the polygon to define its inside.  If no
-            *center* point is provided, the mean of the polygon's
-            points in vector space will be used.  That approach may
-            not work for concave polygons.
+        return cls(points, center)
 
-        degrees : bool, optional
-            If `True`, (default) *ra* and *dec* are in decimal degrees,
-            otherwise in radians.
-
-        auto_close : bool, optional
-            If True, input polygon is not closed, add the initial ra, dec pair
-            to the polygon.
-
-        Returns
-        -------
-        polygon : `SphericalPolygon` object
-        """
-        return cls([
-            _SingleSphericalPolygon.from_lonlat(
-                ra, dec, center=center, degrees=degrees,
-                auto_close=auto_close)])
+    # from_radec is an alias for from_lon_lat
+    from_radec = from_lonlat
 
     @classmethod
     def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
         r"""
-        Create a new `SphericalPolygon` from a cone (otherwise known
+        Create a new `_SingleSphericalPolygon` from a cone (otherwise known
         as a "small circle") defined using (*lon*, *lat*, *radius*).
 
         The cone is not represented as an ideal circle on the sphere,
@@ -881,16 +652,43 @@ class SphericalPolygon(object):
 
         Returns
         -------
-        polygon : `SphericalPolygon` object
+        polygon : `_SingleSphericalPolygon` object
         """
-        return cls([
-            _SingleSphericalPolygon.from_cone(
-                lon, lat, radius, degrees=degrees, steps=steps)])
+        u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
+        if degrees:
+            radius = np.deg2rad(radius)
+
+        # Get an arbitrary perpendicular vector.  This be be obtained
+        # by crossing (u, v, w) with any unit vector that is not itself.
+        which_min = np.argmin([u*u, v*v, w*w])
+        if which_min == 0:
+            perp = np.cross([u, v, w], [1., 0., 0.])
+        elif which_min == 1:
+            perp = np.cross([u, v, w], [0., 1., 0.])
+        else:
+            perp = np.cross([u, v, w], [0., 0., 1.])
+        perp = vector.normalize_vector(perp)
+
+        # Rotate by radius around the perpendicular vector to get the
+        # "pen"
+        x, y, z = vector.rotate_around(
+            u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
+
+        # Then rotate the pen around the center point all 360 degrees
+        C = np.linspace(0, np.pi * 2.0, steps)
+        # Ensure that the first and last elements are exactly the
+        # same.  2π should equal 0, but with rounding error that isn't
+        # always the case.
+        C[-1] = 0
+        C = C[::-1]
+        X, Y, Z = vector.rotate_around(x, y, z, u, v, w, C, degrees=False)
+
+        return cls(np.dstack((X, Y, Z))[0], (u, v, w))
 
     @classmethod
     def from_wcs(cls, fitspath, steps=1, crval=None):
         r"""
-        Create a new `SphericalPolygon` from the footprint of a FITS
+        Create a new `_SingleSphericalPolygon` from the footprint of a FITS
         WCS specification.
 
         This method requires having `astropy <http://astropy.org>`__
@@ -907,11 +705,49 @@ class SphericalPolygon(object):
 
         Returns
         -------
-        polygon : `SphericalPolygon` object
+        polygon : `_SingleSphericalPolygon` object
         """
-        return cls([
-            _SingleSphericalPolygon.from_wcs(
-                fitspath, steps=steps, crval=crval)])
+        from astropy import wcs as pywcs
+        from astropy.io import fits
+
+        if isinstance(fitspath, fits.Header):
+            header = fitspath
+            wcs = pywcs.WCS(header)
+        elif isinstance(fitspath, pywcs.WCS):
+            wcs = fitspath
+        else:
+            wcs = pywcs.WCS(fitspath)
+        if crval is not None:
+            wcs.wcs.crval = crval
+        xa, ya = [wcs._naxis1, wcs._naxis2]
+
+        length = steps * 4 + 1
+        X = np.empty(length)
+        Y = np.empty(length)
+
+        # Now define each of the 4 edges of the quadrilateral
+        X[0      :steps  ] = np.linspace(1, xa, steps, False)
+        Y[0      :steps  ] = 1
+        X[steps  :steps*2] = xa
+        Y[steps  :steps*2] = np.linspace(1, ya, steps, False)
+        X[steps*2:steps*3] = np.linspace(xa, 1, steps, False)
+        Y[steps*2:steps*3] = ya
+        X[steps*3:steps*4] = 1
+        Y[steps*3:steps*4] = np.linspace(ya, 1, steps, False)
+        X[-1]              = 1
+        Y[-1]              = 1
+
+        # Use wcslib to convert to (lon, lat)
+        lon, lat = wcs.all_pix2world(X, Y, 1)
+
+        # Convert to Cartesian
+        x, y, z = vector.lonlat_to_vector(lon, lat)
+
+        # Calculate an inside point
+        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
+        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
+
+        return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
 
     def contains_point(self, point):
         r"""

@@ -37,30 +37,6 @@ def test_normalize_unit_vector():
         l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
         assert_almost_equal(l, 1.0)
 
-def test_same_point():
-    angle = 1.0
-    A = np.asarray([1.0, 0.0, 0.0])
-    B = []
-    for i in range(20):
-        B.append([math.cos(angle), math.sin(angle), 0])
-        angle = angle / 10.0
-    B = np.asanyarray(B)
-    same = great_circle_arc.same_point(A, B, tol=2.0e-8)
-    assert np.all(same[8:])
-
-def test_same_arc():
-    angle = 1.0
-    root2 = 0.5 * math.sqrt(2.0)
-    A = np.asarray([root2, 0.0, root2])
-    B = np.asarray([0.0, 0.0, 1.0])
-    C = []
-    for i in range(20):
-        C.append([math.cos(angle), math.sin(angle), 0])
-        angle = angle / 10.0
-    C = np.asarray(C)
-    same = great_circle_arc.same_arc(A, B, C, tol=2.0e-8)
-    assert np.all(same[8:])
-
 def test_lonlat_to_vector():
     npx, npy, npz = vector.lonlat_to_vector(np.arange(-360, 360, 1), 90)
     assert_almost_equal(npx, 0.0)
@@ -191,7 +167,7 @@ def test_overlap():
             point[0] += offset
             points.append(np.asarray(vector.lonlat_to_vector(point[0],
                                                              point[1])))
-        poly = polygon.SphericalPolygon(points, auto_close=True)
+        poly = polygon.SphericalPolygon(points)
         return poly
 
     first_poly = build_polygon(0.0)
