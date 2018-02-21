@@ -35,8 +35,7 @@ class _SingleSphericalPolygon(object):
         Parameters
         ----------
         points : An Nx3 array of (*x*, *y*, *z*) triples in vector space
-            These points define the boundary of the polygon.  It must
-            be "closed", i.e., the last point is the same as the first.
+            These points define the boundary of the polygon.
 
             It may contain zero points, in which it defines the null
             polygon.  It may not contain one, two or three points.
@@ -337,8 +336,7 @@ class _SingleSphericalPolygon(object):
     def _find_new_inside(self):
         """
         Finds an acceptable inside point inside of *points* that is
-        also inside of *polygons*.  Used by the intersection
-        algorithm and the area computation.
+        also inside of *polygons*.
         """
         npoints = len(self._points)
         if npoints > 4:
@@ -475,18 +473,14 @@ class SphericalPolygon(object):
 
                - An Nx3 array of (*x*, *y*, *z*) triples in Cartesian
                  space.  These points define the boundary of the
-                 polygon.  It must be "closed", i.e., the last point
-                 is the same as the first.
+                 polygon.
 
                  It may contain zero points, in which it defines the
-                 null polygon.  It may not contain one, two or three
-                 points.  Four points are needed to define a triangle,
-                 since the polygon must be closed.
+                 null polygon.  It may not contain one or two points.
 
         inside : An (*x*, *y*, *z*) triple, optional
             If *init* is an array of points, this point must be inside
-            the polygon.  If not provided, the mean of the points will
-            be used.
+            the polygon.  If it is not provided, one will be created.
 
         """
         from . import graph
@@ -597,8 +591,7 @@ class SphericalPolygon(object):
         ----------
         lon, lat : 1-D arrays of the same length
             The vertices of the polygon in longitude and
-            latitude.  It must be \"closed\", i.e., that is, the
-            last point is the same as the first.
+            latitude.
 
         center : (*lon*, *lat*) pair, optional
             A point inside of the polygon to define its inside.
@@ -652,7 +645,7 @@ class SphericalPolygon(object):
 
         Returns
         -------
-        polygon : `_SingleSphericalPolygon` object
+        polygon : `SphericalPolygon` object
         """
         u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
         if degrees:
@@ -705,7 +698,7 @@ class SphericalPolygon(object):
 
         Returns
         -------
-        polygon : `_SingleSphericalPolygon` object
+        polygon : `SphericalPolygon` object
         """
         from astropy import wcs as pywcs
         from astropy.io import fits
