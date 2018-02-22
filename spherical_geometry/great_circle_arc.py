@@ -14,6 +14,7 @@ section of those circles between two points on the unit sphere.
 from __future__ import with_statement, division, absolute_import, unicode_literals
 
 import math
+from .vector import two_d
 
 # THIRD-PARTY
 import numpy as np
@@ -25,6 +26,7 @@ try:
     HAS_C_UFUNCS = True
 except ImportError:
     HAS_C_UFUNCS = False
+
 
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
@@ -63,7 +65,7 @@ def _cross_and_normalize(A, B):
     T = _fast_cross(A, B)
     # Normalization
     l = np.sqrt(np.sum(T ** 2, axis=-1))
-    l = np.expand_dims(l, 2)
+    l = two_d(l)
     # Might get some divide-by-zeros, but we don't care
     with np.errstate(invalid='ignore'):
         TN = T / l
@@ -82,35 +84,6 @@ def triple_product(A, B, C):
 
 if HAS_C_UFUNCS:
     triple_product = math_util.triple_product
-
-
-def same_point(A, B, tol=1.0e-9):
-    r"""
-    Returns true if two points, or arrays of points considered pairwise
-    are close enough to be considered the same point
-
-    Parameters
-    ----------
-    A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
-
-    tol : If distance between two points is < tol (in radians), they are
-          considered the same
-    """
-    return inner1d(A, B) >= math.cos(tol)
-
-def same_arc(A, B, C, tol=1.0e-9):
-    r"""
-    Returns true if C is close enough to be considered to be on the
-    same great circle arc as A and B. This does not test if C is
-    between A and B.
-
-    Parameters
-    ----------
-    A, B: Endpoints of the arc
-
-    C:    Point which may lie on the arc
-    """
-    return abs(triple_product(A, B, C)) <= math.sin(tol)
 
 
 def intersection(A, B, C, D):
@@ -193,7 +166,7 @@ def intersection(A, B, C, D):
     s += np.sign(inner1d(_fast_cross(CDX, C), T))
     s += np.sign(inner1d(_fast_cross(D, CDX), T))
     if T_ndim > 1:
-        s = np.expand_dims(s, 2)
+        s = two_d(s)
 
     cross = np.where(s == -4, -T, np.where(s == 4, T, np.nan))
 
@@ -205,7 +178,7 @@ def intersection(A, B, C, D):
               np.all(B == C, axis=-1) |
               np.all(B == D, axis=-1))
 
-    equals = np.expand_dims(equals, 2)
+    equals = two_d(equals)
 
     return np.where(equals, np.nan, cross)
 
@@ -248,8 +221,8 @@ def length(A, B, degrees=True):
         B2 = B ** 2.0
         Bl = np.sqrt(np.sum(B2, axis=-1))
 
-        A = A / np.expand_dims(Al, 2)
-        B = B / np.expand_dims(Bl, 2)
+        A = A / two_d(Al)
+        B = B / two_d(Bl)
 
         dot = inner1d(A, B)
         dot = np.clip(dot, -1.0, 1.0)
@@ -388,7 +361,7 @@ def midpoint(A, B):
     P = (A + B) / 2.0
     # Now normalize...
     l = np.sqrt(np.sum(P * P, axis=-1))
-    l = np.expand_dims(l, 2)
+    l = two_d(l)
     return P / l
 
 

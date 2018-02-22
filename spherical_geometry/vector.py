@@ -19,9 +19,18 @@ except ImportError:
     HAS_C_UFUNCS = False
 
 
-__all__ = ['lonlat_to_vector', 'vector_to_lonlat', 'normalize_vector',
-           'radec_to_vector', 'vector_to_radec', 'rotate_around']
+__all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
+           'normalize_vector', 'radec_to_vector', 'vector_to_radec',
+           'rotate_around']
 
+def two_d(vec):
+    """
+    Reshape a one dimensional vector so it has a second dimension
+    """
+    shape = list(vec.shape)
+    shape.append(1)
+    shape = tuple(shape)
+    return np.reshape(vec, shape)
 
 def lonlat_to_vector(lon, lat, degrees=True):
     r"""
@@ -182,7 +191,7 @@ def normalize_vector(xyz, output=None):
 
     l = np.sqrt(np.sum(xyz * xyz, axis=-1))
 
-    output = xyz / np.expand_dims(l, 2)
+    output = xyz / two_d(l)
 
     return output
 
@@ -255,4 +264,4 @@ def equal_area_proj(points):
         Y = \\sqrt{\\frac{2}{1-z}}y
     """
     scale = np.sqrt(2.0 / (1.0 - points[..., 2]))
-    return np.expand_dims(scale, 2) * points[:, 0:2]
+    return two_d(scale) * points[:, 0:2]

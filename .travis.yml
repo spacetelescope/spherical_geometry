@@ -14,6 +14,7 @@ env:
         - ASTROPY_VERSION=stable
         - CONDA_INSTALL='conda install -c astropy-ci-extras --yes'
         - PIP_INSTALL='pip install'
+	- PIP_DEPENDENCIES='pytest-astropy'
     matrix:
         - SETUP_CMD='egg_info'
 
