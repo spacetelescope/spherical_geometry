@@ -85,6 +85,13 @@ class _SingleSphericalPolygon(object):
         return '%s(%r, %r)' % (self.__class__.__name__,
                                self.points, self.inside)
 
+    def invert_polygon(self):
+        """
+        Compute the inverse (complement) of a single polygon
+        """
+        outside_point = self._find_new_outside()
+        return _SingleSphericalPolygon(self._points, inside=outside_point)
+
     @property
     def points(self):
         """
@@ -356,6 +363,15 @@ class _SingleSphericalPolygon(object):
             vector.normalize_vector(inside, output=inside)
         return inside
 
+    def _find_new_outside(self):
+        """
+        Finds an acceptable point outside of the polygon
+        """
+        point = -1.0 * np.mean(self._points, axis=0)
+        vector.normalize_vector(point, output=point)
+        if self.contains_point(point):
+            raise RuntimeError("Could not compute outside point")
+        return point
 
     def intersection(self, other):
         """
@@ -741,6 +757,18 @@ class SphericalPolygon(object):
         xc, yc, zc = vector.lonlat_to_vector(lon, lat)
 
         return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
+
+    def invert_polygon(self):
+        """
+        Construct a polygon which is the inverse (complement) of the
+        original polygon
+        """
+        if len(self._polygons) != 1:
+            raise RuntimeErrror("Can only invert a single polygon")
+
+        klass = self.__class__
+        inverted_polygon = self._polygons[0].invert_polygon()
+        return klass((inverted_polygon, ))
 
     def contains_point(self, point):
         r"""
