@@ -19,6 +19,7 @@ import numpy as np
 from . import great_circle_arc
 from . import math_util
 from . import vector
+from . import polygon as mpolygon
 
 __all__ = ['Graph']
 
@@ -488,7 +489,14 @@ class Graph:
         self._sanity_check("union - remove 3ary edges")
         self._remove_orphaned_nodes()
         self._sanity_check("union - remove orphan nodes", True)
-        return self._trace()
+
+        poly = self._trace()
+        for source_poly in self._source_polygons:
+            inside_point = source_poly.inside
+            break
+        else:
+            inside_point = None
+        return mpolygon.SphericalPolygon((poly, ), inside=inside_point)
 
     def intersection(self):
         """
@@ -509,7 +517,11 @@ class Graph:
         self._sanity_check("intersection - remove cut lines")
         self._remove_orphaned_nodes()
         self._sanity_check("intersection - remove orphan nodes", True)
-        return self._trace()
+
+        poly = self._trace()
+        if not self._contains_inside_point(poly):
+            poly = poly.invert_polygon()
+        return poly
 
     def disjoint_polygons(self):
         """
@@ -817,13 +829,23 @@ class Graph:
                 break
         return changed
 
+    def _contains_inside_point(self, poly):
+        """
+        Check if the polygons in the graph all contain
+        the interior point of a polygon
+        """
+        for point in poly.inside:
+            for source_poly in self._source_polygons:
+                if not source_poly.contains_point(point):
+                    return False
+        return True
+
     def _trace_polygons(self):
         """
         Given a graph that has had cutlines removed and all
         intersections found, traces it to find a list of
         disjoint polygons
         """
-        from . import polygon as mpolygon
 
         def edge_normal(edge):
             # THe normal vector to the plane defining the arc
@@ -892,5 +914,4 @@ class Graph:
         intersections found, traces it to find a resulting single
         polygon.
         """
-        from . import polygon as mpolygon
         return mpolygon.SphericalPolygon(self._trace_polygons())
