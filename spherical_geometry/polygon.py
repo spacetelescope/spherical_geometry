@@ -580,6 +580,17 @@ class SphericalPolygon(object):
             cw = None
         return cw
 
+    @staticmethod
+    def self_intersect(points):
+        """
+        Return true if the path defined by a list of points
+        intersects itself
+        """
+        from . import graph
+        polygon = _SingleSphericalPolygon(points)
+        g = graph.Graph((polygon,))
+        return g._find_all_intersections()
+
     def to_lonlat(self):
         """
         Convert the `SphericalPolygon` footprint to longitude and latitude

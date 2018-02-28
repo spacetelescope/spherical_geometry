@@ -16,13 +16,12 @@ from .utils.compat import weakref
 import numpy as np
 
 # LOCAL
-from . import great_circle_arc
+from . import great_circle_arc as gca
 from . import math_util
 from . import vector
 from . import polygon as mpolygon
 
 __all__ = ['Graph']
-
 
 # Set to True to enable some sanity checks
 DEBUG = True
@@ -525,7 +524,8 @@ class Graph:
 
     def disjoint_polygons(self):
         """
-        Convert a graph containing cut lines into a list of disjoint polygons
+        Convert a graph containing cut lines and self intersections
+        into a list of disjoint polygons
         """
         changed = self._remove_cut_lines()
         self._sanity_check("disjoint - remove cut lines")
@@ -613,7 +613,7 @@ class Graph:
             AB = edges.pop(0)
             A, B = list(AB._nodes)
 
-            intersects = great_circle_arc.intersects_point(
+            intersects = gca.intersects_point(
                 A._point, B._point, nodes_array)
             intersection_indices = np.nonzero(intersects)[0]
 
@@ -656,7 +656,7 @@ class Graph:
             # Calculate the intersection points between AB and all
             # other remaining edges
             with np.errstate(invalid='ignore'):
-                intersections = great_circle_arc.intersection(
+                intersections = gca.intersection(
                     A, B, starts, ends)
             # intersects is `True` everywhere intersections has an
             # actual intersection
@@ -733,7 +733,7 @@ class Graph:
                      (polygon in B._source_polygons or
                       polygon.contains_point(B._point))) and
                     polygon.contains_point(
-                        great_circle_arc.midpoint(A._point, B._point))):
+                        gca.midpoint(A._point, B._point))):
                     edge._count += 1
 
         for edge in list(self._edges):
@@ -763,7 +763,7 @@ class Graph:
                       (polygon in B._source_polygons or
                        polygon.contains_point(B._point)) and
                       polygon.contains_point(
-                          great_circle_arc.midpoint(A._point, B._point))):
+                          gca.midpoint(A._point, B._point))):
                     edge._count += 1
 
         for edge in list(self._edges):
@@ -847,10 +847,27 @@ class Graph:
         disjoint polygons
         """
 
-        def edge_normal(edge):
+        def edge_normal(edge, last_edge):
             # THe normal vector to the plane defining the arc
-            return great_circle_arc._cross_and_normalize(edge._nodes[0]._point,
-                                                         edge._nodes[1]._point)
+            normal = gca._cross_and_normalize(edge._nodes[0]._point,
+                                              edge._nodes[1]._point)
+            if last_edge is not None:
+                orientation = None
+                for i in (0, 1):
+                    last_edge_point = last_edge._nodes[i]._point
+                    for j in (0, 1):
+                        point = edge._nodes[j]._point
+                        if np.array_equal(last_edge_point, point):
+                            if i == j:
+                                orientation = -1.0
+                            else:
+                                orientation = 1.0
+
+                if orientation is None:
+                    raise RuntimeError("Unconnected edge found when tracing")
+                normal = orientation * normal
+
+            return normal
 
         def pick_next_edge(node, last_edge):
             # Pick the next edge when arriving at a node from
@@ -863,18 +880,20 @@ class Graph:
             for edge in node._edges:
                 if not edge._followed:
                     candidates.append(edge)
+
             if len(candidates) == 0:
                 raise ValueError("No more edges to follow")
             elif len(candidates) == 1 or last_edge is None:
                 return candidates[0]
 
-            last_edge_cross = edge_normal(last_edge)
-            edge_cross = [edge_normal(edge) for edge in candidates]
+            last_edge_cross = edge_normal(last_edge, None)
+            edge_cross = [edge_normal(edge, last_edge) for edge in candidates]
             edge_cross = np.asanyarray(edge_cross)
-            dot = great_circle_arc.inner1d(edge_cross, last_edge_cross)
+            dot = gca.inner1d(edge_cross, last_edge_cross)
 
             schwartz = zip(dot, candidates)
             schwartz = sorted(schwartz, key=lambda x: x[0])
+
             middle = len(candidates) // 2
             return schwartz[middle][1]
 
