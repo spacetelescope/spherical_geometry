@@ -88,8 +88,10 @@ class _SingleSphericalPolygon(object):
         """
         Compute the inverse (complement) of a single polygon
         """
-        outside_point = self._find_new_outside()
-        return _SingleSphericalPolygon(self._points, inside=outside_point)
+        poly = self.copy()
+        poly._points = poly._points[::-1]
+        poly._inside = np.asanyarray(self._find_new_outside())
+        return poly
 
     @property
     def points(self):
@@ -378,11 +380,13 @@ class _SingleSphericalPolygon(object):
 
         # find the antipode with the maximum distance
         # to any polygon point. It is our outside point.
-        tagged_points = sorted(tagged_points, key=lambda p: p[0])
-        for (tag, point) in tagged_points:
-            if not self.contains_point(point):
-                return point
-        raise RuntimeError("Could not find point outside polygon")
+        (tag, point) = min(tagged_points, key=lambda p: p[0])
+        return point
+        # tagged_points = sorted(tagged_points, key=lambda p: p[0])
+        # for (tag, point) in tagged_points:
+            # if not self.contains_point(point):
+                # return point
+        # raise RuntimeError("Could not find point outside polygon")
 
     def intersection(self, other):
         """

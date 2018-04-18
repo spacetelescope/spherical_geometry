@@ -27,7 +27,7 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
-HAS_C_UFUNCS = False ## DBG
+
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
 else:
