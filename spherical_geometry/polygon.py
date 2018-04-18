@@ -382,11 +382,6 @@ class _SingleSphericalPolygon(object):
         # to any polygon point. It is our outside point.
         (tag, point) = min(tagged_points, key=lambda p: p[0])
         return point
-        # tagged_points = sorted(tagged_points, key=lambda p: p[0])
-        # for (tag, point) in tagged_points:
-            # if not self.contains_point(point):
-                # return point
-        # raise RuntimeError("Could not find point outside polygon")
 
     def intersection(self, other):
         """

@@ -30,12 +30,12 @@ env:
     global:
         # Set defaults to avoid repeating in most cases
         - PYTHON_VERSION=3.6
-        - NUMPY_VERSION=stable
+	- NUMPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         # Build against github source until asdf-2.0 has been released
         - ASDF_GIT='git+git://github.com/spacetelescope/asdf.git#egg=asdf'
-        - CONDA_DEPENDENCIES='Cython jinja2'
-        - CONDA_ALL_DEPENDENCIES='Cython jinja2 scipy h5py matplotlib pyyaml scikit-image pandas pytz beautifulsoup4 ipython mpmath bleach'
+        - CONDA_DEPENDENCIES='astropy Cython jinja2'
+        - CONDA_ALL_DEPENDENCIES='astropy Cython jinja2 scipy h5py matplotlib pyyaml scikit-image pandas pytz beautifulsoup4 ipython mpmath bleach'
         - SETUP_XVFB=True
         - EVENT_TYPE='push pull_request'
         - SETUP_CMD='test'
