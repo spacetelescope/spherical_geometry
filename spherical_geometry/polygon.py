@@ -20,7 +20,6 @@ from . import vector
 
 __all__ = ['SphericalPolygon']
 
-
 class _SingleSphericalPolygon(object):
     r"""
     Polygons are represented by both a set of points (in Cartesian
@@ -89,8 +88,10 @@ class _SingleSphericalPolygon(object):
         """
         Compute the inverse (complement) of a single polygon
         """
-        outside_point = self._find_new_outside()
-        return _SingleSphericalPolygon(self._points, inside=outside_point)
+        poly = self.copy()
+        poly._points = poly._points[::-1]
+        poly._inside = np.asanyarray(self._find_new_outside())
+        return poly
 
     @property
     def points(self):
@@ -157,7 +158,6 @@ class _SingleSphericalPolygon(object):
 
         intersects = great_circle_arc.intersects(P[:-1], P[1:], r, point)
         crossings = np.sum(intersects)
-
         return (crossings % 2) == 0
 
     def contains_point(self, point):
@@ -367,10 +367,20 @@ class _SingleSphericalPolygon(object):
         """
         Finds an acceptable point outside of the polygon
         """
-        point = -1.0 * np.mean(self._points, axis=0)
-        vector.normalize_vector(point, output=point)
-        if self.contains_point(point):
-            raise RuntimeError("Could not compute outside point")
+        tagged_points = []
+        points = self._points[:-1]
+
+        # Compute the minimum distance between all polygon points
+        # and each antipode to a polygon point
+        for point in points:
+            point = -1.0 * point
+            dot = great_circle_arc.inner1d(point, points)
+            tag = np.amax(dot)
+            tagged_points.append((tag, point))
+
+        # find the antipode with the maximum distance
+        # to any polygon point. It is our outside point.
+        (tag, point) = min(tagged_points, key=lambda p: p[0])
         return point
 
     def intersection(self, other):
