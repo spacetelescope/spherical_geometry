@@ -78,27 +78,8 @@ def lonlat_to_vector(lon, lat, degrees=True):
         np.sin(lon_rad) * cos_lat,
         np.sin(lat_rad))
 
-
-def radec_to_vector(ra, dec, degrees=True):
-    r"""
-    Converts a location on the unit sphere from right ascension and
-    declination to an *x*, *y*, *z* vector.
-
-    Parameters
-    ----------
-    ra, dec : scalars or 1-D arrays
-
-    degrees : bool, optional
-
-       If `True`, (default) *ra* and *dec* are in decimal degrees,
-       otherwise in radians.
-
-    Returns
-    -------
-    x, y, z : tuple of scalars or 1-D arrays of the same length
-
-    """
-    return lonlat_to_vector(ra, dec, degrees=degrees)
+# Alias for lonlat_to_vector
+radec_to_vector = lonlat_to_vector
 
 
 def vector_to_lonlat(x, y, z, degrees=True):
@@ -142,25 +123,8 @@ def vector_to_lonlat(x, y, z, degrees=True):
     else:
         return result
 
-
-def vector_to_radec(x, y, z, degrees=True):
-    r"""
-    Converts a vector to longitude and latitude.
-
-    Parameters
-    ----------
-    x, y, z : scalars or 1-D arrays
-        The input vectors
-
-    degrees : bool, optional
-        If `True` (default) the result is returned in decimal degrees,
-        otherwise radians.
-
-    Returns
-    -------
-    ra, dec : tuple of scalars or arrays of the same length
-    """
-    return vector_to_lonlat(x, y, z, degrees=degrees)
+# Alias for vector_to_lonlat
+vector_to_radec = vector_to_lonlat
 
 
 def normalize_vector(xyz, output=None):
