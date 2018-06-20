@@ -922,7 +922,7 @@ class Graph:
                     points.append(node._point)
                     break
 
-            polygon = mpolygon._SingleSphericalPolygon(points)
+            polygon = mpolygon.SingleSphericalPolygon(points)
             polygons.append(polygon)
 
         return polygons

@@ -18,9 +18,9 @@ import numpy as np
 from . import great_circle_arc
 from . import vector
 
-__all__ = ['SphericalPolygon']
+__all__ = ['SingleSphericalPolygon', 'SphericalPolygon']
 
-class _SingleSphericalPolygon(object):
+class SingleSphericalPolygon(object):
     r"""
     Polygons are represented by both a set of points (in Cartesian
     (*x*, *y*, *z*) normalized on the unit sphere), and an inside
@@ -84,6 +84,16 @@ class _SingleSphericalPolygon(object):
         return '%s(%r, %r)' % (self.__class__.__name__,
                                self.points, self.inside)
 
+    def __iter__(self):
+        """
+        Iterate over all base polygons that make up this multi-polygon
+        set.
+        """
+        yield self
+
+    # Alias for backwards compatibility
+    iter_polygons_flat = __iter__
+
     def invert_polygon(self):
         """
         Compute the inverse (complement) of a single polygon
@@ -129,16 +139,9 @@ class _SingleSphericalPolygon(object):
         orient = great_circle_arc.triple_product(A-B, C-B, B)
         return np.sum(orient) > 0.0
 
-    def iter_polygons_flat(self):
-        """
-        Iterate over all base polygons that make up this multi-polygon
-        set.
-        """
-        yield self
-
     def to_lonlat(self):
         """
-        Convert `_SingleSphericalPolygon` footprint to longitude and latitutde.
+        Convert `SingleSphericalPolygon` footprint to longitude and latitutde.
 
         Returns
         -------
@@ -151,6 +154,45 @@ class _SingleSphericalPolygon(object):
         return vector.vector_to_lonlat(self.points[:,0], self.points[:,1],
                                       self.points[:,2], degrees=True)
 
+    # Alias for to_lonlat
+    to_radec = to_lonlat
+
+    @classmethod
+    def from_lonlat(cls, lon, lat, center=None, degrees=True):
+        r"""
+        Create a new `SingleSphericalPolygon` from a list of
+        (*longitude*, *latitude*) points.
+
+        Parameters
+        ----------
+        lon, lat : 1-D arrays of the same length
+            The vertices of the polygon in longitude and
+            latitude.
+
+        center : (*lon*, *lat*) pair, optional
+            A point inside of the polygon to define its inside.
+
+        degrees : bool, optional
+            If `True`, (default) *lon* and *lat* are in decimal degrees,
+            otherwise in radians.
+
+        Returns
+        -------
+        polygon : `SingleSphericalPolygon` object
+        """
+        # Convert to Cartesian
+        x, y, z = vector.lonlat_to_vector(lon, lat, degrees=degrees)
+
+        points = np.dstack((x, y, z))[0]
+
+        if center is not None:
+            center = vector.lonlat_to_vector(*center, degrees=degrees)
+
+        return cls(points, center)
+
+    # from_radec is an alias for from_lon_lat
+    from_radec = from_lonlat
+
     def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
         if np.array_equal(r, point):
@@ -162,7 +204,7 @@ class _SingleSphericalPolygon(object):
 
     def contains_point(self, point):
         r"""
-        Determines if this `_SingleSphericalPolygon` contains a given point.
+        Determines if this `SingleSphericalPolygon` contains a given point.
 
         Parameters
         ----------
@@ -178,7 +220,7 @@ class _SingleSphericalPolygon(object):
 
     def contains_lonlat(self, lon, lat, degrees=True):
         r"""
-        Determines if this `_SingleSphericalPolygon` contains a given
+        Determines if this `SingleSphericalPolygon` contains a given
         longitude and latitude.
 
         Parameters
@@ -198,17 +240,20 @@ class _SingleSphericalPolygon(object):
         point = vector.lonlat_to_vector(lon, lat, degrees=degrees)
         return self._contains_point(point, self._points, self._inside)
 
+    # Alias for contains_lonlat
+    contains_radec = contains_lonlat
+
     def intersects_poly(self, other):
         r"""
-        Determines if this `_SingleSphericalPolygon` intersects another
-        `_SingleSphericalPolygon`.
+        Determines if this `SingleSphericalPolygon` intersects another
+        `SingleSphericalPolygon`.
 
         This method is much faster than actually computing the
         intersection region between two polygons.
 
         Parameters
         ----------
-        other : `_SingleSphericalPolygon`
+        other : `SingleSphericalPolygon`
 
         Returns
         -------
@@ -235,7 +280,7 @@ class _SingleSphericalPolygon(object):
                In this case, an edge from one polygon must cross an
                edge from the other polygon.
         """
-        assert isinstance(other, _SingleSphericalPolygon)
+        assert isinstance(other, SingleSphericalPolygon)
 
         # The easy case is in which a point of one polygon is
         # contained in the other polygon.
@@ -264,7 +309,7 @@ class _SingleSphericalPolygon(object):
 
     def intersects_arc(self, a, b):
         """
-        Determines if this `_SingleSphericalPolygon` intersects or contains
+        Determines if this `SingleSphericalPolygon` intersects or contains
         the given arc.
         """
         P = self._points
@@ -315,7 +360,7 @@ class _SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        other : `_SingleSphericalPolygon`
+        other : `SingleSphericalPolygon`
 
         Returns
         -------
@@ -393,7 +438,7 @@ class _SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        other : `_SingleSphericalPolygon`
+        other : `SingleSphericalPolygon`
 
         Returns
         -------
@@ -429,7 +474,7 @@ class _SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        other : `_SingleSphericalPolygon`
+        other : `SingleSphericalPolygon`
 
         Returns
         -------
@@ -477,6 +522,8 @@ class _SingleSphericalPolygon(object):
         x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
+# For backwards compatibility
+_SingleSphericalPolygon = SingleSphericalPolygon
 
 class SphericalPolygon(object):
     r"""
@@ -511,13 +558,13 @@ class SphericalPolygon(object):
         """
         from . import graph
         for polygon in init:
-            if not isinstance(polygon, (SphericalPolygon, _SingleSphericalPolygon)):
+            if not isinstance(polygon, (SphericalPolygon, SingleSphericalPolygon)):
                 break
         else:
             self._polygons = tuple(init)
             return
 
-        self._polygons = (_SingleSphericalPolygon(init, inside),)
+        self._polygons = (SingleSphericalPolygon(init, inside),)
 
         polygons = []
         for polygon in self.iter_polygons_flat():
@@ -534,14 +581,17 @@ class SphericalPolygon(object):
     def __len__(self):
         return len(self._polygons)
 
-    def iter_polygons_flat(self):
+    def __iter__(self):
         """
         Iterate over all base polygons that make up this multi-polygon
         set.
         """
         for polygon in self._polygons:
-            for subpolygon in polygon.iter_polygons_flat():
+            for subpolygon in polygon:
                 yield subpolygon
+
+    # Alias for backwards compatibility
+    iter_polygons_flat = __iter__
 
     @property
     def points(self):
@@ -597,7 +647,7 @@ class SphericalPolygon(object):
         intersects itself
         """
         from . import graph
-        polygon = _SingleSphericalPolygon(points)
+        polygon = SingleSphericalPolygon(points)
         g = graph.Graph((polygon,))
         return g._find_all_intersections()
 
@@ -620,9 +670,10 @@ class SphericalPolygon(object):
 
     @classmethod
     def from_lonlat(cls, lon, lat, center=None, degrees=True):
+        ## TODO Move into SingleSphericalPolygon
         r"""
-        Create a new `SphericalPolygon` from a list of (*longitude*, *latitude*)
-        points.
+        Create a new `SphericalPolygon` from a list of
+        (*longitude*, *latitude*) points.
 
         Parameters
         ----------
@@ -641,15 +692,9 @@ class SphericalPolygon(object):
         -------
         polygon : `SphericalPolygon` object
         """
-        # Convert to Cartesian
-        x, y, z = vector.lonlat_to_vector(lon, lat, degrees=degrees)
-
-        points = np.dstack((x, y, z))[0]
-
-        if center is not None:
-            center = vector.lonlat_to_vector(*center, degrees=degrees)
-
-        return cls(points, center)
+        polygon = SingleSphericalPolygon.from_lonlat(lon, lat,
+                                                     center, degrees)
+        return cls((polygon,))
 
     # from_radec is an alias for from_lon_lat
     from_radec = from_lonlat
@@ -657,7 +702,7 @@ class SphericalPolygon(object):
     @classmethod
     def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
         r"""
-        Create a new `_SingleSphericalPolygon` from a cone (otherwise known
+        Create a new `SingleSphericalPolygon` from a cone (otherwise known
         as a "small circle") defined using (*lon*, *lat*, *radius*).
 
         The cone is not represented as an ideal circle on the sphere,
@@ -718,7 +763,7 @@ class SphericalPolygon(object):
     @classmethod
     def from_wcs(cls, fitspath, steps=1, crval=None):
         r"""
-        Create a new `_SingleSphericalPolygon` from the footprint of a FITS
+        Create a new `SingleSphericalPolygon` from the footprint of a FITS
         WCS specification.
 
         This method requires having `astropy <http://astropy.org>`__
@@ -833,6 +878,9 @@ class SphericalPolygon(object):
             if polygon.contains_lonlat(lon, lat, degrees=degrees):
                 return True
         return False
+
+    # Alias for contains_lonlat
+    contains_radec = contains_lonlat
 
     def intersects_poly(self, other):
         r"""
