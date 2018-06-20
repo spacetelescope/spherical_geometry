@@ -84,6 +84,16 @@ class SingleSphericalPolygon(object):
         return '%s(%r, %r)' % (self.__class__.__name__,
                                self.points, self.inside)
 
+    def __iter__(self):
+        """
+        Iterate over all base polygons that make up this multi-polygon
+        set.
+        """
+        yield self
+
+    # Alias for backwards compatibility
+    iter_polygons_flat = __iter__
+
     def invert_polygon(self):
         """
         Compute the inverse (complement) of a single polygon
@@ -128,13 +138,6 @@ class SingleSphericalPolygon(object):
         C = points[2:]
         orient = great_circle_arc.triple_product(A-B, C-B, B)
         return np.sum(orient) > 0.0
-
-    def iter_polygons_flat(self):
-        """
-        Iterate over all base polygons that make up this multi-polygon
-        set.
-        """
-        yield self
 
     def to_lonlat(self):
         """
@@ -578,14 +581,17 @@ class SphericalPolygon(object):
     def __len__(self):
         return len(self._polygons)
 
-    def iter_polygons_flat(self):
+    def __iter__(self):
         """
         Iterate over all base polygons that make up this multi-polygon
         set.
         """
         for polygon in self._polygons:
-            for subpolygon in polygon.iter_polygons_flat():
+            for subpolygon in polygon:
                 yield subpolygon
+
+    # Alias for backwards compatibility
+    iter_polygons_flat = __iter__
 
     @property
     def points(self):
