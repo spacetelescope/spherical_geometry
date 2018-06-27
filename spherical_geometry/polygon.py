@@ -80,6 +80,9 @@ class SingleSphericalPolygon(object):
 
     copy = __copy__
 
+    def __len__(self):
+        return 1
+
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__,
                                self.points, self.inside)
@@ -93,15 +96,6 @@ class SingleSphericalPolygon(object):
 
     # Alias for backwards compatibility
     iter_polygons_flat = __iter__
-
-    def invert_polygon(self):
-        """
-        Compute the inverse (complement) of a single polygon
-        """
-        poly = self.copy()
-        poly._points = poly._points[::-1]
-        poly._inside = np.asanyarray(self._find_new_outside())
-        return poly
 
     @property
     def points(self):
@@ -192,6 +186,140 @@ class SingleSphericalPolygon(object):
 
     # from_radec is an alias for from_lon_lat
     from_radec = from_lonlat
+
+    @classmethod
+    def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
+        r"""
+        Create a new `SingleSphericalPolygon` from a cone (otherwise known
+        as a "small circle") defined using (*lon*, *lat*, *radius*).
+
+        The cone is not represented as an ideal circle on the sphere,
+        but as a series of great circle arcs.  The resolution of this
+        conversion can be controlled using the *steps* parameter.
+
+        Parameters
+        ----------
+        lon, lat : float scalars
+            This defines the center of the cone
+
+        radius : float scalar
+            The radius of the cone
+
+        degrees : bool, optional
+            If `True`, (default) *lon*, *lat* and *radius* are in
+            decimal degrees, otherwise in radians.
+
+        steps : int, optional
+            The number of steps to use when converting the small
+            circle to a polygon.
+
+        Returns
+        -------
+        polygon : `SingleSphericalPolygon` object
+        """
+        u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
+        if degrees:
+            radius = np.deg2rad(radius)
+
+        # Get an arbitrary perpendicular vector.  This be be obtained
+        # by crossing (u, v, w) with any unit vector that is not itself.
+        which_min = np.argmin([u*u, v*v, w*w])
+        if which_min == 0:
+            perp = np.cross([u, v, w], [1., 0., 0.])
+        elif which_min == 1:
+            perp = np.cross([u, v, w], [0., 1., 0.])
+        else:
+            perp = np.cross([u, v, w], [0., 0., 1.])
+        perp = vector.normalize_vector(perp)
+
+        # Rotate by radius around the perpendicular vector to get the
+        # "pen"
+        x, y, z = vector.rotate_around(
+            u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
+
+        # Then rotate the pen around the center point all 360 degrees
+        C = np.linspace(0, np.pi * 2.0, steps)
+        # Ensure that the first and last elements are exactly the
+        # same.  2π should equal 0, but with rounding error that isn't
+        # always the case.
+        C[-1] = 0
+        C = C[::-1]
+        X, Y, Z = vector.rotate_around(x, y, z, u, v, w, C, degrees=False)
+
+        return cls(np.dstack((X, Y, Z))[0], (u, v, w))
+
+    @classmethod
+    def from_wcs(cls, fitspath, steps=1, crval=None):
+        r"""
+        Create a new `SingleSphericalPolygon` from the footprint of a FITS
+        WCS specification.
+
+        This method requires having `astropy <http://astropy.org>`__
+        installed.
+
+        Parameters
+        ----------
+        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
+            Refers to a FITS header containing a WCS specification.
+
+        steps : int, optional
+            The number of steps along each edge to convert into
+            polygon edges.
+
+        Returns
+        -------
+        polygon : `SingleSphericalPolygon` object
+        """
+        from astropy import wcs as pywcs
+        from astropy.io import fits
+
+        if isinstance(fitspath, fits.Header):
+            header = fitspath
+            wcs = pywcs.WCS(header)
+        elif isinstance(fitspath, pywcs.WCS):
+            wcs = fitspath
+        else:
+            wcs = pywcs.WCS(fitspath)
+        if crval is not None:
+            wcs.wcs.crval = crval
+        xa, ya = [wcs._naxis1, wcs._naxis2]
+
+        length = steps * 4 + 1
+        X = np.empty(length)
+        Y = np.empty(length)
+
+        # Now define each of the 4 edges of the quadrilateral
+        X[0      :steps  ] = np.linspace(1, xa, steps, False)
+        Y[0      :steps  ] = 1
+        X[steps  :steps*2] = xa
+        Y[steps  :steps*2] = np.linspace(1, ya, steps, False)
+        X[steps*2:steps*3] = np.linspace(xa, 1, steps, False)
+        Y[steps*2:steps*3] = ya
+        X[steps*3:steps*4] = 1
+        Y[steps*3:steps*4] = np.linspace(ya, 1, steps, False)
+        X[-1]              = 1
+        Y[-1]              = 1
+
+        # Use wcslib to convert to (lon, lat)
+        lon, lat = wcs.all_pix2world(X, Y, 1)
+
+        # Convert to Cartesian
+        x, y, z = vector.lonlat_to_vector(lon, lat)
+
+        # Calculate an inside point
+        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
+        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
+
+        return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
+
+    def invert_polygon(self):
+        """
+        Compute the inverse (complement) of a single polygon
+        """
+        poly = self.copy()
+        poly._points = poly._points[::-1]
+        poly._inside = np.asanyarray(self._find_new_outside())
+        return poly
 
     def _contains_point(self, point, P, r):
         point = np.asanyarray(point)
@@ -525,7 +653,7 @@ class SingleSphericalPolygon(object):
 # For backwards compatibility
 _SingleSphericalPolygon = SingleSphericalPolygon
 
-class SphericalPolygon(object):
+class SphericalPolygon(SingleSphericalPolygon):
     r"""
     Polygons are represented by both a set of points (in Cartesian
     (*x*, *y*, *z*) normalized on the unit sphere), and an inside
@@ -567,7 +695,7 @@ class SphericalPolygon(object):
         self._polygons = (SingleSphericalPolygon(init, inside),)
 
         polygons = []
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             g = graph.Graph((polygon,))
             polygons.extend(g.disjoint_polygons())
         self._polygons = polygons
@@ -580,6 +708,12 @@ class SphericalPolygon(object):
 
     def __len__(self):
         return len(self._polygons)
+
+    def __repr__(self):
+        buffer = []
+        for polygon in self._polygons:
+            buffer.append(repr(polygon))
+        return '[' + ',\n'.join(buffer) + ']'
 
     def __iter__(self):
         """
@@ -601,7 +735,7 @@ class SphericalPolygon(object):
         of (*x*, *y*, *z*) vectors.  Each polygon is explicitly
         closed, i.e., the first and last points are the same.
         """
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             yield polygon.points
 
     @property
@@ -609,7 +743,7 @@ class SphericalPolygon(object):
         """
         Iterate over the inside point of each of the polygons.
         """
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             yield polygon.inside
 
     @property
@@ -662,7 +796,7 @@ class SphericalPolygon(object):
             Each element in the iterator is a tuple of the form (*lon*,
             *lat*), where each is an array of points.
         """
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             yield polygon.to_lonlat()
 
     # to_ra_dec is an alias for to_lonlat
@@ -702,7 +836,7 @@ class SphericalPolygon(object):
     @classmethod
     def from_cone(cls, lon, lat, radius, degrees=True, steps=16):
         r"""
-        Create a new `SingleSphericalPolygon` from a cone (otherwise known
+        Create a new `SphericalPolygon` from a cone (otherwise known
         as a "small circle") defined using (*lon*, *lat*, *radius*).
 
         The cone is not represented as an ideal circle on the sphere,
@@ -729,41 +863,14 @@ class SphericalPolygon(object):
         -------
         polygon : `SphericalPolygon` object
         """
-        u, v, w = vector.lonlat_to_vector(lon, lat, degrees=degrees)
-        if degrees:
-            radius = np.deg2rad(radius)
-
-        # Get an arbitrary perpendicular vector.  This be be obtained
-        # by crossing (u, v, w) with any unit vector that is not itself.
-        which_min = np.argmin([u*u, v*v, w*w])
-        if which_min == 0:
-            perp = np.cross([u, v, w], [1., 0., 0.])
-        elif which_min == 1:
-            perp = np.cross([u, v, w], [0., 1., 0.])
-        else:
-            perp = np.cross([u, v, w], [0., 0., 1.])
-        perp = vector.normalize_vector(perp)
-
-        # Rotate by radius around the perpendicular vector to get the
-        # "pen"
-        x, y, z = vector.rotate_around(
-            u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
-
-        # Then rotate the pen around the center point all 360 degrees
-        C = np.linspace(0, np.pi * 2.0, steps)
-        # Ensure that the first and last elements are exactly the
-        # same.  2π should equal 0, but with rounding error that isn't
-        # always the case.
-        C[-1] = 0
-        C = C[::-1]
-        X, Y, Z = vector.rotate_around(x, y, z, u, v, w, C, degrees=False)
-
-        return cls(np.dstack((X, Y, Z))[0], (u, v, w))
+        polygon = SingleSphericalPolygon.from_cone(lon, lat, radius,
+                                                   degrees=degrees, steps=steps)
+        return cls((polygon,))
 
     @classmethod
     def from_wcs(cls, fitspath, steps=1, crval=None):
         r"""
-        Create a new `SingleSphericalPolygon` from the footprint of a FITS
+        Create a new `SphericalPolygon` from the footprint of a FITS
         WCS specification.
 
         This method requires having `astropy <http://astropy.org>`__
@@ -782,47 +889,9 @@ class SphericalPolygon(object):
         -------
         polygon : `SphericalPolygon` object
         """
-        from astropy import wcs as pywcs
-        from astropy.io import fits
-
-        if isinstance(fitspath, fits.Header):
-            header = fitspath
-            wcs = pywcs.WCS(header)
-        elif isinstance(fitspath, pywcs.WCS):
-            wcs = fitspath
-        else:
-            wcs = pywcs.WCS(fitspath)
-        if crval is not None:
-            wcs.wcs.crval = crval
-        xa, ya = [wcs._naxis1, wcs._naxis2]
-
-        length = steps * 4 + 1
-        X = np.empty(length)
-        Y = np.empty(length)
-
-        # Now define each of the 4 edges of the quadrilateral
-        X[0      :steps  ] = np.linspace(1, xa, steps, False)
-        Y[0      :steps  ] = 1
-        X[steps  :steps*2] = xa
-        Y[steps  :steps*2] = np.linspace(1, ya, steps, False)
-        X[steps*2:steps*3] = np.linspace(xa, 1, steps, False)
-        Y[steps*2:steps*3] = ya
-        X[steps*3:steps*4] = 1
-        Y[steps*3:steps*4] = np.linspace(ya, 1, steps, False)
-        X[-1]              = 1
-        Y[-1]              = 1
-
-        # Use wcslib to convert to (lon, lat)
-        lon, lat = wcs.all_pix2world(X, Y, 1)
-
-        # Convert to Cartesian
-        x, y, z = vector.lonlat_to_vector(lon, lat)
-
-        # Calculate an inside point
-        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
-        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
-
-        return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
+        polygon = SingleSphericalPolygon.from_wcs(fitspath,
+                                                  steps=steps, crval=crval)
+        return cls((polygon,))
 
     def invert_polygon(self):
         """
@@ -850,7 +919,7 @@ class SphericalPolygon(object):
         contains : bool
             Returns `True` if the polygon contains the given *point*.
         """
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             if polygon.contains_point(point):
                 return True
         return False
@@ -874,7 +943,7 @@ class SphericalPolygon(object):
         contains : bool
             Returns `True` if the polygon contains the given *point*.
         """
-        for polygon in self.iter_polygons_flat():
+        for polygon in self:
             if polygon.contains_lonlat(lon, lat, degrees=degrees):
                 return True
         return False
@@ -902,8 +971,8 @@ class SphericalPolygon(object):
         """
         assert isinstance(other, SphericalPolygon)
 
-        for polya in self.iter_polygons_flat():
-            for polyb in other.iter_polygons_flat():
+        for polya in self:
+            for polyb in other:
                 if polya.intersects_poly(polyb):
                     return True
         return False
@@ -913,7 +982,7 @@ class SphericalPolygon(object):
         Determines if this `SphericalPolygon` intersects or contains
         the given arc.
         """
-        for subpolygon in self.iter_polygons_flat():
+        for subpolygon in self:
             if subpolygon.intersects_arc(a, b):
                 return True
         return False
@@ -923,7 +992,7 @@ class SphericalPolygon(object):
         Returns `True` if the polygon fully encloses the arc given by a
         and b.
         """
-        for subpolygon in self.iter_polygons_flat():
+        for subpolygon in self:
             if subpolygon.contains_arc(a, b):
                 return True
         return False
@@ -943,7 +1012,7 @@ class SphericalPolygon(object):
             S = \theta - (n - 2) \pi
         """
         area = 0.0
-        for subpoly in self.iter_polygons_flat():
+        for subpoly in self:
             area += subpoly.area()
         return area
 
@@ -976,10 +1045,8 @@ class SphericalPolygon(object):
         elif other.area() == 0.0:
             return self.copy()
 
-        g = graph.Graph(
-            list(self.iter_polygons_flat()) +
-            list(other.iter_polygons_flat()))
-
+        g = graph.Graph(list(self.iter_polygons_flat()) +
+                        list(other.iter_polygons_flat()))
         return g.union()
 
     @classmethod
@@ -1041,8 +1108,8 @@ class SphericalPolygon(object):
             return SphericalPolygon([])
 
         all_polygons = []
-        for polya in self.iter_polygons_flat():
-            for polyb in other.iter_polygons_flat():
+        for polya in self:
+            for polyb in other:
                 if polya.intersects_poly(polyb):
                     subpolygons = polya.intersection(polyb)
                     all_polygons.extend(subpolygons.iter_polygons_flat())
@@ -1077,31 +1144,6 @@ class SphericalPolygon(object):
                 results = results.intersection(polygon)
 
         return results
-
-    def overlap(self, other):
-        r"""
-        Returns the fraction of *self* that is overlapped by *other*.
-
-        Let *self* be *a* and *other* be *b*, then the overlap is
-        defined as:
-
-        .. math::
-
-            \frac{S_a}{S_{a \cap b}}
-
-        Parameters
-        ----------
-        other : `SphericalPolygon`
-
-        Returns
-        -------
-        frac : float
-            The fraction of *self* that is overlapped by *other*.
-        """
-        s1 = self.area()
-        intersection = self.intersection(other)
-        s2 = intersection.area()
-        return abs(s2 / s1)
 
     def draw(self, m, **plot_args):
         """
