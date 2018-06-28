@@ -1,3 +1,10 @@
+## Version 1.2.4 on 28 June 2018
+
+The public methods in SingleSphericalPolygon now match the methods in
+SphericalPolygon so that objects of either type can be used
+interchangably (for the most part.) SphericalPolygon now subclasses
+SingleSphericalPolygon.
+
 ## Version 1.2.3 on 20 June 2018
 
 Every method with lonlat in its name now has an alias with lonlat
