@@ -468,6 +468,44 @@ def test_fast_area():
     assert carea > 2.0 * np.pi and carea < 4.0 * np.pi
 
 
+def test_convex_hull():
+    lon = (0.02, 0.10, 0.05, 0.03, 0.04, 0.07, 0.00, 0.06, 0.08, 0.13,
+           0.08, 0.14, 0.15, 0.12, 0.01, 0.11)
+    lat = (0.06, 0.00, 0.05, 0.01, 0.12, 0.08, 0.03, 0.02, 0.04, 0.03,
+           0.10, 0.11, 0.01, 0.13, 0.09, 0.07)
+
+    lon_lat = list(zip(lon, lat))
+
+    points = []
+    for l, b in lon_lat:
+        points.append(list(vector.lonlat_to_vector(l, b)))
+    points = np.asarray(points)
+
+    # The method call
+    poly = polygon.SphericalPolygon.convex_hull(points)
+
+    boundary = list(poly.points)[0]
+    boundary_lon, boundary_lat = vector.vector_to_lonlat(boundary[:,0],
+                                                         boundary[:,1],
+                                                         boundary[:,2])
+    boundary = list(zip(boundary_lon, boundary_lat))
+    on_boundary = []
+    for p in lon_lat:
+        match = False
+        for b in boundary:
+            distance = math.sqrt((p[0] - b[0]) ** 2 + (p[1] - b[1]) ** 2)
+            if distance < 0.005:
+                match = True
+                break
+        on_boundary.append(match)
+
+    result = [False, True, False, True, True, False, True, False,
+              False, False, False, True, True, True, True, False]
+
+    for b, r in zip(on_boundary, result):
+        assert b == r, "Polygon boundary has correct points"
+
+
 @raises(ValueError)
 def test_math_util_angle_domain():
     # Before a fix, this would segfault

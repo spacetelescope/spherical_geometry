@@ -1,3 +1,8 @@
+## Version 1.2.5 on 10 July 2018
+
+Added a method to create a polygon from the convex hull of a list
+of points.
+
 ## Version 1.2.4 on 28 June 2018
 
 The public methods in SingleSphericalPolygon now match the methods in
