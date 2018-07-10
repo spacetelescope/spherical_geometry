@@ -312,6 +312,69 @@ class SingleSphericalPolygon(object):
 
         return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
 
+    @classmethod
+    def convex_hull(cls, points):
+        """
+        Create a new `SingleSphericalPolygon` from the convex hull of a
+        list of points using the Graham Scan algorithm
+
+        Parameters
+        ----------
+        points: A list of points on the unit sphere
+
+        Returns
+        -------
+        polygon : `SingleSphericalPolygon` object
+        """
+        points = np.asarray(points)
+
+        # Find an extremal point, it must be on boundary
+
+        j = np.argmin(np.arctan2(points[:,1], points[:,0]))
+        extreme = points[j,:]
+        points = np.vstack((points[0:j,:], points[j+1:,:]))
+
+        # Sort points around extreme point by angle from true north
+
+        north = [0., 0., 1.]
+        ang = great_circle_arc.angle(north, extreme, points)
+        pt = [points[i,:] for i in range(points.shape[0])]
+
+        duo = list(zip(pt, ang))
+        duo = sorted(duo, key=lambda d: d[1])
+        points = np.asarray([d[0] for d in duo])
+
+        # Set the first point on the hull to the extreme point
+
+        pbottom = extreme
+        hull = [pbottom]
+
+        # If a point is to the left of previous points on the
+        # hull, add it to the hull. If to the right, the top
+        # point is an inside point and is popped off the hull.
+        # See any description of the Graham Scan algorithm
+        # for a more detailed explanation.
+
+        i = 0
+        inside = None
+        while i < points.shape[0]:
+            ptop = hull[-1]
+            if ptop is pbottom:
+                hull.append(points[i,:])
+                i += 1
+            else:
+                pprevious = hull[-2]
+                if great_circle_arc.triple_product(pprevious, ptop,
+                                                   points[i,:]) > 0.0:
+                    hull.append(points[i,:])
+                    i += 1
+                else:
+                    inside = hull.pop()
+
+        # Create a polygon from points on the hull
+
+        return cls(hull, inside)
+
     def invert_polygon(self):
         """
         Compute the inverse (complement) of a single polygon
@@ -891,6 +954,23 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         polygon = SingleSphericalPolygon.from_wcs(fitspath,
                                                   steps=steps, crval=crval)
+        return cls((polygon,))
+
+    @classmethod
+    def convex_hull(cls, points):
+        r"""
+        Create a new `SphericalPolygon` from the convex hull of a
+        list of points.
+
+        Parameters
+        ----------
+        points: A list of points on the unit sphere
+
+        Returns
+        -------
+        polygon : `SphericalPolygon` object
+        """
+        polygon = SingleSphericalPolygon.convex_hull(points)
         return cls((polygon,))
 
     def invert_polygon(self):
