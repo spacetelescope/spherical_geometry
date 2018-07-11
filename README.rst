@@ -9,11 +9,11 @@ polygons that represent arbitrary regions of the sky.
 Requirements
 ------------
 
-- Python 2.7, 3.5 or later
+- Python 3.5 or later
 
-- Numpy 1.5.0 or later
+- Numpy 1.10.0 or later
 
-- astropy 0.3 or later
+- astropy 0.4 or later
 
 - qd-library 2.3.7 or later (optional: if not available, the
   bundled version will be used).  To force using the system-installed
@@ -52,15 +52,6 @@ work in either degrees or radians.  All methods that require or return
 an angular value have a ``degrees`` keyword argument.  When
 ``degrees`` is `True`, these measurements are in degrees, otherwise
 they are in radians.
-
-.. warning::
-
-    Due to constraints in the precision of intersection calculations,
-    points on the sphere that are closer than :math:`2^{-32}` along a
-    Cartesian axis are automatically merged into a single point.  This
-    prevents intersections from being missed due to floating point
-    rounding error.  There is currently no implemented solution to
-    deal with points that need to be closer together.
 
 Spherical polygons
 ------------------
@@ -111,7 +102,7 @@ for loop, or coerce the property to a list. The properties which are generators
 are;
 
   - `SphericalPolygon.points`: The points defining each polygon
-  
+
   - `SphericalPolygon.inside` : The inside point of each polygon
 
 
@@ -120,7 +111,7 @@ Creating spherical polygons
 
 .. currentmodule:: spherical_geometry.polygon
 
-`SphericalPolygon` objects have 4 different constructors:
+`SphericalPolygon` objects have 5 different constructors:
 
   - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*) points, or a
     list of disjoint `SphericalPolygon` instances.
@@ -134,6 +125,9 @@ Creating spherical polygons
   - `SphericalPolygon.from_wcs`: Creates a polygon from the footprint
     of a FITS image using its WCS header keywords.  Takes a FITS
     filename or a `astropy.io.fits.Header` object.
+
+  - `SphericalPolygon.convex_hull`: Creates a polygon that is the
+    convex hull of a list of points.
 
 Operations on Spherical Polygons
 ````````````````````````````````
