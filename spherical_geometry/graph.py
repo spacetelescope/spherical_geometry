@@ -17,7 +17,6 @@ import numpy as np
 
 # LOCAL
 from . import great_circle_arc as gca
-from . import math_util
 from . import vector
 from . import polygon as mpolygon
 
