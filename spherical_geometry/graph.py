@@ -5,8 +5,6 @@
 """
 This contains the code that does the actual unioning of regions.
 """
-# TODO: Weak references for memory management problems?
-from __future__ import absolute_import, division, unicode_literals, print_function
 
 # STDLIB
 import itertools
