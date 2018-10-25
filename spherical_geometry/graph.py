@@ -372,99 +372,25 @@ class Graph:
         if not DEBUG:
             return
 
-        try:
-            unique_edges = set()
-            for edge in self._edges:
-                for node in edge._nodes:
-                    assert edge in node._edges
-                    assert node in self._nodes
-                edge_repr = [tuple(x._point) for x in edge._nodes]
-                edge_repr.sort()
-                edge_repr = tuple(edge_repr)
-                # assert edge_repr not in unique_edges
-                unique_edges.add(edge_repr)
+        unique_edges = set()
+        for edge in self._edges:
+            for node in edge._nodes:
+                assert edge in node._edges
+                assert node in self._nodes
+            edge_repr = [tuple(x._point) for x in edge._nodes]
+            edge_repr.sort()
+            edge_repr = tuple(edge_repr)
+            # assert edge_repr not in unique_edges
+            unique_edges.add(edge_repr)
 
-            for node in self._nodes:
-                if node_is_2:
-                    assert len(node._edges) % 2 == 0
-                else:
-                    assert len(node._edges) >= 2
-                for edge in node._edges:
-                    assert node in edge._nodes
-                    assert edge in self._edges
-        except AssertionError as e:
-            import traceback
-            traceback.print_exc()
-            self._dump_graph(title=title)
-            raise
-
-    def _dump_graph(self, title=None, lon_0=0, lat_0=90,
-                    projection='vandg', func=lambda x: len(x._edges),
-                    highlight_edge=None, intersections=[]):
-        from mpl_toolkits.basemap import Basemap
-        from matplotlib import pyplot as plt
-        fig = plt.figure()
-        m = Basemap()
-
-        minx = np.inf
-        miny = np.inf
-        maxx = -np.inf
-        maxy = -np.inf
-        for polygon in self._source_polygons:
-            polygon.draw(m, lw=10, alpha=0.1, color="black")
-            v = polygon._points
-            ra, dec = vector.vector_to_lonlat(v[:, 0], v[:, 1], v[:, 2])
-            x, y = m(ra, dec)
-            for x0 in x:
-                minx = min(x0, minx)
-                maxx = max(x0, maxx)
-            for y0 in y:
-                miny = min(y0, miny)
-                maxy = max(y0, maxy)
-
-        counts = {}
         for node in self._nodes:
-            count = func(node)
-            counts.setdefault(count, [])
-            counts[count].append(list(node._point))
-
-        for edge in list(self._edges):
-            A, B = [x._point for x in edge._nodes]
-            lon0, lat0 = vector.vector_to_lonlat(A[0], A[1], A[2])
-            lon1, lat1 = vector.vector_to_lonlat(B[0], B[1], B[2])
-            if edge is highlight_edge:
-                color = 'red'
-                lw = 2
+            if node_is_2:
+                assert len(node._edges) % 2 == 0
             else:
-                color = 'blue'
-                lw = 0.5
-            m.drawgreatcircle(lon0, lat0, lon1, lat1, color=color, lw=lw)
-
-        for k, v in counts.items():
-            v = np.array(v)
-            ra, dec = vector.vector_to_lonlat(v[:, 0], v[:, 1], v[:, 2])
-            x, y = m(ra, dec)
-            m.plot(x, y, 'o', label=str(k))
-            for x0 in x:
-                minx = min(x0, minx)
-                maxx = max(x0, maxx)
-            for y0 in y:
-                miny = min(y0, miny)
-                maxy = max(y0, maxy)
-
-        for v in intersections:
-            if np.all(np.isfinite(v)):
-                ra, dec = vector.vector_to_lonlat(v[0], v[1], v[2])
-                x, y = m(ra, dec)
-                m.plot(x, y, 'x', markersize=20)
-
-        plt.xlim(minx, maxx)
-        plt.ylim(miny, maxy)
-        if title:
-            plt.title("%s, %d v, %d e" % (
-                title, len(self._nodes), len(self._edges)))
-        plt.legend()
-        plt.show()
+                assert len(node._edges) >= 2
+            for edge in node._edges:
+                assert node in edge._nodes
+                assert edge in self._edges
 
     def union(self):
         """
