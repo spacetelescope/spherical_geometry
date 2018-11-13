@@ -1,3 +1,11 @@
+## Version 1.2.6 on 13 November 2018
+
+Replaced _naxis with pixel_shape
+
+Updated README file
+
+Removed debugging code from graph.py
+
 ## Version 1.2.5 on 10 July 2018
 
 Added a method to create a polygon from the convex hull of a list
