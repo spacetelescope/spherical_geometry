@@ -34,7 +34,10 @@ env:
         - MAIN_CMD='python setup.py'
         # Build against github source until asdf-2.0 has been released
         - ASDF_GIT='git+git://github.com/spacetelescope/asdf.git#egg=asdf'
-        - CONDA_DEPENDENCIES='astropy Cython jinja2'
+	# Use astropy githab until release 3.1
+	- ASTROPY_GIT='git+git://github.com/astropy/astropy.git#egg=astropy'
+        #- CONDA_DEPENDENCIES='astropy Cython jinja2'
+        - CONDA_DEPENDENCIES='Cython jinja2'
         - CONDA_ALL_DEPENDENCIES='astropy Cython jinja2 scipy h5py matplotlib pyyaml scikit-image pandas pytz beautifulsoup4 ipython mpmath bleach'
         - SETUP_XVFB=True
         - EVENT_TYPE='push pull_request'
@@ -114,7 +117,7 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=3.5 SETUP_CMD='test --remote-data=astropy'
                CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES="jplephem $ASDF_GIT"
+               PIP_DEPENDENCIES="jplephem $ASDF_GIT, $ASTROPY_GIT"
                LC_CTYPE=C.ascii LC_ALL=C
                NUMPY_VERSION=1.11
                MATPLOTLIB_VERSION=1.5
@@ -134,7 +137,7 @@ matrix:
         - os: linux
           env: SETUP_CMD='test --coverage --remote-data=astropy'
                CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES="cpp-coveralls objgraph jplephem bintrees $ASDF_GIT"
+               PIP_DEPENDENCIES="cpp-coveralls objgraph jplephem bintrees $ASDF_GIT $ASTROPY_GIT"
                LC_CTYPE=C.ascii LC_ALL=C
                CFLAGS='-ftest-coverage -fprofile-arcs -fno-inline-functions -O0'
                MATPLOTLIB_VERSION=2.0 NUMPY_VERSION=1.13
