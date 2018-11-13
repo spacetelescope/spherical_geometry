@@ -34,8 +34,8 @@ env:
         - MAIN_CMD='python setup.py'
         # Build against github source until asdf-2.0 has been released
         - ASDF_GIT='git+git://github.com/spacetelescope/asdf.git#egg=asdf'
-	# Use astropy githab until release 3.1
-	- ASTROPY_GIT='git+git://github.com/astropy/astropy.git#egg=astropy'
+        # Use astropy githab until release 3.1
+        - ASTROPY_GIT='git+git://github.com/astropy/astropy.git#egg=astropy'
         #- CONDA_DEPENDENCIES='astropy Cython jinja2'
         - CONDA_DEPENDENCIES='Cython jinja2'
         - CONDA_ALL_DEPENDENCIES='astropy Cython jinja2 scipy h5py matplotlib pyyaml scikit-image pandas pytz beautifulsoup4 ipython mpmath bleach'
