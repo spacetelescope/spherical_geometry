@@ -282,7 +282,7 @@ class SingleSphericalPolygon(object):
             wcs = pywcs.WCS(fitspath)
         if crval is not None:
             wcs.wcs.crval = crval
-        xa, ya = [wcs._naxis1, wcs._naxis2]
+        xa, ya = wcs.pixel_shape
 
         length = steps * 4 + 1
         X = np.empty(length)
