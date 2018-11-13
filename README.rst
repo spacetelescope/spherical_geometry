@@ -90,21 +90,41 @@ white region.
 The inside point of the the polygon can be obtained from the
 `~polygon.SphericalPolygon.inside` property.
 
+What is the orientation?
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The correctness of several of the algorithms using polygons depends on
+a consistent orientation of the points defining it. That is, the points
+should have a clockwise order. When creating a new spherical polygon,
+the order of the points defining a polygon will be reversed if they are
+not in clockwise order. The method `SphericalPolygon.is_clockwise`is
+used to est if the points are in clockwise order. It takes two
+successive sides and computes the normal vector to the sides. If the
+normal vector points inward towards the center of the sphere, the two
+sides are counter clockwise. If the normal vector points outward, the
+two sides are clockwise. The code determines the orientation by
+computing the triple product of the two sides with the vertex of the
+the two sides. Summing the triple product over all the sides gives the
+predominant orientation of the points in the polygon.
+
 Disjoint Polygons
 ^^^^^^^^^^^^^^^^^
 
-If a polygon is the result of the intersection of polygons, it may be disjoint.
-Disjoint polygons are represented as a list of spherical polygons. The library
-handles the details of this internally. However, the user must be aware that
-several of the properties of polygons are generators and return the value for a
-single polygon at a time. To access all the values of a proeprty, either use a
-for loop, or coerce the property to a list. The properties which are generators
-are;
+If a polygon is the result of the intersection of polygons, it may be
+disjoint. Disjoint polygons are represented as a list of spherical
+polygons. The library handles the details of this internally. However,
+the user must be aware that several of the properties of polygons are
+generators and return the value for a single polygon at a time. To
+access all the values of a proeprty, either use a for loop, or coerce
+the property to a list. The properties which are generators are:
 
   - `SphericalPolygon.points`: The points defining each polygon
 
   - `SphericalPolygon.inside` : The inside point of each polygon
 
+
+If the intersection of two polygons generates disjoint polygons the
+code computes a new interior point for the disjoint polygons.
 
 Creating spherical polygons
 ```````````````````````````
