@@ -1,3 +1,8 @@
+## Version 1.2.7 on 14 November 2018
+
+Restored _naxis, pixel_shape not ready yet≈ß
+
+
 ## Version 1.2.6 on 13 November 2018
 
 Replaced _naxis with pixel_shape
