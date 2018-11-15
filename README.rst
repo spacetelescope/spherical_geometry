@@ -88,7 +88,7 @@ white region.
 .. image:: inside.png
 
 The inside point of the the polygon can be obtained from the
-`~polygon.SphericalPolygon.inside` property.
+`~spherical_geometry.polygon.SphericalPolygon.inside` property.
 
 What is the orientation?
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,7 +97,7 @@ The correctness of several of the algorithms using polygons depends on
 a consistent orientation of the points defining it. That is, the points
 should have a clockwise order. When creating a new spherical polygon,
 the order of the points defining a polygon will be reversed if they are
-not in clockwise order. The method `SphericalPolygon.is_clockwise`is
+not in clockwise order. The method ``SphericalPolygon.is_clockwise`` is
 used to est if the points are in clockwise order. It takes two
 successive sides and computes the normal vector to the sides. If the
 normal vector points inward towards the center of the sphere, the two
@@ -118,10 +118,9 @@ generators and return the value for a single polygon at a time. To
 access all the values of a proeprty, either use a for loop, or coerce
 the property to a list. The properties which are generators are:
 
-  - `SphericalPolygon.points`: The points defining each polygon
+  - `~spherical_geometry.polygon.SphericalPolygon.points`: The points defining each polygon
 
-  - `SphericalPolygon.inside` : The inside point of each polygon
-
+  - `~spherical_geometry.polygon.SphericalPolygon.inside` : The inside point of each polygon
 
 If the intersection of two polygons generates disjoint polygons the
 code computes a new interior point for the disjoint polygons.
@@ -146,7 +145,7 @@ Creating spherical polygons
     of a FITS image using its WCS header keywords.  Takes a FITS
     filename or a `astropy.io.fits.Header` object.
 
-  - `SphericalPolygon.convex_hull`: Creates a polygon that is the
+  - `~spherical_geometry.polygon.SphericalPolygon.convex_hull`: Creates a polygon that is the
     convex hull of a list of points.
 
 Operations on Spherical Polygons
@@ -155,25 +154,25 @@ Operations on Spherical Polygons
 Once one has a `SphericalPolygon` object, there are a number of
 operations available:
 
-  - `~SphericalPolygon.contains_point`: Determines if the given point
+  - `~spherical_geometry.polygon.SphericalPolygon.contains_point`: Determines if the given point
     is inside the polygon.
 
-  - `~SphericalPolygon.intersects_poly`: Determines if one polygon
+  - `~spherical_geometry.polygon.SphericalPolygon.intersects_poly`: Determines if one polygon
     intersects with another.
 
-  - `~SphericalPolygon.area`: Determine the area of a polygon.
+  - `~spherical_geometry.polygon.SphericalPolygon.area`: Determine the area of a polygon.
 
-  - `~SphericalPolygon.union` and `~SphericalPolygon.multi_union`:
+  - `~spherical_geometry.polygon.SphericalPolygon.union` and `~SphericalPolygon.multi_union`:
     Return a new polygon that is the union of two or more polygons.
 
-  - `~SphericalPolygon.intersection` and
-    `~SphericalPolygon.multi_intersection`: Return a new polygon that
+  - `~spherical_geometry.polygon.SphericalPolygon.intersection` and
+    `~spherical_geometry.polygon.SphericalPolygon.multi_intersection`: Return a new polygon that
     is the intersection of two or more polygons.
 
-  - `~SphericalPolygon.overlap`: Determine how much a given polygon
+  - `~spherical_geometry.polygon.SingleSphericalPolygon.overlap`: Determine how much a given polygon
     overlaps another.
 
-  - `~SphericalPolygon.to_radec`: Convert (*x*, *y*, *z*) points in the
+  - `~spherical_geometry.polygon.SphericalPolygon.to_radec`: Convert (*x*, *y*, *z*) points in the
     polygon to (*ra*, *dec*) points.
 
   - `~SphericalPolygon.draw`: Plots the polygon using matplotlib’s

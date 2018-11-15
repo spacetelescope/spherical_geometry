@@ -30,7 +30,7 @@ env:
     global:
         # Set defaults to avoid repeating in most cases
         - PYTHON_VERSION=3.6
-	- NUMPY_VERSION=stable
+        - NUMPY_VERSION=stable
         - MAIN_CMD='python setup.py'
         # Build against github source until asdf-2.0 has been released
         - ASDF_GIT='git+git://github.com/spacetelescope/asdf.git#egg=asdf'
@@ -99,13 +99,12 @@ matrix:
         # versions of Python, we can vary Python and Numpy versions at the same
         # time. Since we test the latest Numpy as part of the builds with all
         # optional dependencies below, we can focus on older builds here.
-        # Numpy 1.11 is tested below, 1.12 in the Initial stage test.
         # Run this test using native pytest
         - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.14
                INSTALL_CMD='python setup.py build_ext --inplace'
                PIP_DEPENDENCIES='pytest-astropy'
-               TEST_CMD='pytest --open-files --doctest-rst'
+               TEST_CMD='pytest --open-files --doctest-rst spherical_geometry'
           script:
             - $INSTALL_CMD
             - $TEST_CMD
