@@ -1,7 +1,6 @@
 User documentation
 ==================
 
-.. currentmodule:: spherical_geometry
 
 The ``spherical_geometry`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
@@ -58,13 +57,13 @@ Spherical polygons
 
 Spherical polygons are arbitrary areas on the sky sphere enclosed by
 great circle arcs.  They are represented by the
-`~spherical_geometry.polygon.SphericalPolygon` class.
+``SphericalPolygon`` class.
 
 Representation
 ``````````````
 
 The points defining the polygon are available from the
-`~polygon.SphericalPolygon.points` property.  It is a Nx3 array where
+``SphericalPolygon.points`` property.  It is a Nx3 array where
 each row is an (*x*, *y*, *z*) vector, normalized.  The polygon points
 are explicitly closed, i.e., the first and last points are the same.
 
@@ -88,7 +87,7 @@ white region.
 .. image:: inside.png
 
 The inside point of the the polygon can be obtained from the
-`~spherical_geometry.polygon.SphericalPolygon.inside` property.
+``SphericalPolygon.inside`` property.
 
 What is the orientation?
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -118,9 +117,9 @@ generators and return the value for a single polygon at a time. To
 access all the values of a proeprty, either use a for loop, or coerce
 the property to a list. The properties which are generators are:
 
-  - `~spherical_geometry.polygon.SphericalPolygon.points`: The points defining each polygon
+  - ``SphericalPolygon.points``: The points defining each polygon
 
-  - `~spherical_geometry.polygon.SphericalPolygon.inside` : The inside point of each polygon
+  - ``SphericalPolygon.inside`` : The inside point of each polygon
 
 If the intersection of two polygons generates disjoint polygons the
 code computes a new interior point for the disjoint polygons.
@@ -128,76 +127,72 @@ code computes a new interior point for the disjoint polygons.
 Creating spherical polygons
 ```````````````````````````
 
-.. currentmodule:: spherical_geometry.polygon
+``SphericalPolygon`` objects have 5 different constructors:
 
-`SphericalPolygon` objects have 5 different constructors:
+  - ``SphericalPolygon``: Takes an array of (*x*, *y*, *z*) points, or a
+    list of disjoint ``SphericalPolygon`` instances.
 
-  - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*) points, or a
-    list of disjoint `SphericalPolygon` instances.
-
-  - `SphericalPolygon.from_radec`: Takes an array of (*ra*, *dec*)
+  - ``SphericalPolygon.from_radec``: Takes an array of (*ra*, *dec*)
     points and an inside point.
 
-  - `SphericalPolygon.from_cone`: Creates a polygon from a cone on the
+  - ``SphericalPolygon.from_cone``: Creates a polygon from a cone on the
     sky shere.  Takes (*ra*, *dec*, *radius*).
 
-  - `SphericalPolygon.from_wcs`: Creates a polygon from the footprint
+  - ``SphericalPolygon.from_wcs``: Creates a polygon from the footprint
     of a FITS image using its WCS header keywords.  Takes a FITS
     filename or a `astropy.io.fits.Header` object.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.convex_hull`: Creates a polygon that is the
+  - ``SphericalPolygon.convex_hull``: Creates a polygon that is the
     convex hull of a list of points.
 
 Operations on Spherical Polygons
 ````````````````````````````````
 
-Once one has a `SphericalPolygon` object, there are a number of
+Once one has a ``SphericalPolygon`` object, there are a number of
 operations available:
 
-  - `~spherical_geometry.polygon.SphericalPolygon.contains_point`: Determines if the given point
+  - ``SphericalPolygon.contains_point``: Determines if the given point
     is inside the polygon.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.intersects_poly`: Determines if one polygon
+  - ``SphericalPolygon.intersects_poly``: Determines if one polygon
     intersects with another.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.area`: Determine the area of a polygon.
+  - ``SphericalPolygon.area``: Determine the area of a polygon.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.union` and `~SphericalPolygon.multi_union`:
+  - ``SphericalPolygon.union`` and ``SphericalPolygon.multi_union``:
     Return a new polygon that is the union of two or more polygons.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.intersection` and
-    `~spherical_geometry.polygon.SphericalPolygon.multi_intersection`: Return a new polygon that
+  - ``SphericalPolygon.intersection`` and
+    ``SphericalPolygon.multi_intersection``: Return a new polygon that
     is the intersection of two or more polygons.
 
-  - `~spherical_geometry.polygon.SingleSphericalPolygon.overlap`: Determine how much a given polygon
+  - ``SingleSphericalPolygon.overlap``: Determine how much a given polygon
     overlaps another.
 
-  - `~spherical_geometry.polygon.SphericalPolygon.to_radec`: Convert (*x*, *y*, *z*) points in the
+  - ``SphericalPolygon.to_radec``: Convert (*x*, *y*, *z*) points in the
     polygon to (*ra*, *dec*) points.
 
-  - `~SphericalPolygon.draw`: Plots the polygon using matplotlib’s
+  - ``SphericalPolygon.draw``: Plots the polygon using matplotlib’s
     Basemap toolkit.  This feature is rather bare and intended
     primarily for debugging purposes.
 
 Great circle arcs
 -----------------
 
-.. currentmodule:: spherical_geometry.great_circle_arc
-
 As seen above, great circle arcs are used to define the edges of the
-polygon.  The `spherical_geometry.great_circle_arc` module contains a number of
+polygon.  The ``spherical_geometry.great_circle_arc`` module contains a number of
 functions that are useful for dealing with them.
 
-- `length`: Returns the angular distance between two points on the sphere.
+- ``length``: Returns the angular distance between two points on the sphere.
 
-- `intersection`: Returns the intersection point between two great
+- ``intersection``: Returns the intersection point between two great
   circle arcs.
 
-- `intersects`: Determines if two great circle arcs intersect.
+- ``intersects``: Determines if two great circle arcs intersect.
 
-- `intersects_point`: Determines if a point is along the great circle
+- ``intersects_point``: Determines if a point is along the great circle
   arc.
 
-- `angle`: Calculate the angle between two great circle arcs.
+- ``angle``: Calculate the angle between two great circle arcs.
 
-- `midpoint`: Calculate the midpoint along a great circle arc.
+- ``midpoint``: Calculate the midpoint along a great circle arc.
