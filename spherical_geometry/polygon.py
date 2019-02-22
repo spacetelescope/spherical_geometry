@@ -282,7 +282,11 @@ class SingleSphericalPolygon(object):
             wcs = pywcs.WCS(fitspath)
         if crval is not None:
             wcs.wcs.crval = crval
-        xa, ya = (wcs._naxis1, wcs._naxis2)
+
+        if astropy.version.version_info < (3, 1, 0):
+            xa, ya = (wcs._naxis1, wcs._naxis2)
+        else:
+            xa, ya = wcs.pixel_shape
 
         length = steps * 4 + 1
         X = np.empty(length)
