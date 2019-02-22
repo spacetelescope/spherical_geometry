@@ -270,7 +270,7 @@ class SingleSphericalPolygon(object):
         -------
         polygon : `SingleSphericalPolygon` object
         """
-        from astropy import wcs as pywcs
+        from astropy import wcs as pywcs, version as astropy_ver
         from astropy.io import fits
 
         if isinstance(fitspath, fits.Header):
@@ -283,7 +283,7 @@ class SingleSphericalPolygon(object):
         if crval is not None:
             wcs.wcs.crval = crval
 
-        if astropy.version.version_info < (3, 1, 0):
+        if astropy_ver.version_info < (3, 1, 0):
             xa, ya = (wcs._naxis1, wcs._naxis2)
         else:
             xa, ya = wcs.pixel_shape

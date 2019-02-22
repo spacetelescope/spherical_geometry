@@ -1,3 +1,8 @@
+## Version 1.2.9 on 22 February 2019
+
+Fixed a bug introduced in version ``1.2.8``
+
+
 ## Version 1.2.8 on 22 February 2019
 
 Add backwards compatibility with Astropy 3.1.0
