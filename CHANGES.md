@@ -1,3 +1,11 @@
+## Version 1.2.8 on 22 February 2019
+
+Add backwards compatibility with Astropy 3.1.0
+
+`<3.1.0` uses `wcs._naxis`
+`>=3.1.0` uses `wcs.pixel_shape`
+
+
 ## Version 1.2.7 on 14 November 2018
 
 Restored _naxis, pixel_shape not ready yet≈ß
