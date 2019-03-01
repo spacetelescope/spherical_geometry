@@ -283,10 +283,10 @@ class SingleSphericalPolygon(object):
         if crval is not None:
             wcs.wcs.crval = crval
 
-        if astropy_ver.version_info < (3, 1, 0):
-            xa, ya = (wcs._naxis1, wcs._naxis2)
-        else:
+        try:
             xa, ya = wcs.pixel_shape
+        except AttributeError:
+            xa, ya = (wcs._naxis1, wcs._naxis2)
 
         length = steps * 4 + 1
         X = np.empty(length)

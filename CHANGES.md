@@ -1,3 +1,9 @@
+## Version 1.2.10 on 1 March 2019
+
+Fix incorrect query of astropy version information to deal with
+deprecation of ``_naxis1`` and ``_naxis2`` WCS attributes. [#165]
+
+
 ## Version 1.2.9 on 22 February 2019
 
 Fixed a bug introduced in version ``1.2.8``
