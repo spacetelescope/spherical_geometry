@@ -444,7 +444,7 @@ class Graph:
 
         poly = self._trace()
         # If multiple polygons, the inside point can only be in one
-        if len(poly._polygons) ==1 not self._contains_inside_point(poly):
+        if len(poly._polygons)==1 and not self._contains_inside_point(poly):
             poly = poly.invert_polygon()
         return poly
 
