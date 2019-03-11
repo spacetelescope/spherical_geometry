@@ -443,7 +443,8 @@ class Graph:
         self._sanity_check("intersection - remove orphan nodes", True)
 
         poly = self._trace()
-        if not self._contains_inside_point(poly):
+        # If multiple polygons, the inside point can only be in one
+        if len(poly._polygons)==1 and not self._contains_inside_point(poly):
             poly = poly.invert_polygon()
         return poly
 
@@ -636,8 +637,8 @@ class Graph:
         intersecting pair, four new edges are created around the
         intersection point.
         """
-        changed = self._find_point_to_arc_intersections()
-        changed = self._find_arc_to_arc_intersections() or changed
+        changed = self._find_arc_to_arc_intersections() 
+        changed = self._find_point_to_arc_intersections() or changed
         return changed
 
     def _remove_interior_edges(self):

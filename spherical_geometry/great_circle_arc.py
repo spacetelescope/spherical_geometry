@@ -66,9 +66,11 @@ def _cross_and_normalize(A, B):
     # Normalization
     l = np.sqrt(np.sum(T ** 2, axis=-1))
     l = two_d(l)
-    # Might get some divide-by-zeros, but we don't care
+    # Might get some divide-by-zeros
     with np.errstate(invalid='ignore'):
         TN = T / l
+    # ... but set to zero, or we miss real NaNs elsewhere
+    TN = np.nan_to_num(TN)
     return TN
 
 
