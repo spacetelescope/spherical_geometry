@@ -637,8 +637,8 @@ class Graph:
         intersecting pair, four new edges are created around the
         intersection point.
         """
-        changed = self._find_point_to_arc_intersections()
-        changed = self._find_arc_to_arc_intersections() or changed
+        changed = self._find_arc_to_arc_intersections() 
+        changed = self._find_point_to_arc_intersections() or changed
         return changed
 
     def _remove_interior_edges(self):
