@@ -443,7 +443,8 @@ class Graph:
         self._sanity_check("intersection - remove orphan nodes", True)
 
         poly = self._trace()
-        if not self._contains_inside_point(poly):
+        # If multiple polygons, the inside point can only be in one
+        if len(poly._polygons) ==1 not self._contains_inside_point(poly):
             poly = poly.invert_polygon()
         return poly
 
