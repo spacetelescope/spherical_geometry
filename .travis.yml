@@ -1,193 +1,25 @@
-# We set the language to c because python isn't supported on the MacOS X nodes
-# on Travis. However, the language ends up being irrelevant anyway, since we
-# install Python ourselves using conda.
-language: c
+dist: xenial
 
-compiler: gcc
+language: python
 
-# Cache can be cleared from the travis settings menu, see docs currently at
-# https://docs.travis-ci.com/user/caching#Clearing-Caches
-cache:
-  - ccache
+addons:
+  apt:
+    packages:
+    - graphviz
+    - libopenblas-dev
 
 os:
-    - linux
+  - linux
 
-stage: Comprehensive tests
+python:
+  - "3.6"
+  - "3.7"
 
-# Setting sudo to false opts in to Travis-CI container-based builds.
-sudo: false
-
-# The apt packages below are needed for sphinx builds, which can no longer
-# be installed with sudo apt-get.
-addons:
-    apt:
-        packages:
-            - graphviz
-            - language-pack-de
-
-env:
-    global:
-        # Set defaults to avoid repeating in most cases
-        - PYTHON_VERSION=3.6
-	- NUMPY_VERSION=stable
-        - MAIN_CMD='python setup.py'
-        # Build against github source until asdf-2.0 has been released
-        - ASDF_GIT='git+git://github.com/spacetelescope/asdf.git#egg=asdf'
-        - CONDA_DEPENDENCIES='astropy Cython jinja2'
-        - CONDA_ALL_DEPENDENCIES='astropy Cython jinja2 scipy h5py matplotlib pyyaml scikit-image pandas pytz beautifulsoup4 ipython mpmath bleach'
-        - SETUP_XVFB=True
-        - EVENT_TYPE='push pull_request'
-        - SETUP_CMD='test'
-
-        # PEP8 errors/warnings:
-        # E101 - mix of tabs and spaces
-        # W191 - use of tabs
-        # W291 - trailing whitespace
-        # W292 - no newline at end of file
-        # W293 - trailing whitespace
-        # W391 - blank line at end of file
-        # E111 - 4 spaces per indentation level
-        # E112 - 4 spaces per indentation level
-        # E113 - 4 spaces per indentation level
-        # E502 - the backslash is redundant between brackets
-        # E722 - do not use bare except
-        # E901 - SyntaxError or IndentationError
-        # E902 - IOError
-        - FLAKE8_OPT="--select=E101,W191,W291,W292,W293,W391,E111,E112,E113,E502,E722,E901,E902"
-
-stages:
-   # Do the style check and a single test job, don't proceed if it fails
-   - name: Initial tests
-   # Do the rest of the tests
-   - name: Comprehensive tests
-   - name: Cron tests
-     if: type = cron
-
-matrix:
-
-    # Don't wait for allowed failures
-    fast_finish: true
-
-    include:
-
-        - stage: Initial tests
-          env: PYTHON_VERSION=3.5 SETUP_CMD='egg_info'
-
-        - stage: Initial tests
-          env: PYTHON_VERSION=3.6 SETUP_CMD='egg_info'
-
-        # Try MacOS X. Use a slightly old numpy version to help test against
-        # all supported numpy versions.
-        - os: osx
-          stage: Cron tests
-          env: SETUP_CMD='test --remote-data=astropy'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES='jplephem' EVENT_TYPE='cron'
-
-        # Check for sphinx doc build warnings - we do this first because it
-        # runs for a long time. The sphinx build also has some additional
-        # dependencies. Using a more stringent locale than UTF-8.
-        - os: linux
-          env: SETUP_CMD='build_docs -w'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES='sphinx-gallery>=0.1.12 pillow --no-deps jplephem'
-               LC_CTYPE=C LC_ALL=C LANG=C
-
-        # Try all python versions and Numpy versions. Since we can assume that
-        # the Numpy developers have taken care of testing Numpy with different
-        # versions of Python, we can vary Python and Numpy versions at the same
-        # time. Since we test the latest Numpy as part of the builds with all
-        # optional dependencies below, we can focus on older builds here.
-        # Numpy 1.11 is tested below, 1.12 in the Initial stage test.
-        # Run this test using native pytest
-        - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
-               INSTALL_CMD='python setup.py build_ext --inplace'
-               PIP_DEPENDENCIES='pytest-astropy'
-               TEST_CMD='pytest --open-files --doctest-rst'
-          script:
-            - $INSTALL_CMD
-            - $TEST_CMD
-
-        # Now try with all optional dependencies.
-        - os: linux
-          env: PYTHON_VERSION=3.5 SETUP_CMD='test --remote-data=astropy'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES="jplephem $ASDF_GIT"
-               LC_CTYPE=C.ascii LC_ALL=C
-               NUMPY_VERSION=1.11
-               MATPLOTLIB_VERSION=1.5
-
-        - os: linux
-          stage: Initial tests
-          env: CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PYTEST_VERSION='>3.2'
-               SETUP_CMD='test -a "--durations=50"'
-          compiler: clang
-
-        # Pinning conda version temporarily to 4.3.21, as some anaconda
-        # packges build with 4.3.27 are faulty and we see this job failing,
-        # while locally there are no issues when the same version of
-        # packages are installed from pip.
-        # TODO: remove the pinning once the issue is solved upstream.
-        - os: linux
-          env: SETUP_CMD='test --coverage --remote-data=astropy'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-               PIP_DEPENDENCIES="cpp-coveralls objgraph jplephem bintrees $ASDF_GIT"
-               LC_CTYPE=C.ascii LC_ALL=C
-               CFLAGS='-ftest-coverage -fprofile-arcs -fno-inline-functions -O0'
-               MATPLOTLIB_VERSION=2.0 NUMPY_VERSION=1.13
-               EVENT_TYPE='push pull_request cron'
-               CONDA_VERSION=4.3.21
-
-        # Try pre-release version of Numpy without optional dependencies
-        - os: linux
-          env: NUMPY_VERSION=prerelease
-               EVENT_TYPE='push pull_request cron'
-
-        # Try older numpy versions
-        - os: linux
-          env: NUMPY_VERSION=1.12
-               EVENT_TYPE='push pull_request cron'
-
-        # Do a PEP8/pyflakes test with flake8
-        - os: linux
-          stage: Initial tests
-          env: MAIN_CMD="flake8 astropy --count $FLAKE8_OPT" SETUP_CMD=''
-
-        # Try developer version of Numpy with optional dependencies and also
-        # run all remote tests. Since both cases will be potentially
-        # unstable, we combine them into a single unstable build that we can
-        # mark as an allowed failure below.
-        - os: linux
-          env: NUMPY_VERSION=dev SETUP_CMD='test --remote-data'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-
-        # We check numpy-dev also in a job that only runs from cron, so that
-        # we can spot issues sooner. We do not use remote data here, since
-        # that gives too many false positives due to URL timeouts.
-        - os: linux
-          stage: Cron tests
-          env: NUMPY_VERSION=dev EVENT_TYPE='cron'
-               CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
-
-    allow_failures:
-      - os: linux
-        env: NUMPY_VERSION=dev SETUP_CMD='test --remote-data'
-             CONDA_DEPENDENCIES=$CONDA_ALL_DEPENDENCIES
 
 install:
-    - git clone git://github.com/astropy/ci-helpers.git
-    - source ci-helpers/travis/setup_conda.sh
+  # default python provides an incompatible version of numpy (1.15.x) for python 3.7
+  - pip install --upgrade pip setuptools numpy scipy
+  - pip install -e ".[test]"
 
 script:
-    - $MAIN_CMD $SETUP_CMD
-
-after_success:
-    - if [[ $SETUP_CMD == *--coverage* ]]; then
-        if [ "$TRAVIS_REPO_SLUG" = "astropy/astropy" -o "$TRAVIS_PULL_REQUEST_SLUG" = "astropy/astropy" ]; then
-          cpp-coveralls -E ".*convolution.*" -E ".*_erfa.*" -E ".*\.l" -E ".*\.y" -E ".*flexed.*" -E ".*cextern.*" -E ".*_np_utils.*" -E ".*cparser.*" -E ".*cython_impl.*" --dump c-coveralls.json;
-          coveralls --merge=c-coveralls.json --rcfile='astropy/tests/coveragerc';
-        fi;
-      fi
+  - pytest
