@@ -202,7 +202,7 @@ def test_self_intersection():
     s1 = polygon.SphericalPolygon.from_radec(np.array(ra1), np.array(dec1))
     s2 = polygon.SphericalPolygon.from_radec(np.array(ra2), np.array(dec2))
     s12 = s2.union(s1)
-    # asserts self-intersection is same as original 
+    # asserts self-intersection is same as original
     s12int = s12.intersection(s12)
     assert(abs(s12.area() - s12int.area()) < 1.0e-6)
     # same, with multi_intersection method
@@ -271,7 +271,7 @@ def test_ordering():
         BS = roll_polygon(B, i)
 
         C = AS.intersection(BS)
-        
+
         Aareas.append(A.area())
         Bareas.append(B.area())
         Careas.append(C.area())
@@ -354,3 +354,29 @@ def test_intersection_crash():
     poly = polygon.SphericalPolygon(polypoints, inside=polycenter)
 
     overlap = poly.overlap(testFoV)
+
+
+def test_intersection_crash_similar_poly():
+    p1 = polygon.SphericalPolygon(
+        np.array([[-0.1094946215827374, -0.8592766830993238, -0.499654390280199 ],
+                  [-0.1089683641318892, -0.8595220381654031, -0.4993473355555343],
+                  [-0.108610535224965 , -0.8593183788298407, -0.4997756250993051],
+                  [-0.1091500557209236, -0.8590667764452905, -0.5000905307482003],
+                  [-0.1094946215827374, -0.8592766830993238, -0.499654390280199 ]]),
+        np.array([-0.1090595793730483, -0.8592979843505629, -0.4997128998115153])
+    )
+
+    p2 = polygon.SphericalPolygon(
+        np.array([[-0.1094946213367254, -0.8592766831114167, -0.4996543903133135],
+                  [-0.1089683641834766, -0.859522038038747 , -0.4993473357622887],
+                  [-0.1086105354789061, -0.8593183788183577, -0.4997756250638628],
+                  [-0.109150055669766 , -0.8590667765760884, -0.5000905305346783],
+                  [-0.1094946213367254, -0.8592766831114167, -0.4996543903133135]]),
+        np.array([-0.1090595793730483, -0.8592979843505629, -0.4997128998115153])
+    )
+
+    p3 = p1.intersection(p2)
+
+    pts1 = np.sort(list(p1.points)[0][:-1], axis=0)
+    pts3 = np.sort(list(p3.points)[0][:-1], axis=0)
+    assert np.allclose(pts1, pts3, rtol=0, atol=1e-15)

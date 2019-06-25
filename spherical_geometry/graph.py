@@ -224,7 +224,7 @@ class Graph:
             The new node
         """
         # Any nodes whose Cartesian coordinates are closer together
-        # than 2 ** -32 will cause numerical problems in the
+        # than 2 ** -29 will cause numerical problems in the
         # intersection calculations, so we merge any nodes that
         # are closer together than that.
 
@@ -237,7 +237,7 @@ class Graph:
             nodes = list(self._nodes)
             node_array = np.array([node._point for node in nodes])
 
-            diff = np.all(np.abs(point - node_array) < 2 ** -32, axis=-1)
+            diff = np.all(np.abs(point - node_array) < 2 ** -29, axis=-1)
 
             indices = np.nonzero(diff)[0]
             if len(indices):
@@ -637,7 +637,7 @@ class Graph:
         intersecting pair, four new edges are created around the
         intersection point.
         """
-        changed = self._find_arc_to_arc_intersections() 
+        changed = self._find_arc_to_arc_intersections()
         changed = self._find_point_to_arc_intersections() or changed
         return changed
 
