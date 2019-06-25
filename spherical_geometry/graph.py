@@ -224,7 +224,7 @@ class Graph:
             The new node
         """
         # Any nodes whose Cartesian coordinates are closer together
-        # than 2 ** -30 will cause numerical problems in the
+        # than 2 ** -29 will cause numerical problems in the
         # intersection calculations, so we merge any nodes that
         # are closer together than that.
 
