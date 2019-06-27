@@ -97,7 +97,7 @@ The correctness of several of the algorithms using polygons depends on
 a consistent orientation of the points defining it. That is, the points
 should have a clockwise order. When creating a new spherical polygon,
 the order of the points defining a polygon will be reversed if they are
-not in clockwise order. The method `SphericalPolygon.is_clockwise`is
+not in clockwise order. The method `SphericalPolygon.is_clockwise` is
 used to est if the points are in clockwise order. It takes two
 successive sides and computes the normal vector to the sides. If the
 normal vector points inward towards the center of the sphere, the two
@@ -106,6 +106,7 @@ two sides are clockwise. The code determines the orientation by
 computing the triple product of the two sides with the vertex of the
 the two sides. Summing the triple product over all the sides gives the
 predominant orientation of the points in the polygon.
+
 
 Disjoint Polygons
 ^^^^^^^^^^^^^^^^^

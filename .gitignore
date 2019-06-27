@@ -28,6 +28,7 @@ docs/_build
 
 # Packages/installer info
 *.egg
+*.eggs
 *.egg-info
 dist
 build
@@ -35,6 +36,7 @@ eggs
 parts
 bin
 var
+pip-wheel-metadata
 sdist
 develop-eggs
 .installed.cfg
