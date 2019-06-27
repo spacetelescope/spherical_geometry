@@ -183,8 +183,7 @@ def test_from_wcs():
     from astropy.io import fits
 
     filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
-    hdulist = fits.open(filename)
-    header = hdulist['SCI'].header
+    header = fits.getheader(filename, ext=('SCI', 1))
 
     poly = polygon.SphericalPolygon.from_wcs(header)
     for lonlat in poly.to_lonlat():
@@ -301,8 +300,8 @@ def test_point_in_poly():
 
 def test_point_in_poly_lots():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'))
-    header = fits[0].header
+    header = fits.getheader(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'),
+                            ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1, crval=[0, 87])

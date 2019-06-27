@@ -75,7 +75,7 @@ class union_test:
                 assert np.all(union_area * 1.1 >= areas)
 
             lengths = np.array([
-                np.sum(len(x._points) for x in y.iter_polygons_flat())
+                sum(len(x._points) for x in y.iter_polygons_flat())
                 for y in unions])
             assert np.all(lengths == [lengths[0]])
             areas = np.array([x.area() for x in unions])
@@ -87,8 +87,8 @@ class union_test:
 @union_test(0, 90)
 def test1():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'))
-    header = fits[0].header
+    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    header = fits.getheader(filename, ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1, crval=[0, 87])
@@ -117,12 +117,11 @@ def test5():
     from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
-
-    wcs = pywcs.WCS(A[1].header, fobj=A)
-    chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(A[4].header, fobj=A)
-    chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
+    with fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz')) as A:
+        wcs = pywcs.WCS(A[1].header, fobj=A)
+        chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(A[4].header, fobj=A)
+        chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
 
     null_union = chipA1.union(chipA2)
 
@@ -131,12 +130,11 @@ def test6():
     from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = fits.open(os.path.join(ROOT_DIR, '2chipC.fits.gz'))
-
-    wcs = pywcs.WCS(A[1].header, fobj=A)
-    chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(A[4].header, fobj=A)
-    chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
+    with fits.open(os.path.join(ROOT_DIR, '2chipC.fits.gz')) as A:
+        wcs = pywcs.WCS(A[1].header, fobj=A)
+        chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(A[4].header, fobj=A)
+        chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
 
     null_union = chipA1.union(chipA2)
 
@@ -146,19 +144,17 @@ def test7():
     from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
+    with fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz')) as A:
+        wcs = pywcs.WCS(A[1].header, fobj=A)
+        chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(A[4].header, fobj=A)
+        chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
 
-    wcs = pywcs.WCS(A[1].header, fobj=A)
-    chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(A[4].header, fobj=A)
-    chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
-
-    B = fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
-
-    wcs = pywcs.WCS(B[1].header, fobj=B)
-    chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(B[4].header, fobj=B)
-    chipB2 = polygon.SphericalPolygon.from_wcs(wcs)
+    with fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz')) as B:
+        wcs = pywcs.WCS(B[1].header, fobj=B)
+        chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(B[4].header, fobj=B)
+        chipB2 = polygon.SphericalPolygon.from_wcs(wcs)
 
     return [chipA1, chipA2, chipB1, chipB2]
 
@@ -167,8 +163,8 @@ def test7():
 def test8():
     from astropy.io import fits
 
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
-    header = fits[0].header
+    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    header = fits.getheader(filename, ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1)

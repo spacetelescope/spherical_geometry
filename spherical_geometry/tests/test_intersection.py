@@ -75,7 +75,7 @@ class intersection_test:
                 assert np.all(intersection_area * 0.9 <= areas)
 
             lengths = np.array([
-                np.sum(len(x._points) for x in y.iter_polygons_flat())
+                sum(len(x._points) for x in y.iter_polygons_flat())
                 for y in intersections])
             assert np.all(lengths == [lengths[0]])
             areas = np.array([x.area() for x in intersections])
@@ -88,8 +88,8 @@ class intersection_test:
 def test1():
     from astropy.io import fits
 
-    fits = fits.open(resolve_imagename(ROOT_DIR,'1904-66_TAN.fits'))
-    header = fits[0].header
+    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    header = fits.getheader(filename, ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1, crval=[0, 87])
@@ -110,8 +110,8 @@ def test2():
 @intersection_test(0, 90)
 def test3():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
-    header = fits[0].header
+    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    header = fits.getheader(filename, ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1, crval=[0, 87])
@@ -125,17 +125,17 @@ def test4():
     from astropy.io import fits
     from astropy import wcs as pywcs
 
-    A = fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz'))
-    B = fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz'))
+    with fits.open(os.path.join(ROOT_DIR, '2chipA.fits.gz')) as A:
+        wcs = pywcs.WCS(A[1].header, fobj=A)
+        chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(A[4].header, fobj=A)
+        chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
 
-    wcs = pywcs.WCS(A[1].header, fobj=A)
-    chipA1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(A[4].header, fobj=A)
-    chipA2 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(B[1].header, fobj=B)
-    chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
-    wcs = pywcs.WCS(B[4].header, fobj=B)
-    chipB2 = polygon.SphericalPolygon.from_wcs(wcs)
+    with fits.open(os.path.join(ROOT_DIR, '2chipB.fits.gz')) as B:
+        wcs = pywcs.WCS(B[1].header, fobj=B)
+        chipB1 = polygon.SphericalPolygon.from_wcs(wcs)
+        wcs = pywcs.WCS(B[4].header, fobj=B)
+        chipB2 = polygon.SphericalPolygon.from_wcs(wcs)
 
     Apoly = chipA1.union(chipA2)
     Bpoly = chipB1.union(chipB2)
@@ -146,8 +146,8 @@ def test4():
 @intersection_test(0, 90)
 def test6():
     from astropy.io import fits
-    fits = fits.open(resolve_imagename(ROOT_DIR, '1904-66_TAN.fits'))
-    header = fits[0].header
+    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    header = fits.getheader(filename, ext=0)
 
     poly1 = polygon.SphericalPolygon.from_wcs(
         header, 1)
@@ -173,9 +173,9 @@ def test_difficult_intersections():
     # Tests a number of intersections of real data that have been
     # problematic in previous revisions of spherical_geometry
 
-    def test_intersection(polys):
-        A, B = polys
-        A.intersection(B)
+    # def test_intersection(polys):
+        # A, B = polys
+        # A.intersection(B)
 
     fname = resolve_imagename(ROOT_DIR, "difficult_intersections.txt")
     with open(fname, 'rb') as fd:
@@ -190,7 +190,8 @@ def test_difficult_intersections():
             to_array(line) for line in lines[i:i+4]]
         polyA = polygon.SphericalPolygon(Apoints, Ainside)
         polyB = polygon.SphericalPolygon(Bpoints, Binside)
-        yield test_intersection, (polyA, polyB)
+        # yield test_intersection, (polyA, polyB)
+        polyA.intersection(polyB)
 
 def test_self_intersection():
     # Tests intersection between a disjoint polygon and itself

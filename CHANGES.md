@@ -2,7 +2,7 @@
 
 Increase the dimension of the confusion region in which two nodes are
 considered to be equal. This reduces the likelihood of crashes when
-computing intersections of nearly identical polygons. [#170]
+computing intersections of nearly identical polygons. [#170, #173]
 
 ## Version 1.2.10 on 1 March 2019
 
