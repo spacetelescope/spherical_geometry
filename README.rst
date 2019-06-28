@@ -1,8 +1,6 @@
 User documentation
 ==================
 
-.. currentmodule:: spherical_geometry
-
 The ``spherical_geometry`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
@@ -28,7 +26,7 @@ While these representations are convenient, they have discontinuities
 at the poles, making operations on them trickier at arbitrary
 locations on the sky sphere.  Therefore, all internal operations of
 this library are done in 3D vector space, where coordinates are
-represented as (*x*, *y*, *z*) vectors.  The `spherical_geometry.vector` module
+represented as (*x*, *y*, *z*) vectors.  The ``spherical_geometry.vector`` module
 contains functions to convert between (*ra*, *dec*) and (*x*, *y*,
 *z*) representations.
 
@@ -44,13 +42,13 @@ defined as a vector whose length is 1, i.e.:
 
 To prevent unnecessary recomputation, many methods in this library
 assume that the vectors passed in are already normalized.  If this is
-not the case, `spherical_geometry.vector.normalize_vector` can be used to
+not the case, ``spherical_geometry.vector.normalize_vector`` can be used to
 normalize an array of vectors.
 
 When not working in Cartesian vectors, the library allows the user to
 work in either degrees or radians.  All methods that require or return
 an angular value have a ``degrees`` keyword argument.  When
-``degrees`` is `True`, these measurements are in degrees, otherwise
+``degrees`` is ``True``, these measurements are in degrees, otherwise
 they are in radians.
 
 Spherical polygons
@@ -58,13 +56,13 @@ Spherical polygons
 
 Spherical polygons are arbitrary areas on the sky sphere enclosed by
 great circle arcs.  They are represented by the
-`~spherical_geometry.polygon.SphericalPolygon` class.
+``~spherical_geometry.polygon.SphericalPolygon`` class.
 
 Representation
 ``````````````
 
 The points defining the polygon are available from the
-`~polygon.SphericalPolygon.points` property.  It is a Nx3 array where
+``~polygon.SphericalPolygon.points`` property.  It is a Nx3 array where
 each row is an (*x*, *y*, *z*) vector, normalized.  The polygon points
 are explicitly closed, i.e., the first and last points are the same.
 
@@ -88,7 +86,7 @@ white region.
 .. image:: inside.png
 
 The inside point of the the polygon can be obtained from the
-`~polygon.SphericalPolygon.inside` property.
+``~polygon.SphericalPolygon.inside`` property.
 
 What is the orientation?
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,7 +95,7 @@ The correctness of several of the algorithms using polygons depends on
 a consistent orientation of the points defining it. That is, the points
 should have a clockwise order. When creating a new spherical polygon,
 the order of the points defining a polygon will be reversed if they are
-not in clockwise order. The method `SphericalPolygon.is_clockwise` is
+not in clockwise order. The method ``SphericalPolygon.is_clockwise`` is
 used to est if the points are in clockwise order. It takes two
 successive sides and computes the normal vector to the sides. If the
 normal vector points inward towards the center of the sphere, the two
@@ -119,9 +117,9 @@ generators and return the value for a single polygon at a time. To
 access all the values of a proeprty, either use a for loop, or coerce
 the property to a list. The properties which are generators are:
 
-  - `SphericalPolygon.points`: The points defining each polygon
+  - ``SphericalPolygon.points``: The points defining each polygon
 
-  - `SphericalPolygon.inside` : The inside point of each polygon
+  - ``SphericalPolygon.inside`` : The inside point of each polygon
 
 
 If the intersection of two polygons generates disjoint polygons the
@@ -130,76 +128,72 @@ code computes a new interior point for the disjoint polygons.
 Creating spherical polygons
 ```````````````````````````
 
-.. currentmodule:: spherical_geometry.polygon
+``SphericalPolygon`` objects have 5 different constructors:
 
-`SphericalPolygon` objects have 5 different constructors:
+  - ``SphericalPolygon``: Takes an array of (*x*, *y*, *z*) points, or a
+    list of disjoint ``SphericalPolygon`` instances.
 
-  - `SphericalPolygon`: Takes an array of (*x*, *y*, *z*) points, or a
-    list of disjoint `SphericalPolygon` instances.
-
-  - `SphericalPolygon.from_radec`: Takes an array of (*ra*, *dec*)
+  - ``SphericalPolygon.from_radec``: Takes an array of (*ra*, *dec*)
     points and an inside point.
 
-  - `SphericalPolygon.from_cone`: Creates a polygon from a cone on the
+  - ``SphericalPolygon.from_cone``: Creates a polygon from a cone on the
     sky shere.  Takes (*ra*, *dec*, *radius*).
 
-  - `SphericalPolygon.from_wcs`: Creates a polygon from the footprint
+  - ``SphericalPolygon.from_wcs``: Creates a polygon from the footprint
     of a FITS image using its WCS header keywords.  Takes a FITS
-    filename or a `astropy.io.fits.Header` object.
+    filename or a ``astropy.io.fits.Header`` object.
 
-  - `SphericalPolygon.convex_hull`: Creates a polygon that is the
+  - ``SphericalPolygon.convex_hull``: Creates a polygon that is the
     convex hull of a list of points.
 
 Operations on Spherical Polygons
 ````````````````````````````````
 
-Once one has a `SphericalPolygon` object, there are a number of
+Once one has a ``SphericalPolygon`` object, there are a number of
 operations available:
 
-  - `~SphericalPolygon.contains_point`: Determines if the given point
+  - ``~SphericalPolygon.contains_point``: Determines if the given point
     is inside the polygon.
 
-  - `~SphericalPolygon.intersects_poly`: Determines if one polygon
+  - ``~SphericalPolygon.intersects_poly``: Determines if one polygon
     intersects with another.
 
-  - `~SphericalPolygon.area`: Determine the area of a polygon.
+  - ``~SphericalPolygon.area``: Determine the area of a polygon.
 
-  - `~SphericalPolygon.union` and `~SphericalPolygon.multi_union`:
+  - ``~SphericalPolygon.union`` and ``~SphericalPolygon.multi_union``:
     Return a new polygon that is the union of two or more polygons.
 
-  - `~SphericalPolygon.intersection` and
-    `~SphericalPolygon.multi_intersection`: Return a new polygon that
+  - ``~SphericalPolygon.intersection`` and
+    ``~SphericalPolygon.multi_intersection``: Return a new polygon that
     is the intersection of two or more polygons.
 
-  - `~SphericalPolygon.overlap`: Determine how much a given polygon
+  - ``~SphericalPolygon.overlap``: Determine how much a given polygon
     overlaps another.
 
-  - `~SphericalPolygon.to_radec`: Convert (*x*, *y*, *z*) points in the
+  - ``~SphericalPolygon.to_radec``: Convert (*x*, *y*, *z*) points in the
     polygon to (*ra*, *dec*) points.
 
-  - `~SphericalPolygon.draw`: Plots the polygon using matplotlib’s
+  - ``~SphericalPolygon.draw``: Plots the polygon using matplotlib’s
     Basemap toolkit.  This feature is rather bare and intended
     primarily for debugging purposes.
 
 Great circle arcs
 -----------------
 
-.. currentmodule:: spherical_geometry.great_circle_arc
-
 As seen above, great circle arcs are used to define the edges of the
-polygon.  The `spherical_geometry.great_circle_arc` module contains a number of
+polygon.  The ``spherical_geometry.great_circle_arc`` module contains a number of
 functions that are useful for dealing with them.
 
-- `length`: Returns the angular distance between two points on the sphere.
+- ``length``: Returns the angular distance between two points on the sphere.
 
-- `intersection`: Returns the intersection point between two great
+- ``intersection``: Returns the intersection point between two great
   circle arcs.
 
-- `intersects`: Determines if two great circle arcs intersect.
+- ``intersects``: Determines if two great circle arcs intersect.
 
-- `intersects_point`: Determines if a point is along the great circle
+- ``intersects_point``: Determines if a point is along the great circle
   arc.
 
-- `angle`: Calculate the angle between two great circle arcs.
+- ``angle``: Calculate the angle between two great circle arcs.
 
-- `midpoint`: Calculate the midpoint along a great circle arc.
+- ``midpoint``: Calculate the midpoint along a great circle arc.
