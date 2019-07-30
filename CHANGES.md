@@ -1,8 +1,19 @@
-## Version 1.2.11.dev Unreleased
+## Version 1.2.13 on 30 July 2019
+
+Undo-ing changes from release 1.2.11 (PRs #170 and #173) due to crashes in the
+union of multi-polygons until a better solution is found. [#176]
+
+## Version 1.2.12
+
+Package structure was updated.
+
+
+## Version 1.2.11
 
 Increase the dimension of the confusion region in which two nodes are
 considered to be equal. This reduces the likelihood of crashes when
 computing intersections of nearly identical polygons. [#170, #173]
+
 
 ## Version 1.2.10 on 1 March 2019
 
