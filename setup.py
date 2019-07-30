@@ -44,7 +44,9 @@ for root, dirs, files in os.walk(PACKAGENAME):
 ext_info = {
     'include_dirs': [numpy.get_include()],
     'libraries': ['m'],
+    'define_macros': [],
 }
+
 sources = [
     os.path.join('src', 'math_util.c')
 ]
@@ -69,6 +71,14 @@ sources.extend([
 ext_info['include_dirs'].extend([
     qd_library_include_path,
     'src'])
+
+if sys.platform.startswith('win'):
+    # no math library on Windows
+    ext_info['libraries'] = []
+    ext_info['define_macros'] += [
+        ('_CRT_SECURE_NO_WARNINGS', None),
+    ]
+
 
 setup(
     name=PACKAGENAME,
