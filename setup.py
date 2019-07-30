@@ -76,7 +76,7 @@ if sys.platform.startswith('win'):
     # no math library on Windows
     ext_info['libraries'] = []
     ext_info['define_macros'] += [
-        ('_CRT_SECURE_NO_WARNING', None),
+        ('_CRT_SECURE_NO_WARNINGS', None),
     ]
 
 
