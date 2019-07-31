@@ -43,7 +43,8 @@ for root, dirs, files in os.walk(PACKAGENAME):
 
 ext_info = {
     'include_dirs': [numpy.get_include()],
-    'libraries': ['m'],
+    'library_dirs': [],
+    'libraries': ['qd', 'm'],
     'define_macros': [],
 }
 
@@ -51,7 +52,7 @@ sources = [
     os.path.join('src', 'math_util.c')
 ]
 
-qd_library_path = os.path.join('cextern', 'qd-library')
+qd_library_path = os.path.abspath(os.path.join('cextern', 'qd-library'))
 qd_library_c_path = os.path.join(qd_library_path, 'src')
 qd_library_include_path = os.path.join(qd_library_path, 'include')
 qd_sources = [
@@ -64,21 +65,31 @@ qd_sources = [
     'fpu.cpp',
     'util.cpp']
 
-sources.extend([
-    str(os.path.join(qd_library_c_path, x))
-    for x in qd_sources])
+#sources.extend([
+#    str(os.path.join(qd_library_c_path, x))
+#    for x in qd_sources])
 
+ext_info['library_dirs'] = [qd_library_c_path]
 ext_info['include_dirs'].extend([
     qd_library_include_path,
     'src'])
 
 if sys.platform.startswith('win'):
     # no math library on Windows
-    ext_info['libraries'] = []
+    ext_info['libraries'] = ['qd']
     ext_info['define_macros'] += [
         ('_CRT_SECURE_NO_WARNINGS', None),
     ]
 
+def build_qd():
+    import subprocess
+    cwd = os.path.abspath(os.curdir)
+    os.chdir(qd_library_c_path)
+    subprocess.run('g++ -O2 -fPIC -I. -I{} -c {}'.format(qd_library_include_path, " ".join(qd_sources)).split())
+    subprocess.run('ar rcs libqd.a {}'.format(" ".join(qd_sources)).replace(".cpp", ".o").split())
+    os.chdir(cwd)
+
+build_qd()
 
 setup(
     name=PACKAGENAME,
