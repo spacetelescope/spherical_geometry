@@ -1,3 +1,7 @@
+## Version 1.2.15 on 31 July 2019
+
+Fixes compilation issue under Windows
+
 ## Version 1.2.13 on 30 July 2019
 
 Undo-ing changes from release 1.2.11 (PRs #170 and #173) due to crashes in the
