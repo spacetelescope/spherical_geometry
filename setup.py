@@ -7,6 +7,9 @@ import sys
 from setuptools import setup
 from setuptools import Extension
 from setuptools import find_packages
+from distutils.command.build_ext import build_ext
+from distutils.command.build_py import build_py
+from setuptools.command.develop import develop
 
 try:
     import numpy
@@ -44,7 +47,7 @@ for root, dirs, files in os.walk(PACKAGENAME):
 ext_info = {
     'include_dirs': [numpy.get_include()],
     'library_dirs': [],
-    'libraries': ['qd', 'm'],
+    'libraries': ['qd'],
     'define_macros': [],
 }
 
@@ -52,44 +55,70 @@ sources = [
     os.path.join('src', 'math_util.c')
 ]
 
+qd_build_dir = os.path.abspath(os.path.join('build', 'cextern', 'qd'))
+os.makedirs(qd_build_dir, exist_ok=True)
+
 qd_library_path = os.path.abspath(os.path.join('cextern', 'qd-library'))
 qd_library_c_path = os.path.join(qd_library_path, 'src')
 qd_library_include_path = os.path.join(qd_library_path, 'include')
-qd_sources = [
-    'bits.cpp',
-    'c_qd.cpp',
-    'dd_real.cpp',
-    'qd_real.cpp',
-    'dd_const.cpp',
-    'qd_const.cpp',
-    'fpu.cpp',
-    'util.cpp']
 
-#sources.extend([
-#    str(os.path.join(qd_library_c_path, x))
-#    for x in qd_sources])
-
-ext_info['library_dirs'] = [qd_library_c_path]
-ext_info['include_dirs'].extend([
-    qd_library_include_path,
-    'src'])
+ext_info['library_dirs'] = [qd_build_dir]
+ext_info['include_dirs'] += [qd_library_include_path, 'src']
 
 if sys.platform.startswith('win'):
     # no math library on Windows
-    ext_info['libraries'] = ['qd']
     ext_info['define_macros'] += [
         ('_CRT_SECURE_NO_WARNINGS', None),
     ]
+else:
+    ext_info['libraries'] += ['m']
+
 
 def build_qd():
     import subprocess
+    from glob import glob
+
+    # Did we already generate the library?
+    have_lib = bool(glob(os.path.join(qd_build_dir, '*.a')) + glob(os.path.join(qd_build_dir, '*.lib')))
+    if have_lib:
+        return
+
+    lib_name = 'libqd.a'
+    if sys.platform.startswith('win'):
+        lib_name = 'qd.lib'
+
     cwd = os.path.abspath(os.curdir)
-    os.chdir(qd_library_c_path)
-    subprocess.run('g++ -O2 -fPIC -I. -I{} -c {}'.format(qd_library_include_path, " ".join(qd_sources)).split())
-    subprocess.run('ar rcs libqd.a {}'.format(" ".join(qd_sources)).replace(".cpp", ".o").split())
+    os.chdir(qd_build_dir)
+
+    print("Generating {}".format(lib_name))
+    if not sys.platform.startswith('win') and not os.path.exists(os.path.join(qd_library_c_path, lib_name)):
+        subprocess.run('g++ -fPIC -O3 -Wall -Wextra -I. -I{} -c {}/*.cpp'.format(qd_library_include_path, qd_library_c_path).split())
+        subprocess.run('ar rcs {} {}/*.o'.format(lib_name, qd_library_c_path).split())
+    elif not os.path.exists(os.path.join(qd_library_c_path, lib_name)):
+        subprocess.run('cl /nologo /EHsc /c /MD /TP /Ox /W4 -I{} {}\*.cpp'.format(qd_library_include_path, qd_library_c_path).split())
+        subprocess.run('link /LIB /OUT:{} {}\*.obj'.format(lib_name, qd_build_dir).split())
     os.chdir(cwd)
 
-build_qd()
+
+class CustomBuildPy(build_py):
+    def run(self):
+        build_py.run(self)
+        build_qd()
+
+
+class CustomBuildExt(build_ext):
+    def run(self):
+        build_ext.run(self)
+        if self.inplace:
+            build_py = self.get_finalized_command('build_py')
+        build_qd()
+
+
+class CustomDevelop(develop):
+    def run(self):
+        build_qd()
+        develop.run(self)
+
 
 setup(
     name=PACKAGENAME,
@@ -125,4 +154,9 @@ setup(
     ext_modules=[
         Extension('spherical_geometry.math_util', sources, **ext_info)
     ],
+    cmdclass={
+        'build_ext': CustomBuildExt,
+        'build_py': CustomBuildPy,
+        'develop': CustomDevelop,
+    },
 )
