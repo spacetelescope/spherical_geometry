@@ -4,6 +4,7 @@
 import os
 import sys
 
+from glob import glob
 from setuptools import setup
 from setuptools import Extension
 from setuptools import find_packages
@@ -61,6 +62,7 @@ os.makedirs(qd_build_dir, exist_ok=True)
 qd_library_path = os.path.abspath(os.path.join('cextern', 'qd-library'))
 qd_library_c_path = os.path.join(qd_library_path, 'src')
 qd_library_include_path = os.path.join(qd_library_path, 'include')
+qd_sources = ' '.join(glob(os.path.join(qd_library_c_path, '*.cpp')))
 
 ext_info['library_dirs'] = [qd_build_dir]
 ext_info['include_dirs'] += [qd_library_include_path, 'src']
@@ -76,7 +78,6 @@ else:
 
 def build_qd():
     import subprocess
-    from glob import glob
 
     # Did we already generate the library?
     have_lib = bool(glob(os.path.join(qd_build_dir, '*.a')) + glob(os.path.join(qd_build_dir, '*.lib')))
@@ -92,11 +93,11 @@ def build_qd():
 
     print("Generating {}".format(lib_name))
     if not sys.platform.startswith('win') and not os.path.exists(os.path.join(qd_library_c_path, lib_name)):
-        subprocess.run('g++ -fPIC -O3 -Wall -Wextra -I. -I{} -c {}/*.cpp'.format(qd_library_include_path, qd_library_c_path).split())
-        subprocess.run('ar rcs {} {}/*.o'.format(lib_name, qd_library_c_path).split())
+        subprocess.run('g++ -fPIC -O3 -Wall -Wextra -I. -I{} -c {}'.format(qd_library_include_path, qd_sources).split())
+        subprocess.run('ar rcs {} {}'.format(lib_name, qd_sources.replace(qd_library_c_path, qd_build_dir).replace('.cpp', '.o')).split())
     elif not os.path.exists(os.path.join(qd_library_c_path, lib_name)):
-        subprocess.run('cl /nologo /EHsc /c /MD /TP /Ox /W4 -I{} {}\*.cpp'.format(qd_library_include_path, qd_library_c_path).split())
-        subprocess.run('link /LIB /OUT:{} {}\*.obj'.format(lib_name, qd_build_dir).split())
+        subprocess.run('cl /nologo /EHsc /c /MD /TP /Ox /W4 -I{} {}'.format(qd_library_include_path, qd_sources).split())
+        subprocess.run('link /LIB /OUT:{} {}'.format(lib_name, qd_sources.replace(qd_library_c_path, qd_build_dir).replace('.cpp', '.obj')).split())
     os.chdir(cwd)
 
 
