@@ -1,0 +1,14 @@
+/------------------ qd.pc ------------------------
+prefix=@prefix@
+exec_prefix=@prefix@
+libdir=@prefix@/lib
+includedir=@prefix@/include
+
+Name: qd
+Description: A C++/Fortran-90 double-double and quad-double package
+URL: http://crd-legacy.lbl.gov/~dhbailey/mpdist/
+Version: @VERSION@
+Requires:
+Libs: -L@libdir@ -lqd
+Cflags: -I@includedir@
+\-------------------------------------------------------

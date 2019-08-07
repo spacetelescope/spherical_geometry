@@ -1,0 +1,182 @@
+configuring qd 2.3.20...
+checking for a BSD-compatible install... /usr/bin/install -c
+checking whether build environment is sane... yes
+checking for a thread-safe mkdir -p... /usr/bin/mkdir -p
+checking for gawk... gawk
+checking whether make sets $(MAKE)... yes
+checking build system type... x86_64-unknown-linux-gnu
+checking host system type... x86_64-unknown-linux-gnu
+checking if commonly used function is to be inlined... yes
+checking if addition with IEEE-style error bound is to be used... no
+checking if sloppy multiplication is to be used... yes
+checking if sloppy division is to be used... yes
+checking if debugging code is to be enabled... no
+checking if compiler warnings is to be enabled... no
+checking for xlC_r... no
+checking for xlC... no
+checking for icpc... no
+checking for pathCC... no
+checking for pgCC... no
+checking for cxx... no
+checking for aCC... no
+checking for CC... no
+checking for cc++... no
+checking for FCC... no
+checking for KCC... no
+checking for RCC... no
+checking for c++... c++
+checking whether the C++ compiler works... yes
+checking for C++ compiler default output file name... a.out
+checking for suffix of executables... 
+checking whether we are cross compiling... no
+checking for suffix of object files... o
+checking whether we are using the GNU C++ compiler... yes
+checking whether c++ accepts -g... yes
+checking for style of include used by make... GNU
+checking dependency style of c++... gcc3
+checking for gcc... c++
+checking whether we are using the GNU C compiler... yes
+checking whether c++ accepts -g... yes
+checking for c++ option to accept ISO C89... unsupported
+checking dependency style of c++... gcc3
+checking how to run the C++ preprocessor... c++ -E
+checking for grep that handles long lines and -e... /usr/bin/grep
+checking for egrep... /usr/bin/grep -E
+checking for ANSI C header files... yes
+checking for sys/types.h... yes
+checking for sys/stat.h... yes
+checking for stdlib.h... yes
+checking for string.h... yes
+checking for memory.h... yes
+checking for strings.h... yes
+checking for inttypes.h... yes
+checking for stdint.h... yes
+checking for unistd.h... yes
+checking ieeefp.h usability... no
+checking ieeefp.h presence... no
+checking for ieeefp.h... no
+checking for stdbool.h that conforms to C99... yes
+checking for _Bool... no
+checking whether time.h and sys/time.h may both be included... yes
+checking whether struct tm is in sys/time.h or time.h... time.h
+checking whether x86 FPU control code is needed... yes
+checking fpu_control.h usability... yes
+checking fpu_control.h presence... yes
+checking for fpu_control.h... yes
+checking for gettimeofday... yes
+checking for clock_gettime useability... yes
+checking for library containing clock_gettime... none required
+checking for isnan... std::isnan
+checking for isinf... std::isinf
+checking for isfinite... std::isfinite
+checking for copysign... ::copysign
+checking for xlf95... no
+checking for ifort... no
+checking for pathf95... no
+checking for f95... no
+checking for gfortran... no
+checking for g95... no
+checking for pgf95... pgf95
+checking whether we are using the GNU Fortran compiler... no
+checking whether pgf95 accepts -g... yes
+checking how to get verbose linking output from pgf95... -v
+checking for Fortran libraries of pgf95...  -L/opt/pgi/linux86-64/17.9/lib -L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.5 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64 -lpgf90rtl -lpgf90 -lpgf90_rpm1 -lpgf902 -lpgftnrtl -lpgmp -lnuma -lpthread -lnspgc -lpgc -lrt -lm
+checking for Fortran flag needed to allow free-form source... -Mfree
+checking for etime... etime
+checking whether extra library is needed to link Fortran and C++... none
+checking for dummy main to link with Fortran libraries... none
+checking for Fortran name-mangling scheme... lower case, underscore, no extra underscore
+checking for alternate main to link with Fortran libraries... main
+checking fortran 90 modules inclusion flag... 
+checking fortran 90 modules naming style... 
+checking for sqrt in -lm... yes
+checking for a sed that does not truncate output... /usr/bin/sed
+checking for fgrep... /usr/bin/grep -F
+checking for ld used by c++... /usr/bin/ld
+checking if the linker (/usr/bin/ld) is GNU ld... yes
+checking for BSD- or MS-compatible name lister (nm)... /usr/bin/nm -B
+checking the name lister (/usr/bin/nm -B) interface... BSD nm
+checking whether ln -s works... yes
+checking the maximum length of command line arguments... 3458764513820540925
+checking whether the shell understands some XSI constructs... yes
+checking whether the shell understands "+="... yes
+checking for /usr/bin/ld option to reload object files... -r
+checking for objdump... objdump
+checking how to recognize dependent libraries... pass_all
+checking for ar... ar
+checking for strip... strip
+checking for ranlib... ranlib
+checking command to parse /usr/bin/nm -B output from c++ object... ok
+checking for dlfcn.h... yes
+checking whether we are using the GNU C++ compiler... (cached) yes
+checking whether c++ accepts -g... (cached) yes
+checking dependency style of c++... (cached) gcc3
+checking how to run the C++ preprocessor... c++ -E
+checking whether we are using the GNU Fortran compiler... (cached) no
+checking whether pgf95 accepts -g... (cached) yes
+checking for objdir... .libs
+checking if c++ supports -fno-rtti -fno-exceptions... yes
+checking for c++ option to produce PIC... -fPIC -DPIC
+checking if c++ PIC flag -fPIC -DPIC works... yes
+checking if c++ static flag -static works... no
+checking if c++ supports -c -o file.o... yes
+checking if c++ supports -c -o file.o... (cached) yes
+checking whether the c++ linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking whether stripping libraries is possible... yes
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... no
+checking whether to build static libraries... yes
+checking for ld used by c++... /usr/bin/ld -m elf_x86_64
+checking if the linker (/usr/bin/ld -m elf_x86_64) is GNU ld... yes
+checking whether the c++ linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking for c++ option to produce PIC... -fPIC -DPIC
+checking if c++ PIC flag -fPIC -DPIC works... yes
+checking if c++ static flag -static works... no
+checking if c++ supports -c -o file.o... yes
+checking if c++ supports -c -o file.o... (cached) yes
+checking whether the c++ linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+checking if libtool supports shared libraries... yes
+checking whether to build shared libraries... no
+checking whether to build static libraries... yes
+checking for pgf95 option to produce PIC... -fpic
+checking if pgf95 PIC flag -fpic works... yes
+checking if pgf95 static flag -Bstatic works... no
+checking if pgf95 supports -c -o file.o... yes
+checking if pgf95 supports -c -o file.o... (cached) yes
+checking whether the pgf95 linker (/usr/bin/ld -m elf_x86_64) supports shared libraries... yes
+checking dynamic linker characteristics... GNU/Linux ld.so
+checking how to hardcode library paths into programs... immediate
+configure: creating ./config.status
+config.status: creating Makefile
+config.status: creating config/Makefile
+config.status: creating src/Makefile
+config.status: creating include/Makefile
+config.status: creating tests/Makefile
+config.status: creating fortran/Makefile
+config.status: creating qd-config
+config.status: creating fortran/second.f
+config.status: creating config.h
+config.status: config.h is unchanged
+config.status: creating include/qd/qd_config.h
+config.status: include/qd/qd_config.h is unchanged
+config.status: executing depfiles commands
+config.status: executing libtool commands
+
+Using 
+  C++ Compiler      = c++
+  C++ Flags         = -O2  -DHAVE_CONFIG_H
+  F90 Compiler      = pgf95
+  F90 Flags         = -O2 -Mfree  
+  F90 Libs          =  -L/opt/pgi/linux86-64/17.9/lib -L/usr/lib64 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.5 -L/usr/lib/gcc/x86_64-redhat-linux/4.8.5/../../../../lib64 -lpgf90rtl -lpgf90 -lpgf90_rpm1 -lpgf902 -lpgftnrtl -lpgmp -lnuma -lpthread -lnspgc -lpgc -lrt -lm 
+  enable fortran    = yes
+  enable inline     = yes
+  enable x86 fix    = yes
+  enable ieee add   = no
+  enable sloppy mul = yes
+  enable sloppy div = yes
+  fma               = none
+  fms               = none
