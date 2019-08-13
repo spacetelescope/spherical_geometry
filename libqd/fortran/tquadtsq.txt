@@ -1,0 +1,307 @@
+Quadtsq test
+Digits =    64  Epsilon =   -64   Quadlevel =     8
+initqtsq: Tanh-sinh quadrature initialization
+           0        2048
+        1000        2048
+initqtsq: Table spaced used =    1173
+Quadrature initialization completed: cpu time =    0.010741
+
+Continuous functions on finite itervals:
+
+Problem 1: Int_0^1 t*log(1+t) dt = 1/4
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   2.49960556562626564293795665036450270604099593847591222154965495E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   2.49999999996286193175260036769287823346788864056628423066965557E-01 
+quadtsq: Iteration  3 of  8; est error = 10^  -23; approx value =
+   2.49999999999999999999999407954117428931213576470020239167458377E-01 
+quadtsq: Iteration  4 of  8; est error = 10^  -48; approx value =
+   2.49999999999999999999999999999999999999999999999998217163648501E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   2.50000000000000000000000000000000000000000000000000000000000000E-01 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.002406
+Result =
+   2.50000000000000000000000000000000000000000000000000000000000000E-01 
+Actual error =  2.838446x10^  -66
+
+Problem 2: Int_0^1 t^2*arctan(t) dt = (pi - 2 + 2*log(2))/12
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   2.10472312458166862755848502225215210498537176921941544802867282E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   2.10657251237827268431628192420302530827848539688166861637860038E-01 
+quadtsq: Iteration  3 of  8; est error = 10^  -22; approx value =
+   2.10657251225806987827151763419617046560019325119771137403293976E-01 
+quadtsq: Iteration  4 of  8; est error = 10^  -32; approx value =
+   2.10657251225806988108092302182988001700204493101800316415133802E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   2.10657251225806988108092302182988001695680805674634694101358718E-01 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.003178
+Result =
+   2.10657251225806988108092302182988001695680805674634694101358718E-01 
+Actual error =  1.424335x10^  -65
+
+Problem 3: Int_0^(pi/2) e^t*cos(t) dt = 1/2*(e^(pi/2) - 1)
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.90530948869825783052790923885813014135140272173121279012974542E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.90523868799766148258117330028385830612432427138924375892251030E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -17; approx value =
+   1.90523869048267582773721156208771519697774623931437387801811020E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -42; approx value =
+   1.90523869048267582773651783335191656319508543733197533463434824E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   1.90523869048267582773651783335191656319508543733226747001040774E+00 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.001578
+Result =
+   1.90523869048267582773651783335191656319508543733226747001040774E+00 
+Actual error =  2.278936x10^  -64
+
+Problem 4: Int_0^1 arctan(sqrt(2+t^2))/((1+t^2)sqrt(2+t^2)) dt = 5*Pi^2/96
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   5.13974878431421912337873367673335042667938813458722836958536087E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   5.14041893626709249627048747310184572423918385611860167832283906E-01 
+quadtsq: Iteration  3 of  8; est error = 10^  -17; approx value =
+   5.14041895890070760288107668739455831720204497487283845730688692E-01 
+quadtsq: Iteration  4 of  8; est error = 10^  -36; approx value =
+   5.14041895890070761397629739576882870067468878987806100896959604E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   5.14041895890070761397629739576882871630921844127124511792361947E-01 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.004400
+Result =
+   5.14041895890070761397629739576882871630921844127124511792361947E-01 
+Actual error = -1.750745x10^  -65
+
+Continuous functions on finite itervals, but non-diff at an endpoint
+
+Problem 5: Int_0^1 sqrt(t)*log(t) dt = -4/9
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+  -4.44439257651670771748813423362780282367118670872775316921073066E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+  -4.44444444444111747632616257963488337492727885415182070355862332E-01 
+quadtsq: Iteration  3 of  8; est error = 10^  -25; approx value =
+  -4.44444444444444444444444444412051462741008763532324869282232998E-01 
+quadtsq: Iteration  4 of  8; est error = 10^  -57; approx value =
+  -4.44444444444444444444444444444444444444444444444444444444444426E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -65; approx value =
+  -4.44444444444444444444444444444444444444444444444444444444444444E-01 
+Quadrature completed: CPU time =    0.002868
+Result =
+  -4.44444444444444444444444444444444444444444444444444444444444444E-01 
+Actual error =  0.000000x10^    0
+
+Problem 6: Int_0^1 sqrt(1-t^2) dt = pi/4
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   7.85427383844150855799418684409191525433507566960878698787082563E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   7.85398163398928106807939321781957965277514189898088158972370679E-01 
+quadtsq: Iteration  3 of  8; est error = 10^  -24; approx value =
+   7.85398163397448309615660891206930412797669686514526260835514374E-01 
+quadtsq: Iteration  4 of  8; est error = 10^  -51; approx value =
+   7.85398163397448309615660845819875721049292349843770069781316782E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   7.85398163397448309615660845819875721049292349843776455243736148E-01 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.000573
+Result =
+   7.85398163397448309615660845819875721049292349843776455243736148E-01 
+Actual error =  0.000000x10^    0
+
+Functions on finite intervals with integrable singularity at an endpoint.
+
+Problem 7: Int_0^1 sqrt(t)/sqrt(1-t^2) dt = 2*sqrt(pi)*gamma(3/4)/gamma(1/4)
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.19813887389271715964922184014631269852725690884727606178192014E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.19814023473477295571611857172736576934195957430917845506611721E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -24; approx value =
+   1.19814023473559220743992248892314007757600171294761998771269308E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -31; approx value =
+   1.19814023473559220743992249228032376246196103444586397012426455E+00 
+quadtsq: Estimated error = 10^  -31
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.000508
+Result =
+   1.19814023473559220743992249228032376246196103444586397012426455E+00 
+Actual error =  1.157653x10^  -34
+
+Problem 8: Int_0^1 log(t)^2 dt = 2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   2.00001078314452430017981828425978231539719617953380859412938187E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   2.00000000000040706415415454806330743413415666853171940726326290E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -25; approx value =
+   2.00000000000000000000000000002422128072788176321681176960023557E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -57; approx value =
+   2.00000000000000000000000000000000000000000000000000000000000001E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -58; approx value =
+   2.00000000000000000000000000000000000000000000000000000000000000E+00 
+quadtsq: Estimated error = 10^  -58
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.002658
+Result =
+   2.00000000000000000000000000000000000000000000000000000000000000E+00 
+Actual error =  5.330304x10^  -63
+
+Problem 9: Int_0^(pi/2) log(cos(t)) dt = -pi*log(2)/2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+  -1.08872115523904193860066871766982307982091117513196683937099111E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+  -1.08879304514637218384703510599142933552692809821081177108164152E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -23; approx value =
+  -1.08879304515180106525034351896891195409105233234346976560257732E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -48; approx value =
+  -1.08879304515180106525034444911880697366929185018463049329972723E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -60; approx value =
+  -1.08879304515180106525034444911880697366929185018464314716289763E+00 
+quadtsq: Estimated error = 10^  -60
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.003107
+Result =
+  -1.08879304515180106525034444911880697366929185018464314716289763E+00 
+Actual error =  7.596454x10^  -65
+
+Problem 10: Int_0^(pi/2) sqrt(tan(t)) dt = pi*sqrt(2)/2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   2.22144192002615578664001121408415708067218950846732656891432174E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   2.22144146907798140339376785658416964246497239860529368311188089E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -22; approx value =
+   2.22144146907918312350794055420206294861569411614825711073927264E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -31; approx value =
+   2.22144146907918312350794049503034287602417104078218690814270693E+00 
+quadtsq: Estimated error = 10^  -31
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.000723
+Result =
+   2.22144146907918312350794049503034287602417104078218690814270693E+00 
+Actual error =  3.973283x10^  -33
+
+Functions on an infinite interval (requiring a two-step solution
+
+Problem 11: Int_0^inf 1/(1+t^2) dt = pi/2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.57953084084978742921105932706673154012445969930337451464616134E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.57080843540788664899862420118312541851288016141650951636655061E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -10; approx value =
+   1.57079632681823158967448748935688600184377241202688873744090543E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -21; approx value =
+   1.57079632679489661923140835482394197854432056674355827481565982E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -44; approx value =
+   1.57079632679489661923132169163975144209858470088288730329311492E+00 
+quadtsq: Iteration  6 of  8; est error = 10^  -65; approx value =
+   1.57079632679489661923132169163975144209858469968755291048747230E+00 
+Quadrature completed: CPU time =    0.000798
+Result =
+   1.57079632679489661923132169163975144209858469968755291048747230E+00 
+Actual error =  1.044512x10^  -64
+
+Problem 12: Int_0^inf e^(-t)/sqrt(t) dt = sqrt(pi)
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.76848480443392895561989007917076135984132384754754831851638231E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.77237261859018947522233602180126873180729091424791359033782330E+00 
+quadtsq: Iteration  3 of  8; est error = 10^   -7; approx value =
+   1.77245385251230601235322273454809071020211185013316320662985269E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -18; approx value =
+   1.77245385090551800972476215302185680671754657996365547835589914E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -25; approx value =
+   1.77245385090551602729816748322111414450679450176323590616369782E+00 
+quadtsq: Iteration  6 of  8; est error = 10^  -32; approx value =
+   1.77245385090551602729816748334114452331199024053197654210516631E+00 
+quadtsq: Estimated error = 10^  -32
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+Quadrature completed: CPU time =    0.002174
+Result =
+   1.77245385090551602729816748334114452331199024053197654210516631E+00 
+Actual error =  6.594856x10^  -34
+
+Problem 13: Int_0^inf e^(-t^2/2) dt = sqrt(pi/2)
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.35594500532923876054442310099992158196872068833947171830626216E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.25064999510040494383903180511914542327377633115077237419219478E+00 
+quadtsq: Iteration  3 of  8; est error = 10^   -5; approx value =
+   1.25331695094320276882395200022993394577908914037076512047214637E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -11; approx value =
+   1.25331413798240116267752558356956653264131382952721805287571949E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -15; approx value =
+   1.25331413731550025147474077813555228032510480970451741122766820E+00 
+quadtsq: Iteration  6 of  8; est error = 10^  -37; approx value =
+   1.25331413731550025120788264240552262624598580874408791876415267E+00 
+quadtsq: Iteration  7 of  8; est error = 10^  -64; approx value =
+   1.25331413731550025120788264240552262650349337030496915831496179E+00 
+Quadrature completed: CPU time =    0.003087
+Result =
+   1.25331413731550025120788264240552262650349337030496915831496179E+00 
+Actual error =  1.851636x10^  -64
+
+Oscillatory functions on an infinite interval.
+
+Problem 14: Int_0^inf e^(-t)*cos(t) dt = 1/2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   6.76224907028994597126776187767545534373969238200672961129191189E-01 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   5.11456904820980613836113766331970820807067765410915255111644085E-01 
+quadtsq: Iteration  3 of  8; est error = 10^   -4; approx value =
+   4.99978371516029931759703520138881833123917716704280456110072343E-01 
+quadtsq: Iteration  4 of  8; est error = 10^   -9; approx value =
+   4.99999984976191534451086706276329622425793859939007625006332772E-01 
+quadtsq: Iteration  5 of  8; est error = 10^  -13; approx value =
+   4.99999999999981723020053972104169865563581496441929446393163971E-01 
+quadtsq: Iteration  6 of  8; est error = 10^  -24; approx value =
+   5.00000000000000000000000007825234243625889928991849979159748065E-01 
+quadtsq: Iteration  7 of  8; est error = 10^  -50; approx value =
+   5.00000000000000000000000000000000000000000000001632352115661929E-01 
+quadtsq: Iteration  8 of  8; est error = 10^  -65; approx value =
+   5.00000000000000000000000000000000000000000000000000000000000000E-01 
+Quadrature completed: CPU time =    0.009466
+Result =
+   5.00000000000000000000000000000000000000000000000000000000000000E-01 
+Actual error =  1.229419x10^  -66
+
+Problem 15: Int_0^inf sin(t)/t = pi/2
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+   1.85226192937877654218458718957261675821962360981541674604928334E+00 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+   1.85193705290657552449482046211052428188774484429475001032285828E+00 
+quadtsq: Iteration  3 of  8; est error = 10^  -18; approx value =
+   1.85193705198246617036163248741613151268130478356113091814338109E+00 
+quadtsq: Iteration  4 of  8; est error = 10^  -42; approx value =
+   1.85193705198246617036105337015799136334580972898407685374033440E+00 
+quadtsq: Iteration  5 of  8; est error = 10^  -62; approx value =
+   1.85193705198246617036105337015799136334580972898115490980478378E+00 
+quadtsq: Estimated error = 10^  -62
+Increase working prec (Digits) for greater accuracy. Current Digits =  64
+quadtsq: Iteration  1 of  8; est error = 10^    0; approx value =
+  -4.60882107883657618572771116529475085207503435564112153541821374E-06 
+quadtsq: Iteration  2 of  8; est error = 10^    0; approx value =
+  -4.64399337581339790063155127443368514540080590420212287082122747E-06 
+quadtsq: Iteration  3 of  8; est error = 10^  -11; approx value =
+  -4.64518373464721681063682524444086550990472655218479900637863997E-06 
+quadtsq: Iteration  4 of  8; est error = 10^  -12; approx value =
+  -4.64521462825431913308086831518929417832682072813049742172790206E-06 
+quadtsq: Iteration  5 of  8; est error = 10^  -14; approx value =
+  -4.64521403549121044071078436321264872693408215322184751229922584E-06 
+quadtsq: Iteration  6 of  8; est error = 10^  -16; approx value =
+  -4.64521404180426170056183734474257963633176347214929441869771530E-06 
+quadtsq: Iteration  7 of  8; est error = 10^  -20; approx value =
+  -4.64521404178447751307026484649899680974085478989596478151391641E-06 
+quadtsq: Iteration  8 of  8; est error = 10^  -21; approx value =
+  -4.64521404178434245852546101855024687939708100597019913892750158E-06 
+quadtsq: Estimated error = 10^  -21
+Increase Quadlevel for greater accuracy. Current Quadlevel =   8
+Quadrature completed: CPU time =    0.007120
+Result =
+Actual error =  1.099533x10^  -17
+Prob 15 error may be 40,000 X higher than estimated error.

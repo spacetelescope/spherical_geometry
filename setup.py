@@ -4,9 +4,62 @@
 import os
 import sys
 
+from glob import glob
 from setuptools import setup
 from setuptools import Extension
 from setuptools import find_packages
+from distutils.spawn import find_executable
+
+use_system_qd = os.environ.get('USE_SYSTEM_QD', '')
+have_windows = bool(sys.platform.startswith('win'))
+have_darwin = bool(sys.platform == 'Darwin')
+have_linux = bool(sys.platform == 'linux')
+
+qd_library_path = os.path.abspath(os.path.join('libqd'))
+qd_library_c_path = os.path.join(qd_library_path, 'src')
+qd_library_include_path = os.path.join(qd_library_path, 'include')
+qd_sources = glob(os.path.join(qd_library_c_path, '*.cpp'))
+
+def qd_config(arg):
+    result = ''
+    if not use_system_qd:
+        if arg == 'libs':
+            result = '' if have_windows else 'm'
+        elif arg == 'cflags':
+            result = qd_library_include_path
+    else:
+        if have_windows:
+            qdpath = os.environ.get('QD_PATH', '')
+            if not qdpath:
+                print('WINDOWS USERS:\n\n'
+                      'Define QD_PATH to the prefix where "qd" '
+                      'is installed:\n\n'
+                      'set QD_PATH="x:\\prefix\\of\\qd"\n\n'
+                      'Expected directory structure of QD_PATH:\n'
+                      '    QD_PATH\\lib\n'
+                      '    QD_PATH\\include\n\n', file=sys.stderr)
+                exit(1)
+
+            qdpath = os.path.abspath(qdpath)
+            if arg == 'libs':
+                result = '/LIBPATH:' + os.path.join(qdpath, 'lib')
+                result += ' qd.lib'
+            elif arg == 'cflags':
+                result = '-I' + os.path.join(qdpath, 'include')
+            else:
+                print('Unsupported option: {}'.format(arg), file=sys.stderr)
+                exit(1)
+        else:
+            from subprocess import check_output
+            if not find_executable('qd-config'):
+                print('"qd-config" not found. Please install "qd" '
+                      '(see: https://www.davidhbailey.com/dhbsoftware)',
+                      file=sys.stderr)
+                exit(1)
+            result = check_output(['qd-config'] + ['--' + arg]).decode().strip()
+
+    return result.split()
+
 
 try:
     import numpy
@@ -41,42 +94,33 @@ for root, dirs, files in os.walk(PACKAGENAME):
                 os.path.join(
                     os.path.relpath(root, PACKAGENAME), filename))
 
+sources = [os.path.join('src', 'math_util.c')]
+
 ext_info = {
-    'include_dirs': [numpy.get_include()],
-    'libraries': ['m'],
+    'include_dirs': [numpy.get_include(), 'src'],
+    'libraries': [],
+    'extra_link_args': [],
+    'extra_compile_args': [],
     'define_macros': [],
 }
 
-sources = [
-    os.path.join('src', 'math_util.c')
-]
 
-qd_library_path = os.path.join('cextern', 'qd-library')
-qd_library_c_path = os.path.join(qd_library_path, 'src')
-qd_library_include_path = os.path.join(qd_library_path, 'include')
-qd_sources = [
-    'bits.cpp',
-    'c_qd.cpp',
-    'dd_real.cpp',
-    'qd_real.cpp',
-    'dd_const.cpp',
-    'qd_const.cpp',
-    'fpu.cpp',
-    'util.cpp']
+if not use_system_qd:
+    sources += qd_sources
+    ext_info['libraries'] += qd_config('libs')
+    ext_info['include_dirs'] += qd_config('cflags')
+else:
+    ext_info['extra_link_args'] += qd_config('libs')
+    ext_info['extra_compile_args'] += qd_config('cflags')
 
-sources.extend([
-    str(os.path.join(qd_library_c_path, x))
-    for x in qd_sources])
-
-ext_info['include_dirs'].extend([
-    qd_library_include_path,
-    'src'])
-
-if sys.platform.startswith('win'):
-    # no math library on Windows
-    ext_info['libraries'] = []
+if have_windows:
     ext_info['define_macros'] += [
         ('_CRT_SECURE_NO_WARNINGS', None),
+    ]
+elif have_darwin:
+    ext_info['extra_link_args'] += [
+        '-stdlib=c++',
+        '-mmacosx-version-min=10.9'
     ]
 
 
