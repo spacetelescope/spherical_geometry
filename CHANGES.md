@@ -1,6 +1,13 @@
+## Version 1.2.16 on 13 August 2019
+
+- Updated qd library to 2.3.22
+- Reimplement the ability to link to system's qd (``export USE_SYSTEM_QD=1``)
+
+
 ## Version 1.2.15 on 31 July 2019
 
 Fixes compilation issue under Windows
+
 
 ## Version 1.2.13 on 30 July 2019
 
