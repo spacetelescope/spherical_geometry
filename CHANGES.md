@@ -1,3 +1,8 @@
+## Version 1.2.17 on 15 August 2019
+
+- Fixed unexpected behavior if using pip on Windows
+
+
 ## Version 1.2.16 on 13 August 2019
 
 - Updated qd library to 2.3.22

@@ -15,7 +15,7 @@ have_windows = bool(sys.platform.startswith('win'))
 have_darwin = bool(sys.platform == 'Darwin')
 have_linux = bool(sys.platform == 'linux')
 
-qd_library_path = os.path.abspath(os.path.join('libqd'))
+qd_library_path = os.path.relpath(os.path.join('libqd'))
 qd_library_c_path = os.path.join(qd_library_path, 'src')
 qd_library_include_path = os.path.join(qd_library_path, 'include')
 qd_sources = glob(os.path.join(qd_library_c_path, '*.cpp'))
