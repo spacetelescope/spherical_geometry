@@ -12,7 +12,7 @@ from distutils.spawn import find_executable
 
 use_system_qd = os.environ.get('USE_SYSTEM_QD', '')
 have_windows = bool(sys.platform.startswith('win'))
-have_darwin = bool(sys.platform == 'Darwin')
+have_darwin = bool(sys.platform == 'darwin')
 have_linux = bool(sys.platform == 'linux')
 
 qd_library_path = os.path.relpath(os.path.join('libqd'))
@@ -119,9 +119,12 @@ if have_windows:
     ]
 elif have_darwin:
     ext_info['extra_link_args'] += [
-        '-stdlib=c++',
         '-mmacosx-version-min=10.9'
     ]
+    ext_info['extra_compile_args'] += [
+        '-mmacosx-version-min=10.9'
+    ]
+    ext_info['language'] = 'c++'
 
 
 setup(
