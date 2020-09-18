@@ -15,7 +15,19 @@ Requirements
 
 - qd-library 2.3.7 or later (optional: if not available, the
   bundled version will be used).  To force using the system-installed
-  version, build with ``setup.py build --use-system-qd``.
+  version, build with ``USE_SYSTEM_QD=1 setup.py build``.
+
+Bundled qd-library
+------------------
+
+Origin: https://www.davidhbailey.com/dhbsoftware/qd-2.3.22.tar.gz
+
+- A custom ``libqd/include/qd/qd_config.h`` is provided to circumvent the need
+  to run any configuration scripts. This generalized configuration may not be
+  optimized for your system.
+
+- The ``spherical_geometry`` test suite fail when linked to a system-optimized
+  ``qd`` library, because the tests are written for the general case.
 
 Coordinate representation
 -------------------------

@@ -1,8 +1,35 @@
-## Version 1.2.11.dev Unreleased
+## Version 1.2.17 on 15 August 2019
+
+- Fixed unexpected behavior if using pip on Windows
+
+
+## Version 1.2.16 on 13 August 2019
+
+- Updated qd library to 2.3.22
+- Reimplement the ability to link to system's qd (``export USE_SYSTEM_QD=1``)
+
+
+## Version 1.2.15 on 31 July 2019
+
+Fixes compilation issue under Windows
+
+
+## Version 1.2.13 on 30 July 2019
+
+Undo-ing changes from release 1.2.11 (PRs #170 and #173) due to crashes in the
+union of multi-polygons until a better solution is found. [#176]
+
+## Version 1.2.12
+
+Package structure was updated.
+
+
+## Version 1.2.11
 
 Increase the dimension of the confusion region in which two nodes are
 considered to be equal. This reduces the likelihood of crashes when
 computing intersections of nearly identical polygons. [#170, #173]
+
 
 ## Version 1.2.10 on 1 March 2019
 
