@@ -983,7 +983,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         original polygon
         """
         if len(self._polygons) != 1:
-            raise RuntimeErrror("Can only invert a single polygon")
+            raise RuntimeError("Can only invert a single polygon")
 
         klass = self.__class__
         inverted_polygon = self._polygons[0].invert_polygon()
