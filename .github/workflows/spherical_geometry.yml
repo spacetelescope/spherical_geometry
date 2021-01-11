@@ -1,10 +1,15 @@
 name: Spherical Geometry CI
 
+# Change 'on' section and add code coverage.
+
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    tags:
+      - "*"
   pull_request:
-    branches: [ master ]
+    branches:
 
 jobs:
   build:
@@ -12,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.6', '3.7']
+        python-version: ['3.6', '3.7', '3.8', '3.9']
 
     steps:
     - uses: actions/checkout@v2
