@@ -42,7 +42,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.7
+        python-version: 3.9
     - name: Install dependencies
       run: |
         sudo apt-get install graphviz texlive-latex-extra dvipng
@@ -51,3 +51,27 @@ jobs:
     - name: Build documents with sphinx
       run: |
         sphinx-build docs build/docs
+
+  code_coverage:
+    name: Code Coverage Report
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e .[test]
+    - name: Test with pytest and code coverage
+      run: |
+        pytest --cov-report=xml --cov=. --cov-config=.cfg
+    - name: Upload coverage to codecoverage
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml
+        flags: unit
+
