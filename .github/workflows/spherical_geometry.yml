@@ -10,6 +10,9 @@ on:
       - "*"
   pull_request:
     branches:
+  schedule:
+    # Run every Monday at 6am UTC
+    - cron: '0 6 * * 1'
 
 jobs:
   build:
