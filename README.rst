@@ -7,7 +7,7 @@ polygons that represent arbitrary regions of the sky.
 Requirements
 ------------
 
-- Python 3.5 or later
+- Python 3.6 or later
 
 - Numpy 1.10.0 or later
 
