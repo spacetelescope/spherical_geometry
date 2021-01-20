@@ -1,7 +1,7 @@
 User documentation
 ==================
 
-.. |Coverage Status| image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/master/graphs/badge.svg
+.. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/master/graphs/badge.svg
     :target: https://codecov.io/gh/spacetelescope/spherical_geometry
     :alt: Spherical Geometry's Coverage Status
 
