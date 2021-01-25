@@ -93,4 +93,4 @@ jobs:
         pip install bandit
     - name: Security checks with bandit
       run: |
-        bandit romancal -r -x tests
+        bandit spherical_geometry -r -x spherical_geometry/tests
