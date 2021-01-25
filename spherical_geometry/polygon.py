@@ -475,7 +475,8 @@ class SingleSphericalPolygon(object):
                In this case, an edge from one polygon must cross an
                edge from the other polygon.
         """
-        assert isinstance(other, SingleSphericalPolygon)
+        if not isinstance(other, SingleSphericalPolygon):
+            raise TypeError
 
         # The easy case is in which a point of one polygon is
         # contained in the other polygon.
@@ -1053,7 +1054,8 @@ class SphericalPolygon(SingleSphericalPolygon):
             Returns `True` if this polygon intersects the *other*
             polygon.
         """
-        assert isinstance(other, SphericalPolygon)
+        if not isinstance(other, SphericalPolygon):
+            raise TypeError
 
         for polya in self:
             for polyb in other:
@@ -1151,9 +1153,12 @@ class SphericalPolygon(SingleSphericalPolygon):
         --------
         union
         """
-        assert len(polygons)
+        if not len(polygons):
+            raise ValueError
+
         for polygon in polygons:
-            assert isinstance(polygon, SphericalPolygon)
+            if not isinstance(polygon, SphericalPolygon):
+                raise TypeError
 
         from . import graph
 
@@ -1214,9 +1219,12 @@ class SphericalPolygon(SingleSphericalPolygon):
         -------
         polygon : `SphericalPolygon` object
         """
-        assert len(polygons)
+        if not len(polygons):
+            raise ValueError
+
         for polygon in polygons:
-            assert isinstance(polygon, SphericalPolygon)
+            if not isinstance(polygon, SphericalPolygon):
+                raise TypeError
 
         results = None
         for polygon in polygons:
