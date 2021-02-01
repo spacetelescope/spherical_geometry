@@ -260,9 +260,6 @@ class Graph:
         ----------
         node : `~Graph.Node` instance
         """
-        if node not in self._nodes:
-            raise AssertionError
-
         for edge in list(node._edges):
             nodeB = edge.follow(node)
             nodeB._edges.remove(edge)
@@ -292,7 +289,7 @@ class Graph:
             The new edge
         """
         if A not in self._nodes or B not in self._nodes:
-            raise AssertionError
+            raise ValueError
 
         # Don't add any edges that already exist.  Update the edge's
         # source polygons list to include the new polygon.  Care needs
@@ -323,7 +320,7 @@ class Graph:
         edge : `~Graph.Edge` instance
         """
         if edge not in self._edges:
-            raise AssertionError
+            raise ValueError
 
         A, B = edge._nodes
         A._edges.remove(edge)
@@ -356,7 +353,7 @@ class Graph:
             The two new edges on either side of *node*.
         """
         if edge not in self._edges or node not in self._nodes:
-            raise AssertionError
+            raise ValueError
 
         A, B = edge._nodes
         edgeA = self._add_edge(A, node, edge._source_polygons)
@@ -378,7 +375,7 @@ class Graph:
         for edge in self._edges:
             for node in edge._nodes:
                 if edge not in node._edges or node not in self._nodes:
-                    raise AssertionError
+                    raise ValueError
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
@@ -395,7 +392,7 @@ class Graph:
 
             for edge in node._edges:
                 if node not in edge._nodes or edge not in self._edges:
-                    raise AssertionError
+                    raise ValueError
 
     def union(self):
         """
