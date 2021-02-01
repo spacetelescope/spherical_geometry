@@ -260,8 +260,6 @@ class Graph:
         ----------
         node : `~Graph.Node` instance
         """
-        assert node in self._nodes
-
         for edge in list(node._edges):
             nodeB = edge.follow(node)
             nodeB._edges.remove(edge)
@@ -290,8 +288,8 @@ class Graph:
         edge : `~Graph.Edge` instance
             The new edge
         """
-        assert A in self._nodes
-        assert B in self._nodes
+        if A not in self._nodes or B not in self._nodes:
+            raise ValueError
 
         # Don't add any edges that already exist.  Update the edge's
         # source polygons list to include the new polygon.  Care needs
@@ -321,7 +319,8 @@ class Graph:
         ----------
         edge : `~Graph.Edge` instance
         """
-        assert edge in self._edges
+        if edge not in self._edges:
+            raise ValueError
 
         A, B = edge._nodes
         A._edges.remove(edge)
@@ -353,8 +352,8 @@ class Graph:
         edgeA, edgeB : `~Graph.Edge` instances
             The two new edges on either side of *node*.
         """
-        assert edge in self._edges
-        assert node in self._nodes
+        if edge not in self._edges or node not in self._nodes:
+            raise ValueError
 
         A, B = edge._nodes
         edgeA = self._add_edge(A, node, edge._source_polygons)
@@ -375,8 +374,8 @@ class Graph:
         unique_edges = set()
         for edge in self._edges:
             for node in edge._nodes:
-                assert edge in node._edges
-                assert node in self._nodes
+                if edge not in node._edges or node not in self._nodes:
+                    raise ValueError
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
@@ -385,12 +384,15 @@ class Graph:
 
         for node in self._nodes:
             if node_is_2:
-                assert len(node._edges) % 2 == 0
+                if len(node._edges) % 2 != 0:
+                    raise ValueError
             else:
-                assert len(node._edges) >= 2
+                if not len(node._edges) >= 2:
+                    raise ValueError
+
             for edge in node._edges:
-                assert node in edge._nodes
-                assert edge in self._edges
+                if node not in edge._nodes or edge not in self._edges:
+                    raise ValueError
 
     def union(self):
         """
