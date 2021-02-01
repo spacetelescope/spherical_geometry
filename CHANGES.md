@@ -1,3 +1,9 @@
+## 01 February 2021
+- Updated CI/CD to use github actions, instead of Travis CI.
+- To comply with `bandit` all `assert` statements were changed to standard
+  `if` checks and raising the appropriate errors.
+
+
 ## Version 1.2.17 on 15 August 2019
 
 - Fixed unexpected behavior if using pip on Windows
