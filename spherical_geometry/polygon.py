@@ -666,7 +666,7 @@ class SingleSphericalPolygon(object):
 
         .. math::
 
-            \frac{S_a}{S_{a \cap b}}
+            \frac{S_{a \cap b}}{S_a}
 
         Parameters
         ----------
