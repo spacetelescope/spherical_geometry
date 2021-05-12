@@ -10,15 +10,16 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 
 # STDLIB
 import itertools
-from .utils.compat import weakref
 
 # THIRD-PARTY
 import numpy as np
 
 # LOCAL
+from .utils.compat import weakref
 from . import great_circle_arc as gca
 from . import vector
-from . import polygon as mpolygon
+from .polygon import (SingleSphericalPolygon, SphericalPolygon,
+                      MalformedPolygonError)
 
 __all__ = ['Graph']
 
@@ -126,7 +127,7 @@ class Graph:
             try:
                 return nodes[not nodes.index(node)]
             except IndexError:
-                raise ValueError("Following from disconnected node")
+                raise RuntimeError("Following from disconnected node")
 
         def equals(self, other):
             """
@@ -289,7 +290,7 @@ class Graph:
             The new edge
         """
         if A not in self._nodes or B not in self._nodes:
-            raise ValueError
+            raise ValueError("Nodes not in the graph.")
 
         # Don't add any edges that already exist.  Update the edge's
         # source polygons list to include the new polygon.  Care needs
@@ -320,7 +321,7 @@ class Graph:
         edge : `~Graph.Edge` instance
         """
         if edge not in self._edges:
-            raise ValueError
+            raise ValueError("Edge not in the graph.")
 
         A, B = edge._nodes
         A._edges.remove(edge)
@@ -353,7 +354,7 @@ class Graph:
             The two new edges on either side of *node*.
         """
         if edge not in self._edges or node not in self._nodes:
-            raise ValueError
+            raise ValueError("Either node or edge not in the graph.")
 
         A, B = edge._nodes
         edgeA = self._add_edge(A, node, edge._source_polygons)
@@ -362,7 +363,7 @@ class Graph:
             self._remove_edge(edge)
         return [edgeA, edgeB]
 
-    def _sanity_check(self, title, node_is_2=False):
+    def _sanity_check(self, msg, node_is_2=False):
         """
         For debugging purposes: assert that edges and nodes are
         connected to each other correctly and there are no orphaned
@@ -375,7 +376,7 @@ class Graph:
         for edge in self._edges:
             for node in edge._nodes:
                 if edge not in node._edges or node not in self._nodes:
-                    raise ValueError
+                    raise MalformedPolygonError(msg)
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
@@ -385,14 +386,14 @@ class Graph:
         for node in self._nodes:
             if node_is_2:
                 if len(node._edges) % 2 != 0:
-                    raise ValueError
+                    raise MalformedPolygonError(msg)
             else:
                 if not len(node._edges) >= 2:
-                    raise ValueError
+                    raise MalformedPolygonError(msg)
 
             for edge in node._edges:
                 if node not in edge._nodes or edge not in self._edges:
-                    raise ValueError
+                    raise MalformedPolygonError(msg)
 
     def union(self):
         """
@@ -406,15 +407,15 @@ class Graph:
             polygons that were given to the constructor.
         """
         self._find_all_intersections()
-        self._sanity_check("union - find all intersections")
+        self._sanity_check("union: find all intersections")
         self._remove_interior_edges()
-        self._sanity_check("union - remove interior edges")
+        self._sanity_check("union: remove interior edges")
         self._remove_degenerate_edges()
-        self._sanity_check("union - remove degenerate edges")
+        self._sanity_check("union: remove degenerate edges")
         self._remove_3ary_edges()
-        self._sanity_check("union - remove 3ary edges")
+        self._sanity_check("union: remove 3ary edges")
         self._remove_orphaned_nodes()
-        self._sanity_check("union - remove orphan nodes", True)
+        self._sanity_check("union: remove orphan nodes", True)
 
         poly = self._trace()
         for source_poly in self._source_polygons:
@@ -422,7 +423,7 @@ class Graph:
             break
         else:
             inside_point = None
-        return mpolygon.SphericalPolygon((poly, ), inside=inside_point)
+        return SphericalPolygon((poly, ), inside=inside_point)
 
     def intersection(self):
         """
@@ -436,13 +437,13 @@ class Graph:
             polygons that were given to the constructor.
         """
         self._find_all_intersections()
-        self._sanity_check("intersection - find all intersections")
+        self._sanity_check("intersection: find all intersections")
         self._remove_exterior_edges()
-        self._sanity_check("intersection - remove exterior edges")
+        self._sanity_check("intersection: remove exterior edges")
         self._remove_cut_lines()
-        self._sanity_check("intersection - remove cut lines")
+        self._sanity_check("intersection: remove cut lines")
         self._remove_orphaned_nodes()
-        self._sanity_check("intersection - remove orphan nodes", True)
+        self._sanity_check("intersection: remove orphan nodes", True)
 
         poly = self._trace()
         # If multiple polygons, the inside point can only be in one
@@ -456,9 +457,9 @@ class Graph:
         into a list of disjoint polygons
         """
         changed = self._remove_cut_lines()
-        self._sanity_check("disjoint - remove cut lines")
+        self._sanity_check("disjoint: remove cut lines")
         changed = self._find_all_intersections() or changed
-        self._sanity_check("disjoint - find all intersections")
+        self._sanity_check("disjoint: find all intersections")
         if changed:
             polygons = self._trace_polygons()
         else:
@@ -850,7 +851,7 @@ class Graph:
                     points.append(node._point)
                     break
 
-            polygon = mpolygon.SingleSphericalPolygon(points)
+            polygon = SingleSphericalPolygon(points)
             polygons.append(polygon)
 
         return polygons
@@ -861,4 +862,4 @@ class Graph:
         intersections found, traces it to find a resulting single
         polygon.
         """
-        return mpolygon.SphericalPolygon(self._trace_polygons())
+        return SphericalPolygon(self._trace_polygons())
