@@ -18,7 +18,13 @@ import numpy as np
 from . import great_circle_arc
 from . import vector
 
-__all__ = ['SingleSphericalPolygon', 'SphericalPolygon']
+__all__ = ['SingleSphericalPolygon', 'SphericalPolygon',
+           'MalformedPolygonError']
+
+
+class MalformedPolygonError(Exception):
+    pass
+
 
 class SingleSphericalPolygon(object):
     r"""
