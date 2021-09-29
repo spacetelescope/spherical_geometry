@@ -5,22 +5,37 @@ on:
     types: [released]
 
 jobs:
-  build:
-      name: Publish release to PyPI
-      env:
-        PYPI_USERNAME_STSCI_MAINTAINER: ${{ secrets.PYPI_USERNAME_STSCI_MAINTAINER }}
-        PYPI_PASSWORD_STSCI_MAINTAINER: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
-        PYPI_USERNAME_OVERRIDE: ${{ secrets.PYPI_USERNAME_OVERRIDE }}
-        PYPI_PASSWORD_OVERRIDE: ${{ secrets.PYPI_PASSWORD_OVERRIDE }}
-        PYPI_TEST: ${{ secrets.PYPI_TEST }}
-        INDEX_URL_OVERRIDE: ${{ secrets.INDEX_URL_OVERRIDE }}
-      runs-on: ubuntu-latest
-      steps:
+  validate:
+    name: Validate metadata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: spacetelescope/action-publish_to_pypi/validate@master
 
-          # Check out the commit containing this workflow file.
-          - name: checkout repo
-            uses: actions/checkout@v2
-         
-          - name: custom action
-            uses: spacetelescope/action-publish_to_pypi@master
-            id: custom_action_0
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: [validate]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-10.15]
+
+    steps:
+      - uses: spacetelescope/action-publish_to_pypi/build-wheel@master
+
+  build_sdist:
+    name: Build source distribution
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: spacetelescope/action-publish_to_pypi/build-sdist@master
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: spacetelescope/action-publish_to_pypi/publish@master
+        with:
+          test: ${{ secrets.PYPI_TEST }}
+          user: ${{ secrets.PYPI_USERNAME_STSCI_MAINTAINER }}
+          password: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }} # WARNING: Do not hardcode secret values here! If you want to use a different user or password, you can override this secret by creating one with the same name in your Github repository settings.
+          test_password: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER_TEST }}
