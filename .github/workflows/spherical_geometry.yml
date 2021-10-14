@@ -73,7 +73,7 @@ jobs:
       run: |
         pytest --cov-report=xml --cov=. --cov-config=setup.cfg
     - name: Upload coverage to codecoverage
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         file: ./coverage.xml
 
