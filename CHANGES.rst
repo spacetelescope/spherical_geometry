@@ -4,8 +4,14 @@
 Release Notes
 =============
 
-.. 1.2.21 (unreleased)
+.. 1.2.22 (unreleased)
    ===================
+
+
+1.2.21 (30-December-2021)
+=========================
+
+Maintenance release.
 
 
 1.2.20 (12-May-2021)
