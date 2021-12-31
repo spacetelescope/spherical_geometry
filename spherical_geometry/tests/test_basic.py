@@ -5,10 +5,9 @@ import os.path
 import math
 import random
 
-from astropy.tests.helper import raises
-
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_less
+import pytest
+from numpy.testing import assert_almost_equal
 
 from .. import graph
 from .. import great_circle_arc
@@ -505,12 +504,12 @@ def test_convex_hull():
         assert b == r, "Polygon boundary has correct points"
 
 
-@raises(ValueError)
 def test_math_util_angle_domain():
     # Before a fix, this would segfault
-    math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])
+    with pytest.raises(ValueError):
+        math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])
 
 
-@raises(ValueError)
 def test_math_util_length_domain():
-    math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
+    with pytest.raises(ValueError):
+        math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])

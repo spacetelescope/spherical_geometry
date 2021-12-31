@@ -3,12 +3,11 @@
 
 import os
 import sys
-
+import shutil
 from glob import glob
 from setuptools import setup
 from setuptools import Extension
 from setuptools import find_packages
-from distutils.spawn import find_executable
 
 use_system_qd = os.environ.get('USE_SYSTEM_QD', '')
 have_windows = bool(sys.platform.startswith('win'))
@@ -19,6 +18,7 @@ qd_library_path = os.path.relpath(os.path.join('libqd'))
 qd_library_c_path = os.path.join(qd_library_path, 'src')
 qd_library_include_path = os.path.join(qd_library_path, 'include')
 qd_sources = glob(os.path.join(qd_library_c_path, '*.cpp'))
+
 
 def qd_config(arg):
     result = ''
@@ -51,7 +51,7 @@ def qd_config(arg):
                 exit(1)
         else:
             from subprocess import check_output
-            if not find_executable('qd-config'):
+            if not shutil.which('qd-config'):
                 print('"qd-config" not found. Please install "qd" '
                       '(see: https://www.davidhbailey.com/dhbsoftware)',
                       file=sys.stderr)
