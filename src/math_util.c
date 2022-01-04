@@ -743,7 +743,7 @@ addUfuncs(PyObject *dictionary) {
     PyObject *f;
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        inner1d_functions, inner1d_data, inner1d_signatures, 2, 2, 1,
+        inner1d_functions, inner1d_data, inner1d_signatures, 1, 2, 1,
         PyUFunc_None, "inner1d",
         "inner on the last dimension and broadcast on the rest \n"      \
         "     \"(i),(i)->()\" \n",
@@ -752,7 +752,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        normalize_functions, normalize_data, normalize_signatures, 2, 1, 1,
+        normalize_functions, normalize_data, normalize_signatures, 1, 1, 1,
         PyUFunc_None, "normalize",
         "Normalize the vector to the unit sphere. \n"      \
         "     \"(i)->(i)\" \n",
@@ -761,7 +761,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        cross_functions, cross_data, cross_signatures, 2, 2, 1,
+        cross_functions, cross_data, cross_signatures, 1, 2, 1,
         PyUFunc_None, "cross",
         "cross product of 3-vectors only \n" \
         "     \"(i),(i)->(i)\" \n",
@@ -770,7 +770,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        cross_and_norm_functions, cross_and_norm_data, cross_and_norm_signatures, 2, 2, 1,
+        cross_and_norm_functions, cross_and_norm_data, cross_and_norm_signatures, 1, 2, 1,
         PyUFunc_None, "cross_and_norm",
         "cross_and_norm product of 3-vectors only \n" \
         "     \"(i),(i)->(i)\" \n",
@@ -779,7 +779,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        triple_product_functions, triple_product_data, triple_product_signatures, 2, 3, 1,
+        triple_product_functions, triple_product_data, triple_product_signatures, 1, 3, 1,
         PyUFunc_None, "triple_product",
         "Calculate the triple_product between A, B and C.\n" \
         "     \"(i),(i),(i)->()\" \n",
@@ -789,7 +789,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        intersection_functions, intersection_data, intersection_signatures, 2, 4, 1,
+        intersection_functions, intersection_data, intersection_signatures, 1, 4, 1,
         PyUFunc_None, "intersection",
         "intersection product of 3-vectors only \n" \
         "     \"(i),(i),(i),(i)->(i)\" \n",
@@ -798,7 +798,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        intersects_functions, intersects_data, intersects_signatures, 2, 4, 1,
+        intersects_functions, intersects_data, intersects_signatures, 1, 4, 1,
         PyUFunc_None, "intersects",
         "true where AB intersects CD \n" \
         "     \"(i),(i),(i),(i)->()\" \n",
@@ -807,7 +807,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        length_functions, length_data, length_signatures, 2, 2, 1,
+        length_functions, length_data, length_signatures, 1, 2, 1,
         PyUFunc_None, "length",
         "length of great circle arc \n" \
         "     \"(i),(i)->()\" \n",
@@ -816,7 +816,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        intersects_point_functions, intersects_point_data, intersects_point_signatures, 2, 3, 1,
+        intersects_point_functions, intersects_point_data, intersects_point_signatures, 1, 3, 1,
         PyUFunc_None, "intersects_point",
         "True where point C intersects arc AB \n" \
         "     \"(i),(i),(i)->()\" \n",
@@ -825,7 +825,7 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        angle_functions, angle_data, angle_signatures, 2, 3, 1,
+        angle_functions, angle_data, angle_signatures, 1, 3, 1,
         PyUFunc_None, "angle",
         "Calculate the angle at B between AB and BC.\n" \
         "     \"(i),(i),(i)->()\" \n",
