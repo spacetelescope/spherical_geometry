@@ -8,6 +8,15 @@ Release Notes
    ===================
 
 
+1.2.22 (unreleased)
+===================
+
+- Fixed segmentation fault occuring in the ``math_util`` module when
+  ``spherical_geometry`` is used with ``numpy`` version ``1.22`` due to
+  incorrect ``ntypes`` value being used when defining generalized
+  universal functions. [#216]
+
+
 1.2.21 (30-December-2021)
 =========================
 
