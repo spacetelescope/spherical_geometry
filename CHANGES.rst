@@ -4,12 +4,12 @@
 Release Notes
 =============
 
-.. 1.2.22 (unreleased)
+.. 1.2.23 (unreleased)
    ===================
 
 
-1.2.22 (unreleased)
-===================
+1.2.22 (04-January-2022)
+========================
 
 - Fixed segmentation fault occuring in the ``math_util`` module when
   ``spherical_geometry`` is used with ``numpy`` version ``1.22`` due to
