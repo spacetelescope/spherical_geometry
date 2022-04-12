@@ -133,7 +133,7 @@ setup(
     setup_requires=["setuptools_scm"],
     description=DESCRIPTION,
     install_requires=[
-        'astropy',
+        'astropy>=5.0.4',
         'numpy',
     ],
     extras_require={
