@@ -136,6 +136,7 @@ setup(
         'astropy>=5.0.4',
         'numpy',
     ],
+    python_requiers='>=3.8',
     extras_require={
         'test': [
             'pytest',
