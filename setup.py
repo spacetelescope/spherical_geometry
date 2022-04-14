@@ -134,7 +134,7 @@ setup(
     description=DESCRIPTION,
     install_requires=[
         'astropy>=5.0.4',
-        'numpy',
+        'numpy>=1.18',
     ],
     python_requiers='>=3.8',
     extras_require={

@@ -9,7 +9,7 @@ Release Notes
 
 - Pin astropy min version to 5.0.4. [#218]
 
-- Set min python version to 3.8. [#219]
+- Set Python min version to 3.8. [#219]
 
 
 1.2.22 (04-January-2022)
