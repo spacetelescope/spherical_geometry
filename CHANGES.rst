@@ -4,8 +4,10 @@
 Release Notes
 =============
 
-.. 1.2.23 (unreleased)
-   ===================
+1.2.23 (unreleased)
+===================
+
+- Pin astropy min version to 5.0.4. [#218]
 
 
 1.2.22 (04-January-2022)
