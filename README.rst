@@ -15,11 +15,11 @@ polygons that represent arbitrary regions of the sky.
 Requirements
 ------------
 
-- Python 3.6 or later
+- Python 3.8 or later
 
-- Numpy 1.10.0 or later
+- Numpy 1.18 or later
 
-- astropy 0.4 or later
+- astropy 5.0.4 or later
 
 - qd-library 2.3.7 or later (optional: if not available, the
   bundled version will be used).  To force using the system-installed
