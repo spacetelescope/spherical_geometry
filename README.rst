@@ -9,6 +9,10 @@ User documentation
     :target: https://github.com/spacetelescope/spherical_geometry/actions
     :alt: Spherical Geometry's Github Actions CI Status
 
+.. image:: https://img.shields.io/pypi/v/spherical-geometry
+    :target: https://pypi.org/project/spherical-geometry/
+    :alt: PyPI
+
 The ``spherical_geometry`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
@@ -103,7 +107,7 @@ In the following image, the inside point (marked with the red dot)
 declares that the area of the polygon is the green region, and not the
 white region.
 
-.. image:: inside.png
+.. image:: docs/spherical_geometry/inside.png
 
 The inside point of the the polygon can be obtained from the
 ``~polygon.SphericalPolygon.inside`` property.
