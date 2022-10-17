@@ -160,6 +160,7 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     for (i = 0; i < 3; ++i) {
         c_qd_mul(A[i].x, B[i].x, tmp[i]);
+        // c_qd_mul(A[i], B[i], tmp[i]);
     }
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
@@ -691,13 +692,11 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         load_point_qd(ip2, is2, B);
         load_point_qd(ip3, is3, C);
 
-        cross_qd(A, B, TMP);
-        cross_qd(B, TMP, ABX);
+        cross_qd(A, B, ABX);
 
         if (normalize_qd(ABX, ABX)) return;
 
-        cross_qd(C, B, TMP);
-        cross_qd(B, TMP, BCX);
+        cross_qd(C, B, BCX);
 
         if (normalize_qd(BCX, BCX)) return;
 
@@ -708,6 +707,11 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         dot_qd(B, X, &diff);
         dot_qd(ABX, BCX, &inner);
 
+        if (fabs(inner.x[0]) == 1.0 & fabs(inner.x[1]) < 1e-60) {
+            inner.x[1] = 0.;
+            inner.x[2] = 0.;
+            inner.x[3] = 0.;
+        }
         if (inner.x[0] != inner.x[0] ||
             inner.x[0] < -1.0 ||
             inner.x[0] > 1.0) {

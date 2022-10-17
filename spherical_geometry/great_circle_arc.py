@@ -327,10 +327,8 @@ def angle(A, B, C, degrees=True):
 
         A, B, C = np.broadcast_arrays(A, B, C)
 
-        ABX = _fast_cross(A, B)
-        ABX = _cross_and_normalize(B, ABX)
-        BCX = _fast_cross(C, B)
-        BCX = _cross_and_normalize(B, BCX)
+        ABX = _cross_and_normalize(A, B)
+        BCX = _cross_and_normalize(C, B)
         X = _cross_and_normalize(ABX, BCX)
         diff = inner1d(B, X)
         inner = inner1d(ABX, BCX)

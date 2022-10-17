@@ -11,6 +11,9 @@ Release Notes
 
 - Set Python min version to 3.8. [#219]
 
+- Fix problem problem reported where angle of 180 degrees results in an
+  error with the C version of the code.
+
 
 1.2.22 (04-January-2022)
 ========================
