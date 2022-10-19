@@ -160,7 +160,6 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     for (i = 0; i < 3; ++i) {
         c_qd_mul(A[i].x, B[i].x, tmp[i]);
-        // c_qd_mul(A[i], B[i], tmp[i]);
     }
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
