@@ -735,39 +735,12 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         load_point_qd(ip3, is3, C);
 
         cross_qd(A, B, ABX);
-<<<<<<< HEAD
-
-        if (normalize_qd(ABX, ABX)) return;
-
         cross_qd(C, B, BCX);
-
-        if (normalize_qd(BCX, BCX)) return;
-
-=======
-        cross_qd(C, B, BCX);
->>>>>>> c2af9f1 (Fix accuracy in angle computation)
         cross_qd(ABX, BCX, X);
         dot_qd(B, X, &diff);
         if (normalized_dot_qd(ABX, BCX, &inner)) return;
 
-<<<<<<< HEAD
-        /* The following threshold is currently arbitrary and
-        is based on observed errors in that value and several 
-        orders of magnitude larger than those. One day someone
-        should determine how qd is producing those errors, 
-        but for now...
-        */
-        if (fabs(inner.x[0]) == 1.0 && fabs(inner.x[1]) < 1e-60) {
-            inner.x[1] = 0.;
-            inner.x[2] = 0.;
-            inner.x[3] = 0.;
-        }
-        if (inner.x[0] != inner.x[0] ||
-            inner.x[0] < -1.0 ||
-=======
-        if (inner.x[0] != inner.x[0] || inner.x[0] < -1.0 ||
->>>>>>> c2af9f1 (Fix accuracy in angle computation)
-            inner.x[0] > 1.0) {
+        if (inner.x[0] != inner.x[0] || fabs(inner.x[0] > 1.0)) {
             PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
             return;
         }
