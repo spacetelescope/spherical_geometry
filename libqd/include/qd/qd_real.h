@@ -9,8 +9,8 @@
  *
  * Quad-double precision (>= 212-bit significand) floating point arithmetic
  * package, written in ANSI C++, taking full advantage of operator overloading.
- * Uses similar techniques as that of David Bailey's double-double package 
- * and that of Jonathan Shewchuk's adaptive precision floating point 
+ * Uses similar techniques as that of David Bailey's double-double package
+ * and that of Jonathan Shewchuk's adaptive precision floating point
  * arithmetic package.  See
  *
  *   http://www.nersc.gov/~dhbailey/mpdist/mpdist.html
@@ -120,16 +120,16 @@ struct QD_API qd_real {
   static qd_real rand(void);
 
   void to_digits(char *s, int &expn, int precision = _ndigits) const;
-  void write(char *s, int len, int precision = _ndigits, 
+  void write(char *s, int len, int precision = _ndigits,
       bool showpos = false, bool uppercase = false) const;
-  std::string to_string(int precision = _ndigits, int width = 0, 
-      std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0), 
+  std::string to_string(int precision = _ndigits, int width = 0,
+      std::ios_base::fmtflags fmt = static_cast<std::ios_base::fmtflags>(0),
       bool showpos = false, bool uppercase = false, char fill = ' ') const;
   static int read(const char *s, qd_real &a);
 
   /* Debugging methods */
   void dump(const std::string &name = "", std::ostream &os = std::cerr) const;
-  void dump_bits(const std::string &name = "", 
+  void dump_bits(const std::string &name = "",
                  std::ostream &os = std::cerr) const;
 
   static qd_real debug_rand();
@@ -150,7 +150,7 @@ namespace std {
 }
 
 QD_API qd_real polyeval(const qd_real *c, int n, const qd_real &x);
-QD_API qd_real polyroot(const qd_real *c, int n, 
+QD_API qd_real polyroot(const qd_real *c, int n,
     const qd_real &x0, int max_iter = 64, double thresh = 0.0);
 
 QD_API qd_real qdrand(void);
@@ -190,6 +190,7 @@ QD_API qd_real operator/(double a, const qd_real &b);
 
 QD_API qd_real sqr(const qd_real &a);
 QD_API qd_real sqrt(const qd_real &a);
+QD_API qd_real fsqrt(const qd_real &a, int &flag);
 QD_API qd_real pow(const qd_real &a, int n);
 QD_API qd_real pow(const qd_real &a, const qd_real &b);
 QD_API qd_real npwr(const qd_real &a, int n);

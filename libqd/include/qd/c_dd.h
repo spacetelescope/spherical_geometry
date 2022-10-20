@@ -91,6 +91,8 @@ void c_dd_comp_dd_d(const double *a, double b, int *result);
 void c_dd_comp_d_dd(double a, const double *b, int *result);
 void c_dd_pi(double *a);
 
+double c_dd_epsilon(void);
+
 #ifdef __cplusplus
 }
 #endif

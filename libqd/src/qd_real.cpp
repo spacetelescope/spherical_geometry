@@ -62,7 +62,7 @@ qd_real nint(const qd_real &a) {
     if (x1 == a[1]) {
       /* Second double is already an integer. */
       x2 = nint(a[2]);
-      
+
       if (x2 == a[2]) {
         /* Third double is already an integer. */
         x3 = nint(a[3]);
@@ -84,7 +84,7 @@ qd_real nint(const qd_real &a) {
           x0 -= 1.0;
       }
   }
-  
+
   renorm(x0, x1, x2, x3);
   return qd_real(x0, x1, x2, x3);
 }
@@ -96,7 +96,7 @@ qd_real floor(const qd_real &a) {
 
   if (x0 == a[0]) {
     x1 = std::floor(a[1]);
-    
+
     if (x1 == a[1]) {
       x2 = std::floor(a[2]);
 
@@ -119,7 +119,7 @@ qd_real ceil(const qd_real &a) {
 
   if (x0 == a[0]) {
     x1 = std::ceil(a[1]);
-    
+
     if (x1 == a[1]) {
       x2 = std::ceil(a[2]);
 
@@ -195,7 +195,7 @@ istream &operator>>(istream &s, qd_real &qd) {
 ostream &operator<<(ostream &os, const qd_real &qd) {
   bool showpos = (os.flags() & ios_base::showpos) != 0;
   bool uppercase = (os.flags() & ios_base::uppercase) != 0;
-  return os << qd.to_string(os.precision(), os.width(), os.flags(), 
+  return os << qd.to_string(os.precision(), os.width(), os.flags(),
       showpos, uppercase, os.fill());
 }
 
@@ -248,7 +248,7 @@ int qd_real::read(const char *s, qd_real &qd) {
         break;
       default:
         return -1;
-      
+
       }
     }
 
@@ -350,9 +350,9 @@ void qd_real::to_digits(char *s, int &expn, int precision) const {
   }
 
   /* If first digit is 10, shift everything. */
-  if (s[0] > '9') { 
-    e++; 
-    for (i = precision; i >= 2; i--) s[i] = s[i-1]; 
+  if (s[0] > '9') {
+    e++;
+    for (i = precision; i >= 2; i--) s[i] = s[i-1];
     s[0] = '1';
     s[1] = '0';
   }
@@ -363,10 +363,10 @@ void qd_real::to_digits(char *s, int &expn, int precision) const {
 
 /* Writes the quad-double number into the character array s of length len.
    The integer d specifies how many significant digits to write.
-   The string s must be able to hold at least (d+8) characters.  
+   The string s must be able to hold at least (d+8) characters.
    showpos indicates whether to use the + sign, and uppercase indicates
    whether the E or e is to be used for the exponent. */
-void qd_real::write(char *s, int len, int precision, 
+void qd_real::write(char *s, int len, int precision,
     bool showpos, bool uppercase) const {
   string str = to_string(precision, 0, ios_base::scientific, showpos, uppercase);
   strncpy(s, str.c_str(), len-1);
@@ -407,7 +407,7 @@ void round_string_qd(char *s, int precision, int *offset){
 }
 
 
-string qd_real::to_string(int precision, int width, ios_base::fmtflags fmt, 
+string qd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
     bool showpos, bool uppercase, char fill) const {
   string s;
   bool fixed = (fmt & ios_base::fixed) != 0;
@@ -523,7 +523,6 @@ string qd_real::to_string(int precision, int width, ios_base::fmtflags fmt,
     	if( fabs( from_string / this->x[0] ) > 3.0 ){
 
     		int point_position;
-    		char temp;
 
     		// loop on the string, find the point, move it up one
     		// don't act on the first character
@@ -740,51 +739,65 @@ qd_real qd_real::accurate_div(const qd_real &a, const qd_real &b) {
   return qd_real(q0, q1, q2, q3);
 }
 
-QD_API qd_real sqrt(const qd_real &a) {
-  /* Strategy:  
+QD_API qd_real fsqrt(const qd_real &a, int &flag) {
+  /* Uses Heron's method, see:
+     https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Babylonian_method
 
-     Perform the following Newton iteration:
-
-       x' = x + (1 - a * x^2) * x / 2;
-       
-     which converges to 1/sqrt(a), starting with the
-     double precision approximation to 1/sqrt(a).
-     Since Newton's iteration more or less doubles the
-     number of correct digits, we only need to perform it 
-     twice.
+     1. x0 = approximate sqrt(a);
+     2. x_{n+1} = (1/2) * (x_n + a / x_n);
+     3. repeat 2 until corrections are small
   */
+  int i;
+  double e, eps;
+
+  qd_real r, diff;
+  qd_real half = "0.5000000000000000000000000000000000"
+                 "000000000000000000000000000000000000";
 
   if (a.is_zero())
-    return 0.0;
+    return (qd_real) 0.0;
 
   if (a.is_negative()) {
     qd_real::error("(qd_real::sqrt): Negative argument.");
     return qd_real::_nan;
   }
 
-  qd_real r = (1.0 / std::sqrt(a[0]));
-  qd_real h = mul_pwr2(a, 0.5);
+  eps = std::numeric_limits<qd_real>::epsilon();
 
-  r += ((0.5 - h * sqr(r)) * r);
-  r += ((0.5 - h * sqr(r)) * r);
-  r += ((0.5 - h * sqr(r)) * r);
+  qd_real x = std::sqrt(a[0]);
+  qd_real y;
 
-  r *= a;
-  return r;
+  for (i=0; i < 10; i++) {
+      y = half * (x + a / x);
+      diff = x - y;
+      x = y;
+      e = fabs(((diff[3] + diff[2]) + diff[1]) + diff[0]);
+      if (e < fabs(x.x[0]) * eps) {
+          flag = 0; // convergence achieved
+          return x;
+      }
+  }
+
+  flag = 1; // failed to converge
+  return x;
 }
 
+QD_API qd_real sqrt(const qd_real &a) {
+  int flag;
+  return fsqrt(a, flag);
+}
 
 /* Computes the n-th root of a */
 qd_real nroot(const qd_real &a, int n) {
   /* Strategy:  Use Newton's iteration to solve
-     
+
         1/(x^n) - a = 0
 
      Newton iteration becomes
 
         x' = x + x * (1 - a * x^n) / n
 
-     Since Newton's iteration converges quadratically, 
+     Since Newton's iteration converges quadratically,
      we only need to perform it twice.
 
    */
@@ -860,13 +873,13 @@ static const qd_real inv_fact[n_inv_fact] = {
 
 qd_real exp(const qd_real &a) {
   /* Strategy:  We first reduce the size of x by noting that
-     
+
           exp(kr + m * log(2)) = 2^m * exp(r)^k
 
      where m and k are integers.  By choosing m appropriately
-     we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is 
-     evaluated using the familiar Taylor series.  Reducing the 
-     argument substantially speeds up the convergence.       */  
+     we can make |kr| <= log(2) / 2 = 0.347.  Then exp(r) is
+     evaluated using the familiar Taylor series.  Reducing the
+     argument substantially speeds up the convergence.       */
 
   const double k = ldexp(1.0, 16);
   const double inv_k = 1.0 / k;
@@ -929,11 +942,11 @@ qd_real log(const qd_real &a) {
 
      using Newton iteration.  The iteration is given by
 
-         x' = x - f(x)/f'(x) 
+         x' = x - f(x)/f'(x)
             = x - (1 - a * exp(-x))
             = x + a * exp(-x) - 1.
-           
-     Two iteration is needed, since Newton's iteration 
+
+     Two iteration is needed, since Newton's iteration
      approximately doubles the number of digits per iteration. */
 
   if (a.is_one()) {
@@ -1999,7 +2012,7 @@ static const qd_real cos_table [] = {
 
 /* Computes sin(a) and cos(a) using Taylor series.
    Assumes |a| <= pi/2048.                           */
-static void sincos_taylor(const qd_real &a, 
+static void sincos_taylor(const qd_real &a,
                           qd_real &sin_a, qd_real &cos_a) {
   const double thresh = 0.5 * qd_real::_eps * std::abs(to_double(a));
   qd_real p, s, t, x;
@@ -2327,7 +2340,7 @@ qd_real atan(const qd_real &a) {
 }
 
 qd_real atan2(const qd_real &y, const qd_real &x) {
-  /* Strategy: Instead of using Taylor series to compute 
+  /* Strategy: Instead of using Taylor series to compute
      arctan, we instead use Newton's iteration to solve
      the equation
 
@@ -2340,12 +2353,12 @@ qd_real atan2(const qd_real &y, const qd_real &x) {
         z' = z - (x - cos(z)) / sin(z)          (for equation 2)
 
      Here, x and y are normalized so that x^2 + y^2 = 1.
-     If |x| > |y|, then first iteration is used since the 
+     If |x| > |y|, then first iteration is used since the
      denominator is larger.  Otherwise, the second is used.
   */
 
   if (x.is_zero()) {
-    
+
     if (y.is_zero()) {
       /* Both x and y is zero. */
       qd_real::error("(qd_real::atan2): Both arguments zero.");
@@ -2441,7 +2454,7 @@ qd_real acos(const qd_real &a) {
 
   return atan2(sqrt(1.0 - sqr(a)), a);
 }
- 
+
 qd_real sinh(const qd_real &a) {
   if (a.is_zero()) {
     return 0.0;
@@ -2542,7 +2555,7 @@ QD_API qd_real qdrand() {
   qd_real r = 0.0;
   double d;
 
-  /* Strategy:  Generate 31 bits at a time, using lrand48 
+  /* Strategy:  Generate 31 bits at a time, using lrand48
      random number generator.  Shift the bits, and repeat
      7 times. */
 
@@ -2561,7 +2574,7 @@ QD_API qd_real qdrand() {
 qd_real polyeval(const qd_real *c, int n, const qd_real &x) {
   /* Just use Horner's method of polynomial evaluation. */
   qd_real r = c[n];
-  
+
   for (int i = n-1; i >= 0; i--) {
     r *= x;
     r += c[i];
@@ -2571,10 +2584,10 @@ qd_real polyeval(const qd_real *c, int n, const qd_real &x) {
 }
 
 /* polyroot(c, n, x0)
-   Given an n-th degree polynomial, finds a root close to 
+   Given an n-th degree polynomial, finds a root close to
    the given guess x0.  Note that this uses simple Newton
    iteration scheme, and does not work for multiple roots.  */
-QD_API qd_real polyroot(const qd_real *c, int n, 
+QD_API qd_real polyroot(const qd_real *c, int n,
     const qd_real &x0, int max_iter, double thresh) {
   qd_real x = x0;
   qd_real f;

@@ -8,6 +8,7 @@
 
 #include "qd/c_qd.h"
 
+
 /*
   The intersects, length and intersects_point calculations use "double
   double" representation internally, as supported by libqd.  Emperical
@@ -144,8 +145,8 @@ normalize_qd(const qd *A, qd *B) {
         PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
         return 1;
     }
-
     c_qd_sqrt(T[3], l);
+
     for (i = 0; i < 3; ++i) {
         c_qd_div(A[i].x, l, B[i].x);
     }
@@ -164,6 +165,48 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
+}
+
+/*
+    normalized_dot_qd returns dot product of normalized input vectors.
+*/
+static NPY_INLINE int
+normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
+    int i, flag;
+    qd aa, bb, ab;
+    double aabb[4];
+    double norm[4];
+    double *v0 = dot_val->x;
+    double *v1 = dot_val->x + 1;
+    double eps = 10.0 * c_qd_epsilon();
+
+    dot_qd(A, A, &aa);
+    dot_qd(B, B, &bb);
+    dot_qd(A, B, &ab);
+    c_qd_mul(aa.x, bb.x, aabb);
+
+    if (aabb[0] < -0.0) {
+        PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
+        return 1;
+    }
+
+    flag = c_qd_sqrt(aabb, norm);
+
+    if (norm[0] == 0.0) {
+        /* return non-normalized value: */
+        PyErr_SetString(PyExc_ValueError, "Null vector.");
+        c_qd_copy(ab.x, dot_val->x);
+        return 1;
+    } else {
+        c_qd_div(ab.x, norm, dot_val->x);
+    }
+
+    if ((*v0 == 1.0 && *v1 > 0.0 && *v1 < eps) ||
+        (*v0 == -1.0 && *v1 < 0.0 && *v1 > -eps)) {
+        c_qd_copy_d(dot_val->x[0], dot_val->x);
+    }
+
+    return 0;
 }
 
 static NPY_INLINE double
@@ -662,20 +705,20 @@ char *angle_signature = "(i),(i),(i)->()";
 static void
 DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
+    int comp;
     qd A[3];
     qd B[3];
     qd C[3];
 
     qd ABX[3];
     qd BCX[3];
-    qd TMP[3];
     qd X[3];
 
     qd diff;
     qd inner;
-    qd angle;
+    double angle[4];
 
-    double dangle;
+    double pi[4];
 
     unsigned int old_cw;
 
@@ -692,6 +735,7 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         load_point_qd(ip3, is3, C);
 
         cross_qd(A, B, ABX);
+<<<<<<< HEAD
 
         if (normalize_qd(ABX, ABX)) return;
 
@@ -699,13 +743,14 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 
         if (normalize_qd(BCX, BCX)) return;
 
+=======
+        cross_qd(C, B, BCX);
+>>>>>>> c2af9f1 (Fix accuracy in angle computation)
         cross_qd(ABX, BCX, X);
-
-        if (normalize_qd(X, X)) return;
-
         dot_qd(B, X, &diff);
-        dot_qd(ABX, BCX, &inner);
+        if (normalized_dot_qd(ABX, BCX, &inner)) return;
 
+<<<<<<< HEAD
         /* The following threshold is currently arbitrary and
         is based on observed errors in that value and several 
         orders of magnitude larger than those. One day someone
@@ -719,19 +764,24 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         }
         if (inner.x[0] != inner.x[0] ||
             inner.x[0] < -1.0 ||
+=======
+        if (inner.x[0] != inner.x[0] || inner.x[0] < -1.0 ||
+>>>>>>> c2af9f1 (Fix accuracy in angle computation)
             inner.x[0] > 1.0) {
             PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
             return;
         }
 
-        c_qd_acos(inner.x, angle.x);
-        dangle = angle.x[0];
+        c_qd_acos(inner.x, angle);
 
-        if (diff.x[0] < 0.0) {
-            dangle = 2.0 * NPY_PI - dangle;
+        c_qd_comp_qd_d(diff.x, 0.0, &comp);
+        if (comp == -1) {
+            c_qd_pi(pi);
+            c_qd_mul_qd_d(pi, 2.0, pi);
+            c_qd_sub_qd_dd(pi, angle, angle);
         }
 
-        *((double *)op) = dangle;
+        *((double *)op) = angle[0];
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);

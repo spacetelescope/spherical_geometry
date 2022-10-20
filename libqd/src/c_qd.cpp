@@ -237,11 +237,14 @@ void c_qd_copy_d(double a, double *b) {
 }
 
 
-void c_qd_sqrt(const double *a, double *b) {
+int c_qd_sqrt(const double *a, double *b) {
+  int flag;
   qd_real bb;
-  bb = sqrt(qd_real(a));
+  bb = fsqrt(qd_real(a), flag);
   TO_DOUBLE_PTR(bb, b);
+  return flag;
 }
+
 void c_qd_sqr(const double *a, double *b) {
   qd_real bb;
   bb = sqr(qd_real(a));
@@ -419,7 +422,7 @@ void c_qd_comp(const double *a, const double *b, int *result) {
     *result = -1;
   else if (aa > bb)
     *result = 1;
-  else 
+  else
     *result = 0;
 }
 
@@ -429,7 +432,7 @@ void c_qd_comp_qd_d(const double *a, double b, int *result) {
     *result = -1;
   else if (aa > b)
     *result = 1;
-  else 
+  else
     *result = 0;
 }
 
@@ -439,12 +442,17 @@ void c_qd_comp_d_qd(double a, const double *b, int *result) {
     *result = -1;
   else if (a > bb)
     *result = 1;
-  else 
+  else
     *result = 0;
 }
 
 void c_qd_pi(double *a) {
   TO_DOUBLE_PTR(qd_real::_pi, a);
 }
+
+double c_qd_epsilon(void) {
+    return (double) std::numeric_limits<qd_real>::epsilon();
+}
+
 
 }

@@ -14,6 +14,13 @@ Release Notes
 - Fix problem reported where angle of 180 degrees results in an
   error with the C version of the code. [#223]
 
+- Use a different algorithm for square root in the ``qd`` library that
+  seems to be less prone to accuracy loss. This helps the bug in the
+  ``math_util.c`` due to which ``angle()`` returns a NaN for
+  coplanar vectors where the angle between the surface points should be
+  180 degrees and enhances the solution from #223. Also, use ``qd`` epsilon
+  instead of arbitrary value for rounding error check. [#224]
+
 
 1.2.22 (04-January-2022)
 ========================
