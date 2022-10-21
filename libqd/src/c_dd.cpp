@@ -311,6 +311,10 @@ void c_dd_pi(double *a) {
   TO_DOUBLE_PTR(dd_real::_pi, a);
 }
 
+void c_dd_2pi(double *a) {
+  TO_DOUBLE_PTR(dd_real::_2pi, a);
+}
+
 double c_dd_epsilon(void) {
     return (double) std::numeric_limits<dd_real>::epsilon();
 }

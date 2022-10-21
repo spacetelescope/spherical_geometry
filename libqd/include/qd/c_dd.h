@@ -90,7 +90,7 @@ void c_dd_comp(const double *a, const double *b, int *result);
 void c_dd_comp_dd_d(const double *a, double b, int *result);
 void c_dd_comp_d_dd(double a, const double *b, int *result);
 void c_dd_pi(double *a);
-
+void c_dd_2pi(double *a);
 double c_dd_epsilon(void);
 
 #ifdef __cplusplus

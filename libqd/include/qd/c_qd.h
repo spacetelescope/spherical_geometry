@@ -111,6 +111,7 @@ void c_qd_comp(const double *a, const double *b, int *result);
 void c_qd_comp_qd_d(const double *a, double b, int *result);
 void c_qd_comp_d_qd(double a, const double *b, int *result);
 void c_qd_pi(double *a);
+void c_qd_2pi(double *a);
 double c_qd_epsilon(void);
 
 #ifdef __cplusplus

@@ -450,6 +450,10 @@ void c_qd_pi(double *a) {
   TO_DOUBLE_PTR(qd_real::_pi, a);
 }
 
+void c_qd_2pi(double *a) {
+  TO_DOUBLE_PTR(qd_real::_2pi, a);
+}
+
 double c_qd_epsilon(void) {
     return (double) std::numeric_limits<qd_real>::epsilon();
 }

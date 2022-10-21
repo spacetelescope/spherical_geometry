@@ -64,6 +64,8 @@ typedef struct {
     double x[4];
 } qd;
 
+double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
+
 static NPY_INLINE void
 load_point(const char *in, const intp s, double* out) {
     out[0] = (*(double *)in);
@@ -717,8 +719,9 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
     qd diff;
     qd inner;
     double angle[4];
+    double abs_inner[4];
 
-    double pi[4];
+    double _2pi[4];
 
     unsigned int old_cw;
 
@@ -740,7 +743,9 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         dot_qd(B, X, &diff);
         if (normalized_dot_qd(ABX, BCX, &inner)) return;
 
-        if (inner.x[0] != inner.x[0] || fabs(inner.x[0] > 1.0)) {
+        c_qd_abs(inner.x, abs_inner);
+        c_qd_comp(abs_inner, QD_ONE, &comp);
+        if (inner.x[0] != inner.x[0] || comp == 1) {
             PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
             return;
         }
@@ -749,9 +754,8 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 
         c_qd_comp_qd_d(diff.x, 0.0, &comp);
         if (comp == -1) {
-            c_qd_pi(pi);
-            c_qd_mul_qd_d(pi, 2.0, pi);
-            c_qd_sub_qd_dd(pi, angle, angle);
+            c_qd_2pi(_2pi);
+            c_qd_sub(_2pi, angle, angle);
         }
 
         *((double *)op) = angle[0];
