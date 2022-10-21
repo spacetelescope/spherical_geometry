@@ -513,3 +513,17 @@ def test_math_util_angle_domain():
 def test_math_util_length_domain():
     with pytest.raises(ValueError):
         math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
+
+def test_math_util_angle_nearly_coplanar_vec():
+    # test from issue #222 + extra values
+    vectors = [
+        5 * [[1.0, 1.0, 1.0]],
+        5 * [[1, 0.9999999, 1]],
+        [[1, 0.5, 1], [1, 0.15, 1], [1, 0.001, 1], [1, 0.15, 1], [-1, 0.1, -1]]
+    ]
+    angles = math_util.angle(*vectors)
+
+    assert np.allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
+    assert np.allclose(angles[-1], 0, rtol=0, atol=1e-32)
+
+

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2000-2001
  *
- * Contains C wrapper function prototypes for quad-double precision 
+ * Contains C wrapper function prototypes for quad-double precision
  * arithmetic.  This can also be used from fortran code.
  */
 #ifndef _QD_C_QD_H
@@ -65,7 +65,7 @@ void c_qd_copy(const double *a, double *b);
 void c_qd_copy_dd(const double *a, double *b);
 void c_qd_copy_d(double a, double *b);
 
-void c_qd_sqrt(const double *a, double *b);
+int c_qd_sqrt(const double *a, double *b);
 void c_qd_sqr(const double *a, double *b);
 
 void c_qd_abs(const double *a, double *b);
@@ -111,6 +111,8 @@ void c_qd_comp(const double *a, const double *b, int *result);
 void c_qd_comp_qd_d(const double *a, double b, int *result);
 void c_qd_comp_d_qd(double a, const double *b, int *result);
 void c_qd_pi(double *a);
+void c_qd_2pi(double *a);
+double c_qd_epsilon(void);
 
 #ifdef __cplusplus
 }
