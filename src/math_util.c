@@ -706,7 +706,13 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         dot_qd(B, X, &diff);
         dot_qd(ABX, BCX, &inner);
 
-        if (fabs(inner.x[0]) == 1.0 & fabs(inner.x[1]) < 1e-60) {
+        /* The following threshold is currently arbitrary and
+        is based on observed errors in that value and several 
+        orders of magnitude larger than those. One day someone
+        should determine how qd is producing those errors, 
+        but for now...
+        */
+        if (fabs(inner.x[0]) == 1.0 && fabs(inner.x[1]) < 1e-60) {
             inner.x[1] = 0.;
             inner.x[2] = 0.;
             inner.x[3] = 0.;
