@@ -7,6 +7,10 @@ Release Notes
 1.2.24 (unreleased)
 ===================
 
+- Add documentation to ``polygon.py`` for the ``SphericalPolygon`` 
+  method ``multi_union`` has exponential time behavior and cannot
+  be used for a large number of polynomials [#229]
+
 1.2.23 (10-October-2022)
 ========================
 

@@ -1145,7 +1145,9 @@ class SphericalPolygon(SingleSphericalPolygon):
     def multi_union(cls, polygons):
         """
         Return a new `SphericalPolygon` that is the union of all of the
-        polygons in *polygons*.
+        polygons in *polygons*. Currently this implementation exhibits
+        exponential time behavior and becomes practically unusable when 
+        dealing with on the order of 40 or more polygons.
 
         Parameters
         ----------
