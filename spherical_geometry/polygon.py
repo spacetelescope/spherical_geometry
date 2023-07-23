@@ -1146,7 +1146,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         Return a new `SphericalPolygon` that is the union of all of the
         polygons in *polygons*. Currently this implementation exhibits
-        exponential time behavior and becomes practically unusable when 
+        exponential time behavior and becomes practically unusable when
         dealing with on the order of 40 or more polygons.
 
         Parameters
@@ -1166,12 +1166,30 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         for polygon in polygons:
             if not isinstance(polygon, SphericalPolygon):
-                raise TypeError
+                raise TypeError("Expected a sequence of SphericalPolygon")
+
+        # Next block is a workaround to a bug in the graph code that leads to a
+        # crash when computing multi_union of polygons
+        # when some of input polygons are very close to each other.
+        # Remove the next block once the bug is fixed.
+        # See https://github.com/spacetelescope/spherical_geometry/issues/232
+        points = [np.sort(list(polygons[0].points)[0], axis=0)]
+        filtered_polygons = [polygons[0]]
+        for p in polygons[1:]:
+            pts = np.sort(list(p.points)[0], axis=0)
+            for pts2 in points:
+                if (pts.size == pts2.size and
+                        np.allclose(pts, pts2, rtol=0, atol=1e-9)):
+                    break
+            else:
+                continue
+            filtered_polygons.append(p)
+            points.append(pts)
 
         from . import graph
 
         all_polygons = []
-        for polygon in polygons:
+        for polygon in filtered_polygons:
             all_polygons.extend(polygon.iter_polygons_flat())
 
         g = graph.Graph(all_polygons)

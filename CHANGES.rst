@@ -7,9 +7,17 @@ Release Notes
 1.2.24 (unreleased)
 ===================
 
-- Add documentation to ``polygon.py`` for the ``SphericalPolygon`` 
+- Add documentation to ``polygon.py`` for the ``SphericalPolygon``
   method ``multi_union`` has exponential time behavior and cannot
   be used for a large number of polynomials [#229]
+
+- Added code to ``SphericalPolygon.multi_union()`` to pre-process
+  polygon list and remove nearly identical polygons to avoid a bug in the
+  ``graph`` code that could cause a crash when some of the input polygons are
+  nearly identical. This workaround can be undone in the future once
+  https://github.com/spacetelescope/spherical_geometry/issues/232
+  is resolved. [#233]
+
 
 1.2.23 (10-October-2022)
 ========================
