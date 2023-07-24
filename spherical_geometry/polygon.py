@@ -1182,9 +1182,9 @@ class SphericalPolygon(SingleSphericalPolygon):
                         np.allclose(pts, pts2, rtol=0, atol=1e-9)):
                     break
             else:
+                filtered_polygons.append(p)
+                points.append(pts)
                 continue
-            filtered_polygons.append(p)
-            points.append(pts)
 
         from . import graph
 
