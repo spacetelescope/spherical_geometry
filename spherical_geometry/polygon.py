@@ -1179,7 +1179,7 @@ class SphericalPolygon(SingleSphericalPolygon):
             pts = np.sort(list(p.points)[0], axis=0)
             for pts2 in points:
                 if (pts.size == pts2.size and
-                        np.allclose(pts, pts2, rtol=0, atol=1e-9)):
+                        np.allclose(pts, pts2, rtol=0, atol=5e-9)):
                     break
             else:
                 filtered_polygons.append(p)

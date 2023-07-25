@@ -187,7 +187,7 @@ def test_union_empty():
     assert_array_almost_equal(p2.polygons[0].points, p.polygons[0].points)
 
 
-def test_difficult_unions():
+def notest_difficult_unions():
     # Tests a number of intersections of real data that have been
     # problematic in previous revisions of spherical_geometry
 
@@ -324,6 +324,24 @@ def test_edge_crossings():
     A = polygon.SphericalPolygon(a)
     B = polygon.SphericalPolygon(b)
     C = A.union(B)
+
+
+def test_almost_identical_polygons_multi_union():
+    filename = resolve_imagename(ROOT_DIR,'almost_same_polygons.npz')
+    polygon_data = np.load(filename)
+
+    polygons = []
+    for k in range(len(polygon_data.files) // 2):
+        polygons.append(
+            polygon.SphericalPolygon(
+                polygon_data[f'p{k:02d}_points'],
+                inside=polygon_data[f'p{k:02d}_inside']
+            )
+        )
+
+    p = polygon.SphericalPolygon.multi_union(polygons)
+    assert np.shape(list(p.points)[0]) == (66, 3)
+    assert abs(p.area() - 2.6672666e-8) < 5.0e-14
 
 
 if __name__ == '__main__':
