@@ -1149,6 +1149,15 @@ class SphericalPolygon(SingleSphericalPolygon):
         exponential time behavior and becomes practically unusable when
         dealing with on the order of 40 or more polygons.
 
+        Also, current implementation struggles when some of the input polygons
+        are nearly identical. As a workaround, this method pre-filters
+        input polygons and excludes those nearly the same as some other input
+        polygon. Two poligons treated as the same polygon if their vertices
+        (``x``, ``y``, and ``z`` cordinates on a unit sphere) differ by less
+        than ``5e-9``. This is equivalent to polygon vertices being separated
+        by less than 0.0015 arcsec on the sky or by less than ``2 mm`` on Earth
+        (at average Earth radius).
+
         Parameters
         ----------
         polygons : sequence of `SphericalPolygon`
@@ -1173,6 +1182,12 @@ class SphericalPolygon(SingleSphericalPolygon):
         # when some of input polygons are very close to each other.
         # Remove the next block once the bug is fixed.
         # See https://github.com/spacetelescope/spherical_geometry/issues/232
+        #
+        # This woraround will result in two poligons treated as the same
+        # polygon if their vertices (x, y, z on a unit sphere) differ by 5e-9.
+        # This is equivalent to polygon vertices being separated by less than
+        # 0.0015 arcsec on the sky or by less than 2mm on Earth (at average
+        # Earth radius).
         accepted_polygon_points = [np.sort(list(polygons[0].points)[0], axis=0)]
         filtered_polygons = [polygons[0]]
         for p in polygons[1:]:
