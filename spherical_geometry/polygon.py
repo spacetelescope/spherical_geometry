@@ -6,7 +6,6 @@
 The `spherical_geometry.polygon` module defines the `SphericalPolygon` class for
 managing polygons on the unit sphere.
 """
-from __future__ import division, print_function, unicode_literals, absolute_import
 
 # STDLIB
 from copy import copy, deepcopy

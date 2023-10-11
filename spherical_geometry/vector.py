@@ -7,8 +7,6 @@ The `spherical_geometry.vector` module contains the basic operations for handlin
 vectors and converting them to and from other representations.
 """
 
-from __future__ import unicode_literals
-
 # THIRD-PARTY
 import numpy as np
 

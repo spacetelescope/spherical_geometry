@@ -18,6 +18,8 @@ Release Notes
   https://github.com/spacetelescope/spherical_geometry/issues/232
   is resolved. [#233]
 
+- Removed unused ``spherical_geometry.utils`` module. [#239]
+
 - Minimum supported version for Python is now 3.9. [#239]
 
 - Minimum supported version for NumPy is now 1.20. [#239]

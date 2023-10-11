@@ -11,9 +11,6 @@ coincident with the center of the sphere.  Great circle arcs are the
 section of those circles between two points on the unit sphere.
 """
 
-from __future__ import with_statement, division, absolute_import, unicode_literals
-
-import math
 from .vector import two_d
 
 # THIRD-PARTY

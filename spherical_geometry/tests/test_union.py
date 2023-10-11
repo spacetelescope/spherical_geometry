@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 # STDLIB
 import codecs
 import functools
@@ -11,6 +9,7 @@ import sys
 
 # THIRD-PARTY
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 # LOCAL
@@ -113,6 +112,7 @@ def test2():
     return [poly1, poly2, poly3, poly4, poly5, poly6]
 
 
+@pytest.mark.filterwarnings("ignore:CPERROR.*")
 def test5():
     from astropy.io import fits
     from astropy import wcs as pywcs
@@ -139,6 +139,7 @@ def test6():
     null_union = chipA1.union(chipA2)
 
 
+@pytest.mark.filterwarnings("ignore:CPERROR.*")
 @union_test(0, 90)
 def test7():
     from astropy.io import fits

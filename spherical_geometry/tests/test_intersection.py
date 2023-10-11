@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 # STDLIB
 import codecs
 import functools
@@ -8,10 +6,10 @@ import math
 import os
 import random
 import sys
-import pytest
 
 # THIRD-PARTY
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 
 # LOCAL
@@ -121,6 +119,7 @@ def test3():
     return [poly1, poly3]
 
 
+@pytest.mark.filterwarnings("ignore:CPERROR.*")
 def test4():
     from astropy.io import fits
     from astropy import wcs as pywcs
