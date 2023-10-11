@@ -134,9 +134,9 @@ setup(
     description=DESCRIPTION,
     install_requires=[
         'astropy>=5.0.4',
-        'numpy>=1.18',
+        'numpy>=1.20',
     ],
-    python_requiers='>=3.8',
+    python_requiers='>=3.9',
     extras_require={
         'test': [
             'pytest',

@@ -4,8 +4,8 @@
 Release Notes
 =============
 
-1.2.24 (unreleased)
-===================
+1.3 (unreleased)
+================
 
 - Add documentation to ``polygon.py`` for the ``SphericalPolygon``
   method ``multi_union`` has exponential time behavior and cannot
@@ -17,6 +17,10 @@ Release Notes
   nearly identical. This workaround can be undone in the future once
   https://github.com/spacetelescope/spherical_geometry/issues/232
   is resolved. [#233]
+
+- Minimum supported version for Python is now 3.9. [#239]
+
+- Minimum supported version for NumPy is now 1.20. [#239]
 
 
 1.2.23 (10-October-2022)
