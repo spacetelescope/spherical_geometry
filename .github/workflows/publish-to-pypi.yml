@@ -29,6 +29,10 @@ jobs:
 
     if: (github.repository == 'spacetelescope/spherical_geometry' && (github.event_name == 'push' ||  contains(github.event.pull_request.labels.*.name, 'Build wheels')))
     with:
+      # sdist cannot see spherical_geometry.math_util C-ext but local/wheel builds are fine, not sure why.
+      env: |
+        NUMPY_EXPERIMENTAL_DTYPE_API: 1
+
       # We upload to PyPI for all tag pushes
       upload_to_pypi: ${{ startsWith(github.ref, 'refs/tags/') && github.event_name == 'push' }}
 
@@ -38,14 +42,18 @@ jobs:
         # Linux wheels
         - cp3*-manylinux_x86_64
         - cp3*-musllinux_x86_64
-        - cp3*-manylinux_aarch64
+        # BUG: Takes too long.
+        #- cp3*-manylinux_aarch64
+
         # MacOS X wheels - we deliberately do not build universal2 wheels.
         # Note that the arm64 wheels are not actually tested so we
         # rely on local manual testing of these to make sure they are ok.
         - cp3*macosx_x86_64
         - cp3*macosx_arm64
+
         # Windows wheels
-        - cp3*win32
+        # BUG: https://github.com/spacetelescope/spherical_geometry/issues/244
+        #- cp3*win32
         - cp3*win_amd64
     secrets:
       pypi_token: ${{ secrets.PYPI_TOKEN }}
