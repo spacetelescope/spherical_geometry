@@ -7,8 +7,13 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_allclose
 
-from spherical_geometry import graph, great_circle_arc, math_util, polygon, vector
+from spherical_geometry import graph, great_circle_arc, polygon, vector
 from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_imagename
+
+try:
+    from spherical_geometry import math_util
+except ImportError:
+    math_util = None
 
 graph.DEBUG = True
 
@@ -504,17 +509,20 @@ def test_convex_hull():
         assert b == r, "Polygon boundary has correct points"
 
 
+@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_domain():
     # Before a fix, this would segfault
     with pytest.raises(ValueError):
         math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])
 
 
+@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_length_domain():
     with pytest.raises(ValueError):
         math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
 
+@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_nearly_coplanar_vec():
     # test from issue #222 + extra values
     vectors = [
