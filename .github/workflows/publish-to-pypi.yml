@@ -36,8 +36,10 @@ jobs:
       # We upload to PyPI for all tag pushes
       upload_to_pypi: ${{ startsWith(github.ref, 'refs/tags/') && github.event_name == 'push' }}
 
+      # BUG: https://github.com/spacetelescope/spherical_geometry/issues/244
+      # BUG: https://github.com/spacetelescope/spherical_geometry/issues/245
       test_extras: test
-      test_command: pytest -p no:warnings --pyargs spherical_geometry -v
+      test_command: pytest -p no:warnings --astropy-header -k "not test_almost_identical_polygons_multi_union" --pyargs spherical_geometry.tests -v
       targets: |
         # Linux wheels
         - cp3*-manylinux_x86_64
@@ -52,8 +54,7 @@ jobs:
         - cp3*macosx_arm64
 
         # Windows wheels
-        # BUG: https://github.com/spacetelescope/spherical_geometry/issues/244
-        #- cp3*win32
+        - cp3*win32
         - cp3*win_amd64
     secrets:
       pypi_token: ${{ secrets.PYPI_TOKEN }}

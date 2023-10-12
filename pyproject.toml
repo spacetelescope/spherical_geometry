@@ -61,13 +61,13 @@ build-backend = "setuptools.build_meta"
 license-files = ["licenses/*.rst"]
 zip-safe = false
 
-[tool.setuptools.packages.find]
-namespaces = false
-
 [tool.setuptools.package-data]
-"*" = [
+"" = [
     "README.rst",
     "licenses/*",
+]
+"spherical_geometry" = [
+    "spherical_geometry/*",
 ]
 "spherical_geometry.tests" = [
     "data/*",

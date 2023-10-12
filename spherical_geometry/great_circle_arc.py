@@ -35,7 +35,7 @@ else:
 if HAS_C_UFUNCS:
     _fast_cross = math_util.cross
 else:
-    def _fast_cross_3d(a, b):
+    def _fast_cross(a, b):
         """
         This is a reimplementation of `numpy.cross` that only does 3D x
         3D, and is therefore faster since it doesn't need any
