@@ -22,7 +22,7 @@ jobs:
       upload_to_pypi: false
       upload_to_anaconda: false
       test_extras: test
-      test_command: pytest -p no:warnings -k "not test_almost_identical_polygons_multi_union" --pyargs spherical_geometry.tests -v
+      test_command: pytest -p no:warnings --pyargs spherical_geometry.tests -v
       targets: |
         - cp39-manylinux_x86_64
 
@@ -45,12 +45,12 @@ jobs:
       # BUG: https://github.com/spacetelescope/spherical_geometry/issues/244
       # BUG: https://github.com/spacetelescope/spherical_geometry/issues/245
       test_extras: test
-      test_command: pytest -p no:warnings -k "not test_almost_identical_polygons_multi_union" --pyargs spherical_geometry.tests -v
+      test_command: pytest -p no:warnings --pyargs spherical_geometry.tests -v
       targets: |
         # Linux wheels
         - cp3*-manylinux_x86_64
         - cp3*-musllinux_x86_64
-        # BUG: Takes too long.
+        # FIXME: https://github.com/spacetelescope/spherical_geometry/issues/247
         #- cp3*-manylinux_aarch64
 
         # MacOS X wheels - we deliberately do not build universal2 wheels.
