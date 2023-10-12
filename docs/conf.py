@@ -19,8 +19,8 @@ sys.path.insert(1, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'Spherical Geometry'
-copyright = '2019, Mike Droettboom'
-author = 'Mike Droettboom'
+copyright = '2023, STScI'
+author = 'STScI'
 
 from spherical_geometry import __version__
 release = __version__
