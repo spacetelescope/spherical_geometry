@@ -24,6 +24,7 @@ Release Notes
 
 - Minimum supported version for NumPy is now 1.20. [#239]
 
+- Wheels for several common architectures are now available on PyPI. [#243]
 
 1.2.23 (10-October-2022)
 ========================
