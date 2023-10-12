@@ -18,7 +18,7 @@ from spherical_geometry.vector import two_d
 # C versions of the code have been written to speed up operations
 # the python versions are a fallback if the C cannot be used
 try:
-    from . import math_util
+    from spherical_geometry import math_util
     HAS_C_UFUNCS = True
 except ImportError:
     HAS_C_UFUNCS = False

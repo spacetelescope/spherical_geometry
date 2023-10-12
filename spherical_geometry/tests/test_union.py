@@ -5,7 +5,6 @@ import itertools
 import math
 import os
 import random
-import sys
 
 # THIRD-PARTY
 import numpy as np
