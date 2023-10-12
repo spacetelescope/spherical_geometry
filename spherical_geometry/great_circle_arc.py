@@ -28,10 +28,11 @@ except ImportError:
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
 else:
-    from numpy.core.umath_tests import inner1d
+    from numpy.core._umath_tests import inner1d
 
 __all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
+
 
 def _fast_cross(a, b):
     """
