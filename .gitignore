@@ -6,7 +6,7 @@
 __pycache__
 
 # Other generated files
-*/version.py
+*/_version.py
 */cython_version.py
 htmlcov
 MANIFEST

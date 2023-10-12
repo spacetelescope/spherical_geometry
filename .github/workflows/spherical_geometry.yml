@@ -32,6 +32,9 @@ jobs:
         - name: Security audit
           linux: bandit
 
+        - name: PEP 8
+          linux: codestyle
+
         - name: Python 3.9 (OSX)
           macos: py39-test
           posargs: -v
