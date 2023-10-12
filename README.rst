@@ -20,6 +20,17 @@ User documentation
 The ``spherical_geometry`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
 
+Installation
+------------
+
+On PyPI::
+
+  pip install spherical-geometry
+
+On conda::
+
+  conda install -c conda-forge spherical-geometry
+
 Requirements
 ------------
 
