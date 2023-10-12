@@ -2,9 +2,7 @@ import sys
 import time
 
 from spherical_geometry import SphericalPolygon
-
-from test_util import ROOT_DIR, get_point_set
-from test_shared import resolve_imagename
+from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_imagename
 
 
 def point_in_poly_lots():
@@ -18,8 +16,8 @@ def point_in_poly_lots():
 
     count = 0
     for point in points:
-        if poly1.contains_point(point) or poly2.contains_point(point) or \
-               poly3.contains_point(point):
+        if (poly1.contains_point(point) or poly2.contains_point(point) or
+                poly3.contains_point(point)):
             count += 1
 
     assert count == 5

@@ -1,8 +1,9 @@
 include README.rst
 include CHANGES.rst
-
 include setup.cfg
 include pyproject.toml
+
+exclude benchmarks.py
 
 recursive-include *.c
 recursive-include docs *

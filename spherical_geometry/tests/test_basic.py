@@ -5,19 +5,12 @@ import random
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_allclose
 
-from .. import graph
-from .. import great_circle_arc
-from .. import math_util
-from .. import polygon
-from .. import vector
-
-from .test_util import get_point_set
-from .test_shared import resolve_imagename
+from spherical_geometry import graph, great_circle_arc, math_util, polygon, vector
+from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_imagename
 
 graph.DEBUG = True
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 def test_normalize_vector():
@@ -531,5 +524,5 @@ def test_math_util_angle_nearly_coplanar_vec():
     ]
     angles = math_util.angle(*vectors)
 
-    np.testing.assert_allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
-    np.testing.assert_allclose(angles[-1], 0, rtol=0, atol=1e-32)
+    assert_allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
+    assert_allclose(angles[-1], 0, rtol=0, atol=1e-32)

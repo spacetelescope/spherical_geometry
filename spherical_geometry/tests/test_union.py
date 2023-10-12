@@ -13,11 +13,10 @@ import pytest
 from numpy.testing import assert_array_almost_equal
 
 # LOCAL
-from .. import polygon
-from .test_shared import resolve_imagename
+from spherical_geometry import polygon
+from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
 GRAPH_MODE = False
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class union_test:
@@ -343,13 +342,3 @@ def test_almost_identical_polygons_multi_union():
     p = polygon.SphericalPolygon.multi_union(polygons)
     assert np.shape(list(p.points)[0]) == (66, 3)
     assert abs(p.area() - 2.6672666e-8) < 5.0e-14
-
-
-if __name__ == '__main__':
-    if '--profile' not in sys.argv:
-        GRAPH_MODE = True
-
-    functions = [(k, v) for k, v in globals().items() if k.startswith('test')]
-    functions.sort()
-    for k, v in functions:
-        v()

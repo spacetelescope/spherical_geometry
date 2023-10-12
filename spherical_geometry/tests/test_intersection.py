@@ -10,14 +10,13 @@ import sys
 # THIRD-PARTY
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_allclose
 
 # LOCAL
-from .. import polygon
-from .test_shared import resolve_imagename
+from spherical_geometry import polygon
+from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
 GRAPH_MODE = False
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class intersection_test:
@@ -370,14 +369,4 @@ def test_intersection_crash_similar_poly():
 
     pts1 = np.sort(list(p1.points)[0][:-1], axis=0)
     pts3 = np.sort(list(p3.points)[0][:-1], axis=0)
-    np.testing.assert_allclose(pts1, pts3, rtol=0, atol=1e-15)
-
-
-if __name__ == '__main__':
-    if '--profile' not in sys.argv:
-        GRAPH_MODE = True
-
-    functions = [(k, v) for k, v in globals().items() if k.startswith('test')]
-    functions.sort()
-    for k, v in functions:
-        v()
+    assert_allclose(pts1, pts3, rtol=0, atol=1e-15)
