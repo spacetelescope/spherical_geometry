@@ -5,19 +5,17 @@ import itertools
 import math
 import os
 import random
-import sys
 
 # THIRD-PARTY
 import numpy as np
 import pytest
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_allclose
 
 # LOCAL
-from .. import polygon
-from .test_shared import resolve_imagename
+from spherical_geometry import polygon
+from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
 GRAPH_MODE = False
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
 class intersection_test:
@@ -139,7 +137,7 @@ def test4():
     Apoly = chipA1.union(chipA2)
     Bpoly = chipB1.union(chipB2)
 
-    X = Apoly.intersection(Bpoly)
+    _ = Apoly.intersection(Bpoly)
 
 
 @intersection_test(0, 90)
@@ -173,8 +171,8 @@ def test_difficult_intersections():
     # problematic in previous revisions of spherical_geometry
 
     # def test_intersection(polys):
-        # A, B = polys
-        # A.intersection(B)
+    #     A, B = polys
+    #     A.intersection(B)
 
     fname = resolve_imagename(ROOT_DIR, "difficult_intersections.txt")
     with open(fname, 'rb') as fd:
@@ -192,22 +190,24 @@ def test_difficult_intersections():
         # yield test_intersection, (polyA, polyB)
         polyA.intersection(polyB)
 
+
 def test_self_intersection():
     # Tests intersection between a disjoint polygon and itself
     ra1 = [150.15056635,  150.18472797,  150.18472641, 150.15056557, 150.15056635]
     dec1 = [2.33675579,  2.33675454,  2.30262137,  2.3026226 ,  2.33675579]
     ra2 = [150.18472955,  150.18472798,  150.15056635, 150.15056714, 150.18472955]
     dec2 = [2.37105428,  2.33692121,  2.33692245,  2.37105554,  2.37105428]
-     # create a union polygon
+    # create a union polygon
     s1 = polygon.SphericalPolygon.from_radec(np.array(ra1), np.array(dec1))
     s2 = polygon.SphericalPolygon.from_radec(np.array(ra2), np.array(dec2))
     s12 = s2.union(s1)
     # asserts self-intersection is same as original
     s12int = s12.intersection(s12)
-    assert(abs(s12.area() - s12int.area()) < 1.0e-6)
+    assert (abs(s12.area() - s12int.area()) < 1.0e-6)
     # same, with multi_intersection method
     s12int = polygon.SphericalPolygon.multi_intersection([s12, s12, s12])
-    assert(abs(s12.area() - s12int.area()) < 1.0e-6)
+    assert (abs(s12.area() - s12int.area()) < 1.0e-6)
+
 
 def test_ordering():
     nrepeat = 10
@@ -288,18 +288,6 @@ def test_ordering():
     assert_array_almost_equal(Careas[:-1], Careas[1:])
 
 
-if __name__ == '__main__':
-    if '--profile' not in sys.argv:
-        GRAPH_MODE = True
-        from mpl_toolkits.basemap import Basemap
-        from matplotlib import pyplot as plt
-
-    functions = [(k, v) for k, v in globals().items() if k.startswith('test')]
-    functions.sort()
-    for k, v in functions:
-        v()
-
-
 def test_intersection_crash():
     # Reported by Darren White
 
@@ -353,7 +341,8 @@ def test_intersection_crash():
     testFoV = polygon.SphericalPolygon(testpoints, inside=testcenter)
     poly = polygon.SphericalPolygon(polypoints, inside=polycenter)
 
-    overlap = poly.overlap(testFoV)
+    _ = poly.overlap(testFoV)
+
 
 @pytest.mark.skip(reason="currently there is no solution to get this to pass")
 def test_intersection_crash_similar_poly():
@@ -379,4 +368,4 @@ def test_intersection_crash_similar_poly():
 
     pts1 = np.sort(list(p1.points)[0][:-1], axis=0)
     pts3 = np.sort(list(p3.points)[0][:-1], axis=0)
-    assert np.allclose(pts1, pts3, rtol=0, atol=1e-15)
+    assert_allclose(pts1, pts3, rtol=0, atol=1e-15)

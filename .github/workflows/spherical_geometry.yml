@@ -19,88 +19,35 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Python Testing ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+  tests:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    with:
+      submodules: false
+      coverage: ''
+      envs: |
+        # Make sure that packaging will work
+        - name: pep517 build
+          linux: twine
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install numpy
-        python -m pip install -e .[test]
-    - name: Test with pytest
-      run: |
-        pip freeze
-        pytest
+        - name: Security audit
+          linux: bandit
 
-  devdeps:
-    name: Python Testing with dev versions of dependencies
-    runs-on: ubuntu-latest
+        - name: PEP 8
+          linux: codestyle
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --pre --upgrade --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
-        python -m pip install --pre --upgrade --extra-index-url https://pypi.anaconda.org/astropy/simple astropy
-        python -m pip install -e .[test]
-    - name: Test with pytest
-      run: |
-        pip freeze
-        pytest
+        - name: Python 3.9 (OSX)
+          macos: py39-test
+          posargs: -v
 
-  code_coverage:
-    name: Code Coverage Report
-    runs-on: ubuntu-latest
+        - name: Python 3.10 (Windows)
+          windows: py310-test
+          posargs: -v
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install -e .[test]
-    - name: Test with pytest and code coverage
-      run: |
-        pip freeze
-        pytest --cov-report=xml --cov=. --cov-config=setup.cfg
-    - name: Upload coverage to codecoverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
+        - name: Python 3.11 with coverage
+          linux: py311-test-cov
+          posargs: -v
+          coverage: codecov
 
-  bandit:
-    name: Bandit
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit
-    - name: Security checks with bandit
-      run: |
-        bandit spherical_geometry -r -x spherical_geometry/tests
+        - name: Python 3.12 with dev version of dependencies
+          linux: py312-test-devdeps
+          posargs: -v

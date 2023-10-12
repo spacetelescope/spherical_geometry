@@ -1,2 +1,123 @@
+[project]
+name = "spherical_geometry"
+dynamic = [
+    "version"
+]
+description = "Python based tools for spherical geometry"
+readme = "README.rst"
+authors = [
+    { name = "STScI", email = "help@stsci.edu" }
+]
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.9"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: C",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+keywords = [
+    "astronomy",
+    "astrophysics",
+    "space",
+    "science",
+    "spherical",
+    "geometry",
+]
+dependencies = [
+    "numpy>=1.20",
+    "astropy>=5.0.4",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-astropy-header",
+]
+docs = [
+    "sphinx-automodapi",
+    "numpydoc",
+]
+
+[project.urls]
+bug = "https://github.com/spacetelescope/spherical_geometry/issues/"
+source = "https://github.com/spacetelescope/spherical_geometry/"
+help = "https://hsthelp.stsci.edu"
+documentation = "http://spherical-geometry.readthedocs.io/"
+
 [build-system]
-requires = ["setuptools>=38.2.5", "setuptools_scm", "numpy>=1.25,<2"]
+requires = [
+    "setuptools",
+    "setuptools_scm",
+    "numpy>=1.25,<2",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = false
+license-files = ["licenses/*.rst"]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["spherical_geometry*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+"*" = [
+    "README.rst",
+    "licenses/*",
+]
+"spherical_geometry.tests" = [
+    "data/*",
+]
+
+[tool.setuptools_scm]
+write_to = "spherical_geometry/_version.py"
+
+[tool.pytest.ini_options]
+minversion = 6.0
+addopts = "--color=yes --import-mode=append"
+testpaths = [
+    "spherical_geometry",
+]
+norecursedirs = [
+    "build",
+    "docs[\\/]_build",
+]
+astropy_header = true
+junit_family = "xunit2"
+xfail_strict = true
+filterwarnings = [
+    "error",
+    "ignore:numpy\\.ndarray size changed:RuntimeWarning",
+    "ignore:numpy\\.ufunc size changed:RuntimeWarning",
+]
+
+[tool.coverage]
+
+    [tool.coverage.run]
+        omit = [
+            "spherical_geometry/tests/*",
+            "*/spherical_geometry/tests/*",
+        ]
+
+    [tool.coverage.report]
+        exclude_lines = [
+            # Have to re-enable the standard pragma
+            "pragma: no cover",
+            # Don't complain about packages we have installed
+            "except ImportError",
+            # Don't complain if tests don't hit defensive assertion code:
+            "raise AssertionError",
+            "raise NotImplementedError",
+            # Don't complain about script hooks
+            "'def main(.*):'",
+            # Ignore branches that don't pertain to this version of Python
+            "pragma: py{ignore_python_version}",
+            # Don't complain about IPython completion helper
+            "def _ipython_key_completions_",
+        ]
