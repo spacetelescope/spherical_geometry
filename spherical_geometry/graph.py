@@ -24,6 +24,7 @@ __all__ = ['Graph']
 # Set to True to enable some sanity checks
 DEBUG = True
 
+
 # The following two functions are called by sorted to provide a consistent
 # ordering of nodes and edges retrieved from the graph, since values are
 # retrieved from sets in an order that varies from run to run
@@ -31,8 +32,10 @@ DEBUG = True
 def node_order(node):
     return hash(tuple(node._point))
 
+
 def edge_order(edge):
     return node_order(edge._nodes[0]) + node_order(edge._nodes[1])
+
 
 class Graph:
     """
@@ -83,7 +86,6 @@ class Graph:
                 the actual sizes of polygons is not implemented.
             """
             return np.array_equal(self._point, other._point)
-
 
     class Edge:
         """
@@ -140,13 +142,12 @@ class Graph:
             equals : bool
             """
             if (self._nodes[0].equals(other._nodes[0]) and
-                self._nodes[1].equals(other._nodes[1])):
+                    self._nodes[1].equals(other._nodes[1])):
                 return True
             if (self._nodes[1].equals(other._nodes[0]) and
-                self._nodes[0].equals(other._nodes[1])):
+                    self._nodes[0].equals(other._nodes[1])):
                 return True
             return False
-
 
     def __init__(self, polygons):
         """
@@ -445,7 +446,7 @@ class Graph:
 
         poly = self._trace()
         # If multiple polygons, the inside point can only be in one
-        if len(poly._polygons)==1 and not self._contains_inside_point(poly):
+        if len(poly._polygons) == 1 and not self._contains_inside_point(poly):
             poly = poly.invert_polygon()
         return poly
 
@@ -577,8 +578,10 @@ class Graph:
         changed = False
         while len(edges) > 1:
             AB = edges.pop(0)
-            A = starts[0]; starts = starts[1:]  # numpy equiv of "pop(0)"
-            B = ends[0];   ends = ends[1:]      # numpy equiv of "pop(0)"
+            A = starts[0]
+            starts = starts[1:]  # numpy equiv of "pop(0)"
+            B = ends[0]
+            ends = ends[1:]      # numpy equiv of "pop(0)"
 
             # Calculate the intersection points between AB and all
             # other remaining edges
@@ -654,7 +657,7 @@ class Graph:
             edge._count = 0
             A, B = edge._nodes
             for polygon in polygons:
-                if (not polygon in edge._source_polygons and
+                if (polygon not in edge._source_polygons and
                     ((polygon in A._source_polygons or
                       polygon.contains_point(A._point)) and
                      (polygon in B._source_polygons or
@@ -728,7 +731,7 @@ class Graph:
             nedges_a = len(edge._nodes[0]._edges)
             nedges_b = len(edge._nodes[1]._edges)
             if (nedges_a % 2 == 1 and nedges_a >= 3 and
-                nedges_b % 2 == 1 and nedges_b >= 3):
+                    nedges_b % 2 == 1 and nedges_b >= 3):
                 removals.append(edge)
                 changed = True
 

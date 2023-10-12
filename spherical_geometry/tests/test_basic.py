@@ -13,11 +13,12 @@ from .. import math_util
 from .. import polygon
 from .. import vector
 
-from .test_util import *
+from .test_util import get_point_set
 from .test_shared import resolve_imagename
 
 graph.DEBUG = True
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
 
 def test_normalize_vector():
     x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
@@ -26,6 +27,7 @@ def test_normalize_vector():
     l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
     assert_almost_equal(l, 1.0)
 
+
 def test_normalize_unit_vector():
     for i in range(3):
         xyz = [0.0, 0.0, 0.0]
@@ -33,6 +35,7 @@ def test_normalize_unit_vector():
         xyzn = vector.normalize_vector(xyz)
         l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
         assert_almost_equal(l, 1.0)
+
 
 def test_lonlat_to_vector():
     npx, npy, npz = vector.lonlat_to_vector(np.arange(-360, 360, 1), 90)
@@ -95,6 +98,7 @@ def test_vector_to_radec():
     assert_almost_equal(lon, 315.0)
     assert_almost_equal(lat, 0.0)
 
+
 def test_is_clockwise():
     clockwise_poly = polygon.SphericalPolygon.from_cone(0.0, 90.0, 1.0)
     assert clockwise_poly.is_clockwise()
@@ -117,8 +121,8 @@ def test_midpoint():
             for j in range(0, 11, 5)]
 
     bvec = [(float(i+10), float(j+10))
-             for i in range(0, 11, 5)
-             for j in range(0, 11, 5)]
+            for i in range(0, 11, 5)
+            for j in range(0, 11, 5)]
 
     for a in avec:
         A = np.asarray(vector.lonlat_to_vector(a[0], a[1]))
@@ -188,6 +192,7 @@ def test_from_wcs():
         lat = lonlat[1]
         assert np.all(np.absolute(lon - 6.027148333333) < 0.2)
         assert np.all(np.absolute(lat + 72.08351111111) < 0.2)
+
 
 def test_intersects_poly_simple():
     lon1 = [-10, 10, 10, -10, -10]
@@ -295,6 +300,7 @@ def test_point_in_poly():
     lon, lat = vector.vector_to_lonlat(point[0], point[1], point[2])
     assert not poly.contains_lonlat(lon, lat)
 
+
 def test_point_in_poly_lots():
     from astropy.io import fits
     header = fits.getheader(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'),
@@ -311,7 +317,7 @@ def test_point_in_poly_lots():
     count = 0
     for point in points:
         if (poly1.contains_point(point) or poly2.contains_point(point) or
-            poly3.contains_point(point)):
+                poly3.contains_point(point)):
             count += 1
 
     assert count == 5
@@ -399,7 +405,7 @@ def test_cone():
     for i in range(50):
         lon = random.randrange(-180, 180)
         lat = random.randrange(20, 90)
-        cone = polygon.SphericalPolygon.from_cone(lon, lat, 8, steps=64)
+        _ = polygon.SphericalPolygon.from_cone(lon, lat, 8, steps=64)
 
 
 def test_area():
@@ -417,13 +423,16 @@ def test_area():
         calc_area = poly.area()
         assert_almost_equal(calc_area, area)
 
+
 def test_cone_area():
     saved_area = None
-    for lon in  (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
+    for lon in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
         for lat in (0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330):
             area = polygon.SphericalPolygon.from_cone(lon, lat, 30, steps=64).area()
-            if saved_area is None: saved_area = area
+            if saved_area is None:
+                saved_area = area
             assert_almost_equal(area, saved_area)
+
 
 def test_fast_area():
     a = np.array(  # Clockwise
@@ -512,6 +521,7 @@ def test_math_util_length_domain():
     with pytest.raises(ValueError):
         math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
+
 def test_math_util_angle_nearly_coplanar_vec():
     # test from issue #222 + extra values
     vectors = [
@@ -521,7 +531,5 @@ def test_math_util_angle_nearly_coplanar_vec():
     ]
     angles = math_util.angle(*vectors)
 
-    assert np.allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
-    assert np.allclose(angles[-1], 0, rtol=0, atol=1e-32)
-
-
+    np.testing.assert_allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
+    np.testing.assert_allclose(angles[-1], 0, rtol=0, atol=1e-32)

@@ -8,7 +8,7 @@ managing polygons on the unit sphere.
 """
 
 # STDLIB
-from copy import copy, deepcopy
+from copy import deepcopy
 
 # THIRD-PARTY
 import numpy as np
@@ -151,7 +151,7 @@ class SingleSphericalPolygon(object):
         if len(self.points) == 0:
             return np.array([])
         return vector.vector_to_lonlat(self.points[:,0], self.points[:,1],
-                                      self.points[:,2], degrees=True)
+                                       self.points[:,2], degrees=True)
 
     # Alias for to_lonlat
     to_radec = to_lonlat
@@ -275,7 +275,7 @@ class SingleSphericalPolygon(object):
         -------
         polygon : `SingleSphericalPolygon` object
         """
-        from astropy import wcs as pywcs, version as astropy_ver
+        from astropy import wcs as pywcs
         from astropy.io import fits
 
         if isinstance(fitspath, fits.Header):
@@ -504,7 +504,7 @@ class SingleSphericalPolygon(object):
             A = self._points[i]
             B = self._points[i+1]
             if np.any(great_circle_arc.intersects(
-                A, B, other._points[:-1], other._points[1:])):
+                    A, B, other._points[:-1], other._points[1:])):
                 return True
         return False
 
@@ -723,8 +723,10 @@ class SingleSphericalPolygon(object):
         x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
+
 # For backwards compatibility
 _SingleSphericalPolygon = SingleSphericalPolygon
+
 
 class SphericalPolygon(SingleSphericalPolygon):
     r"""
@@ -772,7 +774,6 @@ class SphericalPolygon(SingleSphericalPolygon):
             g = graph.Graph((polygon,))
             polygons.extend(g.disjoint_polygons())
         self._polygons = polygons
-
 
     def __copy__(self):
         return deepcopy(self)
@@ -877,7 +878,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
     @classmethod
     def from_lonlat(cls, lon, lat, center=None, degrees=True):
-        ## TODO Move into SingleSphericalPolygon
+        # TODO Move into SingleSphericalPolygon
         r"""
         Create a new `SphericalPolygon` from a list of
         (*longitude*, *latitude*) points.

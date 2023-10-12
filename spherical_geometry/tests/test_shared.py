@@ -1,5 +1,6 @@
 import os
 
+
 def resolve_imagename(ROOT_DIR, base_name):
     """Resolve image name for tests."""
 

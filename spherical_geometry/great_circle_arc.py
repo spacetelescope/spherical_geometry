@@ -33,57 +33,51 @@ else:
 __all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
 
-
-def _fast_cross(a, b):
-    """
-    This is a reimplementation of `numpy.cross` that only does 3D x
-    3D, and is therefore faster since it doesn't need any
-    conditionals.
-    """
-    if HAS_C_UFUNCS:
-        return math_util.cross(a, b)
-
-    cp = np.empty(np.broadcast(a, b).shape)
-    aT = a.T
-    bT = b.T
-    cpT = cp.T
-
-    cpT[0] = aT[1]*bT[2] - aT[2]*bT[1]
-    cpT[1] = aT[2]*bT[0] - aT[0]*bT[2]
-    cpT[2] = aT[0]*bT[1] - aT[1]*bT[0]
-
-    return cp
-
-
 if HAS_C_UFUNCS:
     _fast_cross = math_util.cross
+else:
+    def _fast_cross_3d(a, b):
+        """
+        This is a reimplementation of `numpy.cross` that only does 3D x
+        3D, and is therefore faster since it doesn't need any
+        conditionals.
+        """
+        if HAS_C_UFUNCS:
+            return math_util.cross(a, b)
 
+        cp = np.empty(np.broadcast(a, b).shape)
+        aT = a.T
+        bT = b.T
+        cpT = cp.T
 
-def _cross_and_normalize(A, B):
-    T = _fast_cross(A, B)
-    # Normalization
-    l = np.sqrt(np.sum(T ** 2, axis=-1))
-    l = two_d(l)
-    # Might get some divide-by-zeros
-    with np.errstate(invalid='ignore'):
-        TN = T / l
-    # ... but set to zero, or we miss real NaNs elsewhere
-    TN = np.nan_to_num(TN)
-    return TN
+        cpT[0] = aT[1]*bT[2] - aT[2]*bT[1]
+        cpT[1] = aT[2]*bT[0] - aT[0]*bT[2]
+        cpT[2] = aT[0]*bT[1] - aT[1]*bT[0]
 
+        return cp
 
 if HAS_C_UFUNCS:
     def _cross_and_normalize(A, B):
         with np.errstate(invalid='ignore'):
             return math_util.cross_and_norm(A, B)
-
-
-def triple_product(A, B, C):
-    return inner1d(C, _fast_cross(A, B))
-
+else:
+    def _cross_and_normalize(A, B):
+        T = _fast_cross(A, B)
+        # Normalization
+        l = np.sqrt(np.sum(T ** 2, axis=-1))
+        l = two_d(l)
+        # Might get some divide-by-zeros
+        with np.errstate(invalid='ignore'):
+            TN = T / l
+        # ... but set to zero, or we miss real NaNs elsewhere
+        TN = np.nan_to_num(TN)
+        return TN
 
 if HAS_C_UFUNCS:
     triple_product = math_util.triple_product
+else:
+    def triple_product(A, B, C):
+        return inner1d(C, _fast_cross(A, B))
 
 
 def intersection(A, B, C, D):

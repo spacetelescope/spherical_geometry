@@ -1,15 +1,15 @@
-import os
 import sys
 import time
 
-import numpy as np
-from sphere import *
-from test_util import *
+from spherical_geometry import SphericalPolygon
+
+from test_util import ROOT_DIR, get_point_set
 from test_shared import resolve_imagename
 
+
 def point_in_poly_lots():
-    image_name = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
-    
+    image_name = resolve_imagename(ROOT_DIR, '1904-66_TAN.fits')
+
     poly1 = SphericalPolygon.from_wcs(image_name, 64, crval=[0, 87])
     poly2 = SphericalPolygon.from_wcs(image_name, 64, crval=[20, 89])
     poly3 = SphericalPolygon.from_wcs(image_name, 64, crval=[180, 89])
@@ -27,6 +27,7 @@ def point_in_poly_lots():
     assert not poly1.intersects_poly(poly3)
     assert not poly2.intersects_poly(poly3)
 
+
 if __name__ == '__main__':
     for benchmark in [point_in_poly_lots]:
         t = time.time()
@@ -36,4 +37,3 @@ if __name__ == '__main__':
         benchmark()
         sys.stdout.write(' %.03fs\n' % (time.time() - t))
         sys.stdout.flush()
-

@@ -1,9 +1,6 @@
-import os
-
 import numpy as np
 from .. import vector
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 def get_point_set(density=25):
     points = []

@@ -21,6 +21,7 @@ __all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
            'normalize_vector', 'radec_to_vector', 'vector_to_radec',
            'rotate_around']
 
+
 def two_d(vec):
     """
     Reshape a one dimensional vector so it has a second dimension
@@ -29,6 +30,7 @@ def two_d(vec):
     shape.append(1)
     shape = tuple(shape)
     return np.reshape(vec, shape)
+
 
 def lonlat_to_vector(lon, lat, degrees=True):
     r"""
@@ -76,6 +78,7 @@ def lonlat_to_vector(lon, lat, degrees=True):
         np.sin(lon_rad) * cos_lat,
         np.sin(lat_rad))
 
+
 # Alias for lonlat_to_vector
 radec_to_vector = lonlat_to_vector
 
@@ -120,6 +123,7 @@ def vector_to_lonlat(x, y, z, degrees=True):
         return np.rad2deg(result[0]), np.rad2deg(result[1])
     else:
         return result
+
 
 # Alias for vector_to_lonlat
 vector_to_radec = vector_to_lonlat
