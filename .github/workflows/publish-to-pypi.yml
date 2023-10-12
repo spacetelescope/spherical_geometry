@@ -19,11 +19,11 @@ permissions:
 
 jobs:
   test_wheel_building:
-    # This ensures that a couple of targets work fine in pull requests and pushes
+    # This ensures that a couple of targets work fine in pull requests
     permissions:
       contents: none
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v1
-    if: (github.event_name == 'push' || github.event_name == 'pull_request')
+    if: (github.repository == 'spacetelescope/spherical_geometry' && github.event_name == 'pull_request')
     with:
       upload_to_pypi: false
       upload_to_anaconda: false
