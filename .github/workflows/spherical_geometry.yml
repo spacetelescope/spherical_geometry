@@ -1,7 +1,5 @@
 name: Spherical Geometry CI
 
-# Change 'on' section and add code coverage.
-
 on:
   push:
     branches:
@@ -9,23 +7,30 @@ on:
     tags:
       - "*"
   pull_request:
-    branches:
   schedule:
     # Run every Monday at 6am UTC
     - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Python Testing ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -35,6 +40,28 @@ jobs:
         python -m pip install -e .[test]
     - name: Test with pytest
       run: |
+        pip freeze
+        pytest
+
+  devdeps:
+    name: Python Testing with dev versions of dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --pre --upgrade --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+        python -m pip install --pre --upgrade --extra-index-url https://pypi.anaconda.org/astropy/simple astropy
+        python -m pip install -e .[test]
+    - name: Test with pytest
+      run: |
+        pip freeze
         pytest
 
   doc_build:
@@ -42,11 +69,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         sudo apt-get install graphviz texlive-latex-extra dvipng
@@ -54,6 +81,7 @@ jobs:
         python -m pip install -e .[docs]
     - name: Build documents with sphinx
       run: |
+        pip freeze
         sphinx-build docs build/docs
 
   code_coverage:
@@ -61,20 +89,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install -e .[test]
     - name: Test with pytest and code coverage
       run: |
+        pip freeze
         pytest --cov-report=xml --cov=. --cov-config=setup.cfg
     - name: Upload coverage to codecoverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
 
@@ -83,11 +112,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: '3.11'
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip

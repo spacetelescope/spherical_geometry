@@ -68,10 +68,7 @@ except ImportError:
     exit(1)
 
 # Get some values from the setup.cfg
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+from configparser import ConfigParser
 conf = ConfigParser()
 conf.read(['setup.cfg'])
 metadata = dict(conf.items('metadata'))
@@ -134,9 +131,9 @@ setup(
     description=DESCRIPTION,
     install_requires=[
         'astropy>=5.0.4',
-        'numpy>=1.18',
+        'numpy>=1.20',
     ],
-    python_requiers='>=3.8',
+    python_requiers='>=3.9',
     extras_require={
         'test': [
             'pytest',
