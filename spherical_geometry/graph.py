@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 This contains the code that does the actual unioning of regions.
 """
@@ -14,10 +12,10 @@ import weakref
 import numpy as np
 
 # LOCAL
-from . import great_circle_arc as gca
-from . import vector
-from .polygon import (SingleSphericalPolygon, SphericalPolygon,
-                      MalformedPolygonError)
+from spherical_geometry import great_circle_arc as gca
+from spherical_geometry import vector
+from spherical_geometry.polygon import (SingleSphericalPolygon, SphericalPolygon,
+                                        MalformedPolygonError)
 
 __all__ = ['Graph']
 

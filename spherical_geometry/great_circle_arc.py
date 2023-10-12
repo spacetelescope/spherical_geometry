@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 The `spherical_geometry.great_circle_arc` module contains functions for computing
 the length, intersection, angle and midpoint of great circle arcs.
@@ -11,10 +9,11 @@ coincident with the center of the sphere.  Great circle arcs are the
 section of those circles between two points on the unit sphere.
 """
 
-from .vector import two_d
-
 # THIRD-PARTY
 import numpy as np
+
+# LOCAL
+from spherical_geometry.vector import two_d
 
 # C versions of the code have been written to speed up operations
 # the python versions are a fallback if the C cannot be used
@@ -24,14 +23,14 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
+__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
+           'length', 'midpoint', 'interpolate']
 
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
 else:
     from numpy.core._umath_tests import inner1d
 
-__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
-           'length', 'midpoint', 'interpolate']
 
 if HAS_C_UFUNCS:
     _fast_cross = math_util.cross

@@ -1,7 +1,7 @@
 import sys
 import time
 
-from spherical_geometry import SphericalPolygon
+from spherical_geometry.polygon import SphericalPolygon
 from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_imagename
 
 

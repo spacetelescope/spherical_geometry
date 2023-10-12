@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 """
 The `spherical_geometry.polygon` module defines the `SphericalPolygon` class for
 managing polygons on the unit sphere.
@@ -14,8 +12,7 @@ from copy import deepcopy
 import numpy as np
 
 # LOCAL
-from . import great_circle_arc
-from . import vector
+from spherical_geometry import great_circle_arc, vector
 
 __all__ = ['SingleSphericalPolygon', 'SphericalPolygon',
            'MalformedPolygonError']
