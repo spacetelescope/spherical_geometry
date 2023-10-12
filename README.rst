@@ -19,9 +19,9 @@ polygons that represent arbitrary regions of the sky.
 Requirements
 ------------
 
-- Python 3.8 or later
+- Python 3.9 or later
 
-- Numpy 1.18 or later
+- Numpy 1.20 or later
 
 - astropy 5.0.4 or later
 
