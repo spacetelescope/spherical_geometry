@@ -122,7 +122,7 @@ In the following image, the inside point (marked with the red dot)
 declares that the area of the polygon is the green region, and not the
 white region.
 
-.. image:: docs/spherical_geometry/inside.png
+.. image:: inside.png
 
 The inside point of the the polygon can be obtained from the
 ``~polygon.SphericalPolygon.inside`` property.
