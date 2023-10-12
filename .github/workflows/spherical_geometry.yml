@@ -1,4 +1,4 @@
-name: Spherical Geometry CI
+name: CI
 
 on:
   push:
