@@ -1,12 +1,11 @@
 include README.rst
 include CHANGES.rst
-include setup.cfg
 include pyproject.toml
 
 exclude benchmarks.py
 exclude inside.png
 
-recursive-include *.c
+recursive-include src *.c
 recursive-include docs *
 recursive-include licenses *
 
