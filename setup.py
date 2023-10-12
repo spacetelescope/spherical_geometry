@@ -137,7 +137,7 @@ setup(
     extras_require={
         'test': [
             'pytest',
-            'pytest-cov',
+            'pytest-astropy-header',
         ],
         'docs': [
             'sphinx',
