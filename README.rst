@@ -1,13 +1,17 @@
 User documentation
 ==================
 
-.. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/spacetelescope/spherical_geometry
-    :alt: Spherical Geometry's Coverage Status
+.. image:: https://readthedocs.org/projects/spherical-geometry/badge/?version=latest
+    :target: https://spherical-geometry.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 .. image:: https://github.com/spacetelescope/spherical_geometry/workflows/CI/badge.svg
     :target: https://github.com/spacetelescope/spherical_geometry/actions
     :alt: Spherical Geometry's Github Actions CI Status
+
+.. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/spacetelescope/spherical_geometry
+    :alt: Spherical Geometry's Coverage Status
 
 .. image:: https://img.shields.io/pypi/v/spherical-geometry
     :target: https://pypi.org/project/spherical-geometry/
