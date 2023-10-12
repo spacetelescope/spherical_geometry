@@ -15,6 +15,11 @@ from numpy.testing import assert_array_almost_equal
 from spherical_geometry import polygon
 from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
+try:
+    from spherical_geometry import math_util
+except ImportError:
+    math_util = None
+
 GRAPH_MODE = False
 
 
@@ -325,6 +330,8 @@ def test_edge_crossings():
     _ = A.union(B)
 
 
+@pytest.mark.xfail(
+    math_util is None, reason="math_util C-ext is missing, numpy gives different results")
 def test_almost_identical_polygons_multi_union():
     filename = resolve_imagename(ROOT_DIR,'almost_same_polygons.npz')
     polygon_data = np.load(filename)

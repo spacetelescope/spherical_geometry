@@ -157,6 +157,8 @@ def test_interpolate():
         assert abs(length - first_length) < 1.0e-10
 
 
+@pytest.mark.xfail(
+    math_util is None, reason="math_util C-ext is missing, numpy gives different results")
 def test_overlap():
     def build_polygon(offset):
         points = []

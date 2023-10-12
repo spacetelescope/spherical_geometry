@@ -80,8 +80,9 @@ write_to = "spherical_geometry/_version.py"
 
 [tool.pytest.ini_options]
 minversion = 6.0
+addopts = "--color=yes"
 testpaths = [
-    "spherical_geometry/tests",
+    "spherical_geometry",
 ]
 norecursedirs = [
     "build",
