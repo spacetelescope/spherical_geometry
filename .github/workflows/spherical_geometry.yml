@@ -64,26 +64,6 @@ jobs:
         pip freeze
         pytest
 
-  doc_build:
-    name: Document Build
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: |
-        sudo apt-get install graphviz texlive-latex-extra dvipng
-        python -m pip install --upgrade pip
-        python -m pip install -e .[docs]
-    - name: Build documents with sphinx
-      run: |
-        pip freeze
-        sphinx-build docs build/docs
-
   code_coverage:
     name: Code Coverage Report
     runs-on: ubuntu-latest
