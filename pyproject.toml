@@ -62,7 +62,7 @@ license-files = ["licenses/*.rst"]
 zip-safe = false
 
 [tool.setuptools.package-data]
-"" = [
+"*" = [
     "README.rst",
     "licenses/*",
 ]
