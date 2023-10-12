@@ -58,16 +58,18 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
+include-package-data = false
 license-files = ["licenses/*.rst"]
 zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["spherical_geometry*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "*" = [
     "README.rst",
     "licenses/*",
-]
-"spherical_geometry" = [
-    "spherical_geometry/*",
 ]
 "spherical_geometry.tests" = [
     "data/*",
