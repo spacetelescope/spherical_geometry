@@ -10,12 +10,16 @@ User documentation
     :alt: Spherical Geometry's Github Actions CI Status
 
 .. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/spacetelescope/spherical_geometry
+    :target: https://codecov.io/gh/spacetelescope/spherical_geometry
     :alt: Spherical Geometry's Coverage Status
 
 .. image:: https://img.shields.io/pypi/v/spherical-geometry
     :target: https://pypi.org/project/spherical-geometry/
     :alt: PyPI
+
+.. image:: https://zenodo.org/badge/20937470.svg
+    :target: https://zenodo.org/doi/10.5281/zenodo.10020243
+    :alt: 10.5281/zenodo.10020243
 
 The ``spherical_geometry`` library is a Python package for handling spherical
 polygons that represent arbitrary regions of the sky.
