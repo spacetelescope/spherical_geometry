@@ -29,7 +29,7 @@ __all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
 else:
-    from numpy.core._umath_tests import inner1d
+    inner1d = lambda x, y: np.multiply(x, y).sum(axis=1)
 
 
 if HAS_C_UFUNCS:
