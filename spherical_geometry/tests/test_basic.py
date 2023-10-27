@@ -564,11 +564,6 @@ def test_math_util_inner1d():
         [1, 0.15, 1],
         [-1, 0.1, -1]
     ]
-    lengths = great_circle_arc._inner1d_np(vectors, vectors)
+    lengths = math_util.inner1d(vectors, vectors)
 
-    assert_allclose(
-        lengths,
-        math_util.inner1d(vectors, vectors),
-        rtol=0,
-        atol=1e-15
-    )
+    assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
