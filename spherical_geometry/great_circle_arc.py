@@ -26,10 +26,15 @@ except ImportError:
 __all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
            'length', 'midpoint', 'interpolate']
 
+
+def _inner1d_np(x, y):
+    return np.multiply(x, y).sum(axis=1)
+
+
 if HAS_C_UFUNCS:
     inner1d = math_util.inner1d
 else:
-    from numpy.core._umath_tests import inner1d
+    inner1d = _inner1d_np
 
 
 if HAS_C_UFUNCS:
@@ -55,6 +60,7 @@ else:
 
         return cp
 
+
 if HAS_C_UFUNCS:
     def _cross_and_normalize(A, B):
         with np.errstate(invalid='ignore'):
@@ -71,6 +77,7 @@ else:
         # ... but set to zero, or we miss real NaNs elsewhere
         TN = np.nan_to_num(TN)
         return TN
+
 
 if HAS_C_UFUNCS:
     triple_product = math_util.triple_product

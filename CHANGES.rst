@@ -26,6 +26,9 @@ Release Notes
 
 - Wheels for several common architectures are now available on PyPI. [#243]
 
+- Replaced private ``numpy.core._umath_tests.inner1d()`` with an alternative
+  implementation. [#253]
+
 1.2.23 (10-October-2022)
 ========================
 
