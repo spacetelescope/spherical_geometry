@@ -29,6 +29,12 @@ Release Notes
 - Replaced private ``numpy.core._umath_tests.inner1d()`` with an alternative
   implementation. [#253]
 
+- Fixed a bug in the ``math_util.angles()`` function that would result in crash
+  when one of the input vectors is a null vector. [#254]
+
+- Enhanced the code in the ``SphericalPolygon.convex_hull()`` to ignore points
+  that lead to null vectors in computations. [#254]
+
 1.2.23 (10-October-2022)
 ========================
 

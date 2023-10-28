@@ -348,7 +348,7 @@ class SingleSphericalPolygon(object):
 
         duo = list(zip(pt, ang))
         duo = sorted(duo, key=lambda d: d[1])
-        points = np.asarray([d[0] for d in duo])
+        points = np.asarray([d[0] for d in duo if np.isfinite(d[1])])
 
         # Set the first point on the hull to the extreme point
 
