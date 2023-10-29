@@ -35,6 +35,7 @@ Release Notes
 - Enhanced the code in the ``SphericalPolygon.convex_hull()`` to ignore points
   that lead to null vectors in computations. [#254]
 
+
 1.2.23 (10-October-2022)
 ========================
 

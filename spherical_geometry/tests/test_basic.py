@@ -477,11 +477,18 @@ def test_fast_area():
     assert carea > 2.0 * np.pi and carea < 4.0 * np.pi
 
 
-def test_convex_hull():
+@pytest.mark.parametrize(
+    'repeat_pts', [False, True]
+)
+def test_convex_hull(repeat_pts):
     lon = (0.02, 0.10, 0.05, 0.03, 0.04, 0.07, 0.00, 0.06, 0.08, 0.13,
            0.08, 0.14, 0.15, 0.12, 0.01, 0.11)
     lat = (0.06, 0.00, 0.05, 0.01, 0.12, 0.08, 0.03, 0.02, 0.04, 0.03,
            0.10, 0.11, 0.01, 0.13, 0.09, 0.07)
+
+    if repeat_pts:
+        lon = lon + lon[::-1]
+        lat = lat + lat[::-1]
 
     lon_lat = list(zip(lon, lat))
 
@@ -518,8 +525,9 @@ def test_convex_hull():
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_domain():
     # Before a fix, this would segfault
-    with pytest.raises(ValueError):
-        math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])
+    assert not np.isfinite(
+        math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
+    )
 
 
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
