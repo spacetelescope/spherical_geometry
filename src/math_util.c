@@ -7,6 +7,8 @@
 #include "numpy/npy_math.h"
 
 #include "qd/c_qd.h"
+#include <math.h>
+#include <stdlib.h>
 
 
 /*
@@ -198,7 +200,7 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
         /* return non-normalized value: */
         PyErr_SetString(PyExc_ValueError, "Null vector.");
         c_qd_copy(ab.x, dot_val->x);
-        return 1;
+        return 2;
     } else {
         c_qd_div(ab.x, norm, dot_val->x);
     }
@@ -707,7 +709,7 @@ char *angle_signature = "(i),(i),(i)->()";
 static void
 DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 {
-    int comp;
+    int comp, ret;
     qd A[3];
     qd B[3];
     qd C[3];
@@ -741,7 +743,18 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
         cross_qd(C, B, BCX);
         cross_qd(ABX, BCX, X);
         dot_qd(B, X, &diff);
-        if (normalized_dot_qd(ABX, BCX, &inner)) return;
+        ret = normalized_dot_qd(ABX, BCX, &inner);
+        if (ret == 1)  {
+            return;
+        } else if (ret == 2) {
+            PyErr_Clear();
+#if defined(NAN)
+            *((double *)op) = NAN;
+#else
+            *((double *)op) = strtod("NaN", NULL);
+#endif
+            continue;
+        }
 
         c_qd_abs(inner.x, abs_inner);
         c_qd_comp(abs_inner, QD_ONE, &comp);
