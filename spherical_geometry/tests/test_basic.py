@@ -524,7 +524,6 @@ def test_convex_hull(repeat_pts):
 
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_domain():
-    # Before a fix, this would segfault
     assert not np.isfinite(
         math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
     )

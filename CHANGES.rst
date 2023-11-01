@@ -35,6 +35,9 @@ Release Notes
 - Enhanced the code in the ``SphericalPolygon.convex_hull()`` to ignore points
   that lead to null vectors in computations. [#254]
 
+- Fixed a bug in quad-precision functions ``normalize`` and
+  ``intersection`` functions affecting numerous other functions. [#256]
+
 
 1.2.23 (10-October-2022)
 ========================
