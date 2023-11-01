@@ -149,6 +149,11 @@ normalize_qd(const qd *A, qd *B) {
         PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
         return 1;
     }
+    if (T[3][0] == 0.0) {
+        c_qd_copy_d(NPY_NAN, B->x);
+        return 1;
+    }
+
     c_qd_sqrt(T[3], l);
 
     for (i = 0; i < 3; ++i) {
@@ -267,7 +272,10 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D,
         cross_qd(A, B, ABX);
         cross_qd(C, D, CDX);
         cross_qd(ABX, CDX, T);
-        if (normalize_qd(T, T)) return;
+        if (normalize_qd(T, T)) {
+            *match = 0;
+            return;
+        }
 
         *match = 0;
         cross_qd(ABX, A, tmp);
