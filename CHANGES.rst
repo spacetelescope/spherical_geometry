@@ -4,8 +4,8 @@
 Release Notes
 =============
 
-1.3 (unreleased)
-================
+1.3.0 (1-November-2023)
+=======================
 
 - Add documentation to ``polygon.py`` for the ``SphericalPolygon``
   method ``multi_union`` has exponential time behavior and cannot
