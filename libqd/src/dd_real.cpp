@@ -18,10 +18,6 @@
 #include <iomanip>
 #include <string>
 
-#ifdef _MSC_VER
-#include <algorithm>
-#endif
-
 #include "config.h"
 #include <qd/dd_real.h>
 #include "util.h"

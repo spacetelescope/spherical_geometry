@@ -11,6 +11,7 @@
  */
 #include "config.h"
 #include <qd/qd_real.h>
+#include <qd/inline.h>
 
 /* Some useful constants. */
 const qd_real qd_real::_2pi = qd_real(6.283185307179586232e+00,

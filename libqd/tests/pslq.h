@@ -23,6 +23,7 @@
 
 #include <qd/dd_real.h>
 #include <qd/qd_real.h>
+#include <qd/inline.h>
 
 using std::sqrt;
 using std::abs;

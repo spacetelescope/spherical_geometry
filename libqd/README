@@ -1,20 +1,16 @@
 Quad Double computation package
-Copyright (C) 2003-2019
+Copyright (C) 2003-2023
 ================================================
 
-Revision date:  26 February 2019
+Revision date:  3 Nov 2023
 
 Authors:
-Yozo Hida		U.C. Berkeley   			yozo@cs.berkeley.edu
+Yozo Hida		U.C. Berkeley   		yozo@cs.berkeley.edu
 Xiaoye S. Li 		Lawrence Berkeley Natl Lab  	xiaoye@nersc.gov
 David H. Bailey  	Lawrence Berkeley Natl Lab  	dhbailey@lbl.gov
 
 C++ usage guide:
 Alex Kaiser 		Lawrence Berkeley Natl Lab 	adkaiser@lbl.gov
-
-This work was supported by the Director, Office of Science, Division of Mathematical, 
-Information, and Computational Sciences of the U.S. Department of Energy under contract 
-number DE-AC02-05CH11231.
 
 This work was supported by the Director, Office of Science, Division of Mathematical, 
 Information, and Computational Sciences of the U.S. Department of Energy under contract 
@@ -25,12 +21,13 @@ numbers DE-AC03-76SF00098 and DE-AC02-05CH11231.
 See the file COPYING for modified BSD license information.
 See the file INSTALL for installation instructions.
 See the file NEWS for recent revisions.
-See the file docs/qd.pdf for additional information.
+See the file README.pdf for additional information. The file is mostly identical, but 
+	but includes additional tables on constructors and constants. 
 
 Outline:
 
 I.   Introduction
-II.  Installation of package, and linking and executing user files
+II.  Directories and Files
 III. C++ Usage
 IV.  Fortran Usage
 V.   Note on x86-Based Processors (MOST systems in use today)
@@ -47,18 +44,11 @@ conventional C++ and Fortran-90 programs.
 In addition to the basic arithmetic operations (add, subtract, multiply, divide, square root), 
 common transcendental functions such as the exponential, logarithm, trigonometric and 
 hyperbolic functions are also included.  A detailed description of the algorithms used is 
-available in the docs subdirectory (see docs/qd.pdf).  An abridged version of this paper, 
-which was presented at the ARITH-15 conference, is also available at:
+available in the docs subdirectory (see docs/qd.ps).  An abridged version of this paper, 
+which was presented at the ARITH-15 conference, is also available in this same directory 
+(see docs/arith15.ps).
 
-Yozo Hida, Xiaoye S. Li and David H. Bailey, "Algorithms for quad-double precision 
-  floating point arithmetic," 15th IEEE Symposium on Computer Arithmetic, IEEE Computer 
-  Society, 2001, pg. 155-162, available at
-  https://www.davidhbailey.com/dhbpapers/arith15.pdf.
-
-
-II.  Installation of package, and linking and executing user files
-
-A.  Directories
+II. Directories and Files
 
 There are six directories and several files in the main directory of this distribution, 
 described below
@@ -73,15 +63,20 @@ fortran  This directory contains Fortran-90 files.
 
 tests	This directory contains some simple (not comprehensive) tests.
 
-docs 	This directory contains a technical paper describing the algorithms.
+docs 	This directory contains two papers describing the algorithms.
 
 config   This directory contains various scripts used by the configure
  		script and the Makefile.
 
+
+	
+C++ Usage: 
+
 Please note that all commands refer to a Unix-type environment such as Mac OSX or Ubuntu 
 Linux using the bash shell. 
 
-B. Installing and building
+
+A. Building
 
 To build the library, first run the included configure script by typing 
 
@@ -137,68 +132,67 @@ detection. To build such programs, type:
 
 in the  "tests" directory. 
 
-C. Linking and executing user programs
+B. Linking 
 
-C++ source files:
-
-The simplest way to link to the library is to install it to a standard place as described above, and use the -l option. For example
+The simplest way to link to the library is to install it to a standard place as described above, 
+and use the -l option. For example
 
        g++ compileExample.cpp -o compileExample -l qd
 
 One can also use this method to build with make. A file called "compileExample.cpp" and the 
 associated makefile "makeCompileExample" illustrate the process. 
 
-A third alternative is to use a link script. If one types "make demo" in the test 
-directory, the output produced gives guidance as to how to build the files. By 
-following the structure of the compiling commands one may copy the appropriate portions, 
-perhaps replacing the filename with an argument that the user can include at link time.
-An example of such a script is as follows:
+A third alternative is to use a link script. If one types "make demo" in the test directory, the 
+output produced gives guidance as to how to build the files. By following the structure of 
+the compiling commands one may copy the appropriate portions, perhaps replacing the 
+filename with an argument that the user can include at link time. An example of such a 
+script is as follows:
 
 g++ -DHAVE_CONFIG_H   -I.. -I../include -I../include   -O2  -MT $1.o -MD -MP -MF 
 .deps/qd_test.Tpo -c -o $1.o $1.cpp
 mv -f .deps/$1.Tpo .deps/$1.Po
-g++  -O2    -o $1 $1.o ../src/libqd.a -lm
+g++  -O2    -o $1 $1.o ../src/libqd.a Ðlm
 
-To use the link script, make it executable (by typing "chmod +x link.scr) and then type:
+To use it, make the link script executable and type:
 
 ./link.scr compileExample
 
 Note that the file extension is not included because the script handles all extensions, 
-expecting the source file to have the extension ".cpp". 
+expecting the source file to have the extension ".cpp" . 
 
-Fortran-90 source files:
+Similarly, a script for compiling fortran programs may be constructed
+as follows.  In the fortran directory, type "make quadts".  This
+compiles the Fortran program tquadts.f, links with all necessary
+library files, and produces the executable "quadts".  As this is being
+done, all flags and linked libraries are displayed.  For instance, on
+many Mac systems, presuming g++-4.0 was defined for C++ and gfortran
+for F90, the following is output: 
 
-Similarly, a script for compiling fortran programs may be constructed as follows.
-In the fortran directory, type "make quadtsq".  This compiles the Fortran program 
-tquadts.f, links with all necessary library files, and produces the executable 
-"quadts".  As this is being done, all flags and linked libraries are displayed.
-For instance, on a 2019-era Apple Macintosh system, where the library was installed
-as above with g++ for C++ and gfortran for Fortran-90, the following is output: 
+  gfortran  -O2 -ffree-form -c -o tquadts.o tquadts.f
+  g++-4.0  -O2 -Wall   -o quadts tquadts.o second.o libarprec_f_main.a
+  libarprecmod.a ../src/libarprec.a
+  -L/usr/local/lib/gcc/i386-apple-darwin9.0.0/4.3.0
+  -L/usr/local/lib/gcc/i386-apple-darwin9.0.0/4.3.0/../../.. -lgfortranbegin
+  -lgfortran
 
-gfortran  -m64 -ffree-form  -c -o tquadtsq.o tquadtsq.f
-/bin/sh ../libtool --tag=CXX   --mode=link g++  -O2  -o quadtsq tquadtsq.o second.o 
-libqdmod.la libqd_f_main.la ../src/libqd.la 
--L/usr/local/gfortran/lib/gcc/x86_64-apple-darwin16/6.3.0 
--L/usr/local/gfortran/lib/gcc/x86_64-apple-darwin16/6.3.0/../../.. 
--lgfortran -lquadmath -lm  -lm 
+Thus a general compile-link script (which could be saved in an
+executable file named "complink.scr") is the following:
 
-Thus a general compile-link script is the following:
-
-gfortran  -m64 -ffree-form  -c -o $1.o $1.f90
-/bin/sh ../libtool --tag=CXX   --mode=link g++  -O2  -o $1 $1.o second.o \
-  libqdmod.la libqd_f_main.la ../src/libqd.la \
-  -L/usr/local/gfortran/lib/gcc/x86_64-apple-darwin16/6.3.0 \
-  -L/usr/local/gfortran/lib/gcc/x86_64-apple-darwin16/6.3.0/../../.. \
-  -lgfortran -lquadmath -lm  -lm
+  gfortran  -O2 -ffree-form -c -o $1.o $1.f
+  g++-4.0  -O2 -Wall   -o $1 $1.o second.o libarprec_f_main.a \
+  libarprecmod.a ../src/libarprec.a \
+  -L/usr/local/lib/gcc/i386-apple-darwin9.0.0/4.3.0 \
+  -L/usr/local/lib/gcc/i386-apple-darwin9.0.0/4.3.0/../../.. -lgfortranbegin \
+  -lgfortran
 
 Note that if the .f90 suffix is used for Fortran-90 source files, the
--ffree-form flag may be omitted, but the first line above should end with
-"$1.f90" (as shown above).  After forming the script, name file, "complink.scr",
-and then type "chmod +x complink.scr".  To use this script compile and link a 
-program named "prog.f90", type "./complink.scr prog".
+-ffree-form flag can be omitted, and the first line above ends with
+"$1.f90".  Remember to type "chmod +x complink.scr".  Then, for
+instance, a program named "prog.f90" could be compiled and linked by
+merely typing "./complink.scr prog".
 
 
-III. C++ usage
+C. Programming techniques
 
 As much as possible, operator overloading is included to make basic programming as much 
 like using standard typed floating-point arithmetic. Changing many codes should be as 
@@ -215,7 +209,9 @@ further arithmetic. Upon assignment to a multi-precision variable, the value wil
 padded. This problem is serious and potentially difficult to debug. To avoid this, use the 
 included constructors to force arithmetic to be performed in the full precision requested. 
 
-For a table with descriptions, please see the documentation file qd.pdf in the docs directory.
+
+For a table with descriptions, please see the included file README.pdf
+
 
 ii. Included functions and Constants 
 
@@ -231,6 +227,7 @@ Many constants are included, which are global and calculated upon initialization
 following list of constants is calculated for both the dd_real and qd_real classes separately. 
 Use care to select the correct value. 
 
+
 For a table with descriptions, please see the included file README.pdf
 
 ii. Conversion of types 
@@ -239,10 +236,10 @@ Static casts may be used to convert constants between types. One may also use co
 to return temporary multi-precision types within expressions, but should be careful, as this 
 will waste memory if done repeatedly. For example: 
 
-   qd_real y ; 
-   y = sin( qd_real(4.0) / 3.0 ) ;
+		qd_real y ; 
+       y = sin( qd_real(4.0) / 3.0 ) ;
 
-C-style casts may be used, but are not recommended.  Dynamic and reinterpret casts are 
+CÐstyle casts may be used, but are not recommended.  Dynamic and reinterpret casts are 
 not supported and should be considered unreliable. Casting between multi-precision and 
 standard precision types can be dangerous, and care must be taken to ensure that programs 
 are working properly and accuracy has not degraded by use of a misplaced type-conversion. 
@@ -258,6 +255,20 @@ word for arithmetic, and as such do not extend the total range of values availab
 means that the maximum absolute value for either data type is the same as that of double-
 precision, or approximately 10^308. The precision near this range, however, is greatly 
 increased. 
+
+To ensure that arithmetic is carried out with proper precision and accuracy, one must call 
+the function fpu_fix_start before performing any double-double or quad-double 
+arithmetic. This forces all arithmetic to be carried out in 64-bit double precision, not the 80-
+bit precision that is found on certain compilers and interferes with the existing library. 
+
+	unsigned int old_cw;
+	fpu_fix_start(&old_cw);
+
+To return standard settings for arithmetic on oneÕs system, call the function Òfpu_fix_endÓ. 
+For example:
+
+	fpu_fix_end(&old_cw);
+
 
 E. I/O 
 
@@ -279,6 +290,7 @@ Here are three valid examples:
 	3.14159 26535 89793
 	123.123123e50
 
+
 When read using cin, these constants will be converted using full multi-precision accuracy.
 
 
@@ -298,6 +310,9 @@ Here is a sample Fortran-90 program, equivalent to the above C++ program:
 	use qdmodule 
 	implicit none
 	type (qd_real) a, b
+	integer*4 old_cw
+
+	call f_fpu_fix_start(old_cw)
 	a = 1.d0
 	b = cos(a)**2 + sin(a)**2 - 1.d0
 	call qdwrite(6, b)
@@ -364,9 +379,9 @@ F90 functions defined with dd_real arguments:
   erfc, exp, int, log, log10, max, min, mod, ddcsshf (cosh and sinh),
   ddcssnf (cos and sin), ddranf (random number generator in (0,1)), 
   ddnrtf (n-th root), sign, sin, sinh, sqr, sqrt, tan, tanh
-
-Similar functions are provided for qd_real arguments with function names qdcsshf, 
-qdcssnf, qdranf and qdnrtf instead of the names in the list above.
+Similar functions are provided for qd_real arguments (with function
+  names qdcsshf, qdcssnf, qdranf and qdnrtf instead of the names in
+  the list above).
 
 Input and output of double-double and quad-double data is done using the special 
 subroutines ddread, ddwrite, qdread and qdwrite.  The first argument of these subroutines 
@@ -399,13 +414,10 @@ subdirectory.
 V. Note on x86-Based Processors (MOST systems in use today)
 
 The algorithms in this library assume IEEE double precision floating point arithmetic.  Since 
-Intel x86 processors have extended (80-bit) floating point registers, some compilers,
-albeit a declining number, may generate commands for the 80-bit instructions. The QD
-library does NOT work correctly with 80-bit instructions, so if one's code does not operate
-correctly, this may be the reason.  To avoid such problems, the round-to-double flag must be 
-enabled in the control word of the FPU for this library to function properly.  The following 
-functions contains appropriate code to facilitate manipulation of this flag.  For non-x86 
-systems these functions do nothing (but still exist).
+Intel x86 processors have extended (80-bit) floating point registers, the round-to-double 
+flag must be enabled in the control word of the FPU for this library to function properly 
+under x86 processors.  The following functions contains appropriate code to facilitate 
+manipulation of this flag.  For non-x86 systems these functions do nothing (but still exist).
 
 fpu_fix_start	This turns on the round-to-double bit in the control word.
 fpu_fix_end	  This restores the control flag.

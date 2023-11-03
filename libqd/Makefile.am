@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = config src include tests fortran
+SUBDIRS = src include tests fortran
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = qd.pc
@@ -26,13 +26,7 @@ dist_noinst_DATA = docs/Makefile \
 doc: docs/qd.pdf
 
 docs/qd.pdf:
-	$(MAKE) -C docsqd.pdf
-
-changelog:
-	git log >ChangeLog
-
-dist-hook:
-	rm -f ${distdir}/ChangeLog && git log >${distdir}/ChangeLog
+	$(MAKE) -C docs qd.pdf
 
 cpp-demo:
 	$(MAKE) -C tests demo
@@ -58,4 +52,4 @@ time:
 
 bin_SCRIPTS=qd-config
 
-.PHONY: changelog cpp-demo fortran-demo demo time doc
+.PHONY: cpp-demo fortran-demo demo time doc

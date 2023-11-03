@@ -9,8 +9,8 @@
  *
  * Quad-double precision (>= 212-bit significand) floating point arithmetic
  * package, written in ANSI C++, taking full advantage of operator overloading.
- * Uses similar techniques as that of David Bailey's double-double package
- * and that of Jonathan Shewchuk's adaptive precision floating point
+ * Uses similar techniques as that of David Bailey's double-double package 
+ * and that of Jonathan Shewchuk's adaptive precision floating point 
  * arithmetic package.  See
  *
  *   http://www.nersc.gov/~dhbailey/mpdist/mpdist.html

@@ -15,4 +15,5 @@ Yves Renard      <Yves.Renard@gmm.insa-tlse.fr>
   - Provided initial autotoolization (autoconf / automake / libool).
 E. Jason Riedy   <ejr@cs.berkeley.edu>
   - Various bug fixes and code cleanup.
-
+Michael Orlitzky <michael@orlitzky.com>
+  - Bug fixes, build system cleanup, and a new release.
