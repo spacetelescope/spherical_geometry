@@ -16,16 +16,17 @@ endif
 
 lib_LTLIBRARIES = libqdmod.la libqd_f_main.la
 libqdmod_la_SOURCES = ddext.f ddmod.f qdext.f qdmod.f f_dd.cpp f_qd.cpp
+libqdmod_la_LIBADD = $(top_builddir)/src/libqd.la $(FCLIBS)
 libqd_f_main_la_SOURCES = main.cpp
+libqd_f_main_la_LIBADD = $(top_builddir)/src/libqd.la libqdmod.la $(FCLIBS)
 ddmod.lo: $(DDEXT) ddext.lo
 qdmod.lo: ddmod.lo $(DDMOD) qdext.lo
 $(QDMOD): qdmod.lo $(DDMOD)
 $(DDMOD): ddmod.lo
 $(DDEXT): ddext.lo
-$(QDEXT): qdext.lo $(DDEXT) 
+$(QDEXT): qdext.lo $(DDEXT)
 
-qdmoddir = $(includedir)/$(PACKAGE)
-qdmod_HEADERS = $(QDMOD) $(QDEXT) $(DDMOD) $(DDEXT)
+nodist_pkginclude_HEADERS = $(QDMOD) $(QDEXT) $(DDMOD) $(DDEXT)
 
 DEMO=quaderq$(EXEEXT) quadgsq2d$(EXEEXT) quadgsq$(EXEEXT) \
      quadtsq$(EXEEXT) quadtsq2d$(EXEEXT)
@@ -62,7 +63,7 @@ qd_timer_LINK=$(CXXLINK)
 
 demo: $(DEMO)
 
-CLEANFILES = $(EXTRA_PROGRAMS) *.mod
+CLEANFILES = $(EXTRA_PROGRAMS) $(nodist_pkginclude_HEADERS)
 
 endif
 

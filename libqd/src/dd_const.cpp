@@ -9,6 +9,7 @@
  */
 #include "config.h"
 #include <qd/dd_real.h>
+#include <qd/inline.h>
 
 const dd_real dd_real::_2pi = dd_real(6.283185307179586232e+00,
                                       2.449293598294706414e-16);

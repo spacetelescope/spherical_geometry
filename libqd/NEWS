@@ -1,3 +1,18 @@
+Changes for 2.3.24
+	Installed a patch suggested by Sharlatan Hellseher to improve the accuracy
+	of a spherical geometry application.
+
+Changes for 2.3.23
+    Fixed underlinking of libqdmod and libqd_f_main (bug).
+    Don't set CC=$CXX (fixes a new build issue with autoconf-2.71, bug).
+    Fixed typo in the rule to build docs/qd.pdf (bug).
+    Fixed "make dist" rule (built headers cannot be dist'd, bug).
+    Fixed the build with --disable-inline (bug).
+    Don't add "-O2" to CXXFLAGS or FCFLAGS when they're empty (portability).
+    Don't manually search for compilers & flags in configure.ac (portability).
+    Removed the --enable-warnings and --enable-debug flags (portability).
+    Modernized all of configure.ac for use with autoconf-2.71 (housekeeping).
+
 Changes for 2.3.22
     Made changes suggested by Vasiliy Sotnikov
 

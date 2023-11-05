@@ -4,6 +4,12 @@
 Release Notes
 =============
 
+1.3.1 (5-November-2023)
+=======================
+
+- Updated the built-in ``qd`` library to version 2.3.24. [#258]
+
+
 1.3.0 (1-November-2023)
 =======================
 

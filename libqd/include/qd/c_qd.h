@@ -7,7 +7,7 @@
  *
  * Copyright (c) 2000-2001
  *
- * Contains C wrapper function prototypes for quad-double precision
+ * Contains C wrapper function prototypes for quad-double precision 
  * arithmetic.  This can also be used from fortran code.
  */
 #ifndef _QD_C_QD_H

@@ -283,7 +283,7 @@ void c_dd_comp(const double *a, const double *b, int *result) {
     *result = -1;
   else if (aa > bb)
     *result = 1;
-  else
+  else 
     *result = 0;
 }
 
@@ -293,7 +293,7 @@ void c_dd_comp_dd_d(const double *a, double b, int *result) {
     *result = -1;
   else if (aa > bb)
     *result = 1;
-  else
+  else 
     *result = 0;
 }
 
@@ -303,7 +303,7 @@ void c_dd_comp_d_dd(double a, const double *b, int *result) {
     *result = -1;
   else if (aa > bb)
     *result = 1;
-  else
+  else 
     *result = 0;
 }
 
