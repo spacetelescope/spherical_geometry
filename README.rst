@@ -5,11 +5,11 @@ User documentation
     :target: https://spherical-geometry.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://github.com/spacetelescope/spherical_geometry/actions/workflows/spherical_geometry.yml/badge.svg?branch=master
+.. image:: https://github.com/spacetelescope/spherical_geometry/actions/workflows/spherical_geometry.yml/badge.svg?branch=main
     :target: https://github.com/spacetelescope/spherical_geometry/actions/workflows/spherical_geometry.yml
     :alt: Spherical Geometry's Github Actions CI Status
 
-.. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/spacetelescope/spherical_geometry/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/spacetelescope/spherical_geometry
     :alt: Spherical Geometry's Coverage Status
 
