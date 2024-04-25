@@ -1,6 +1,7 @@
 import os
 import os.path
 import math
+import platform
 import random
 
 import numpy as np
@@ -531,7 +532,11 @@ def test_math_util_angle_domain():
 
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_length_domain():
-    with pytest.raises(ValueError):
+    if platform.system().lower() == "darwin" and platform.machine() == "arm64":
+        ctx = pytest.warns(RuntimeWarning, match="invalid value encountered in length")
+    else:
+        ctx = pytest.raises(ValueError, match="Out of domain for acos")
+    with ctx:
         math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
 
