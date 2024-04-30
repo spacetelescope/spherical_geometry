@@ -529,10 +529,9 @@ def test_math_util_angle_domain():
     )
 
 
-@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_length_domain():
     with pytest.raises(ValueError):
-        math_util.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
+        great_circle_arc.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
 
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")

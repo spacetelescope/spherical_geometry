@@ -53,8 +53,8 @@ documentation = "http://spherical-geometry.readthedocs.io/"
 requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.6",
-    "numpy>=1.25",
-#    "numpy>=2.0.0dev0",
+    #"numpy>=1.25",
+    "numpy>=2.0.0dev0",
 ]
 build-backend = "setuptools.build_meta"
 

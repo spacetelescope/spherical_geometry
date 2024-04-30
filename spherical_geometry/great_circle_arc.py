@@ -23,12 +23,12 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
-__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
-           'length', 'midpoint', 'interpolate']
+__all__ = ['angle', 'interpolate', 'intersection', 'intersects',
+           'intersects_point', 'length', 'midpoint']
 
 
 def _inner1d_np(x, y):
-    return np.multiply(x, y).sum(axis=1)
+    return np.multiply(x, y).sum(axis=-1)
 
 
 if HAS_C_UFUNCS:
@@ -213,6 +213,8 @@ def length(A, B, degrees=True):
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
     else:
+        raise AssertionError("C version should have been used")
+        approx1 = 1 + 3 * np.finfo(float).eps
         A = np.asanyarray(A)
         B = np.asanyarray(B)
 
@@ -221,11 +223,20 @@ def length(A, B, degrees=True):
         B2 = B ** 2.0
         Bl = np.sqrt(np.sum(B2, axis=-1))
 
-        A = A / two_d(Al)
-        B = B / two_d(Bl)
+        try:
+            with np.errstate(invalid='raise'):
+                A = A / two_d(Al)
+                B = B / two_d(Bl)
+        except FloatingPointError:
+            raise ValueError("Out of domain for acos")
 
         dot = inner1d(A, B)
-        dot = np.clip(dot, -1.0, 1.0)
+
+        for d in np.atleast_1d(dot):
+            if np.isnan(d) or abs(d) > approx1:
+                raise ValueError("Out of domain for acos")
+
+        dot = np.clip(dot, -1.0, 1.0)  # needed due to accuracy loss
         with np.errstate(invalid='ignore'):
             result = np.arccos(dot)
 

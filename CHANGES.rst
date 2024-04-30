@@ -4,6 +4,11 @@
 Release Notes
 =============
 
+1.3.2 (unreleased)
+==================
+
+- Fixed a bug in the Python implementation of ``inner1d``. [#266]
+
 1.3.1 (5-November-2023)
 =======================
 
