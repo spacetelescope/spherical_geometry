@@ -310,7 +310,7 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D,
 char *inner1d_signature = "(i),(i)->()";
 
 static void
-DOUBLE_inner1d(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_inner1d(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
     intp di = dimensions[0];
@@ -339,7 +339,7 @@ static char inner1d_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOU
 char *normalize_signature = "(i)->(i)";
 
 static void
-DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd IN[3];
     qd OUT[3];
@@ -374,7 +374,7 @@ static char normalize_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
 char *cross_signature = "(i),(i)->(i)";
 
 static void
-DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_cross(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -415,7 +415,7 @@ char *cross_and_norm_signature = "(i),(i)->(i)";
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
 static void
-DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_cross_and_norm(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -456,7 +456,7 @@ char *triple_product_signature = "(i),(i),(i)->()";
  * Finds the triple_product at *B* between *A*, *B*,  and *C*.
  */
 static void
-DOUBLE_triple_product(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_triple_product(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -502,7 +502,7 @@ char *intersection_signature = "(i),(i),(i),(i)->(i)";
  * Finds the intersection of 2 great circle arcs AB and CD.
  */
 static void
-DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersection(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -562,7 +562,7 @@ char *intersects_signature = "(i),(i),(i),(i)->()";
  * Returns True where the great circle arcs AB and CD intersects
  */
 static void
-DOUBLE_intersects(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersects(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -611,7 +611,7 @@ char *length_signature = "(i),(i)->()";
  * Finds the length of the given great circle arc AB
  */
 static void
-DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -656,7 +656,7 @@ char *intersects_point_signature = "(i),(i),(i)->()";
  * Returns True is if the point C intersects arc AB
  */
 static void
-DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersects_point(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -715,7 +715,7 @@ char *angle_signature = "(i),(i),(i)->()";
  * Finds the angle at *B* between *AB* and *BC*.
  */
 static void
-DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     int comp, ret;
     qd A[3];
