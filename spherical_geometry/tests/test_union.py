@@ -214,6 +214,7 @@ def notest_difficult_unions():
     polygon.SphericalPolygon.multi_union(polys[:len(polys)//2])
 
 
+@pytest.mark.timeout(30)
 def test_inside_point():
     p = np.array(
         [[ 0.9990579 , -0.02407018,  0.03610999],

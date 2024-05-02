@@ -37,6 +37,7 @@ dependencies = [
 test = [
     "pytest",
     "pytest-astropy-header",
+    "pytest-timeout",
 ]
 docs = [
     "sphinx-automodapi",
