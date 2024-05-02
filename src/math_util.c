@@ -229,7 +229,7 @@ sign(const double A) {
 
 static NPY_INLINE int
 equals_qd(const qd *A, const qd *B) {
-    return memcmp(A, B, sizeof(qd) * 3) == 0;
+    return memcmp(A, B, sizeof(qd)) == 0;
 }
 
 static NPY_INLINE int
