@@ -46,7 +46,7 @@ Requirements
 
 - qd-library 2.3.7 or later (optional: if not available, the
   bundled version will be used).  To force using the system-installed
-  version, build with ``USE_SYSTEM_QD=1`` before building this package.
+  version, build with ``USE_SYSTEM_QD=1 pip install .``.
 
 Bundled qd-library
 ------------------
