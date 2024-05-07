@@ -20,3 +20,18 @@ PYTEST_HEADER_MODULES.pop('Pandas', None)
 PYTEST_HEADER_MODULES.pop('h5py', None)
 
 TESTED_VERSIONS['spherical-geometry'] = version
+
+
+# This has to be in the root dir or it will not display in CI.
+def pytest_report_header(config):
+    import os
+
+    from spherical_geometry import DISABLE_C_UFUNCS, HAS_C_UFUNCS
+
+    # This gets added after the pytest-astropy-header output.
+    return (
+        f'CI: {os.environ.get("CI", "undefined")}\n'
+        f'DISABLE_SPHR_GEOM_C_UFUNCS: {os.environ.get("DISABLE_SPHR_GEOM_C_UFUNCS", "undefined")}\n'
+        f'DISABLE_C_UFUNCS: {DISABLE_C_UFUNCS}\n'
+        f'HAS_C_UFUNCS: {HAS_C_UFUNCS}\n'
+    )

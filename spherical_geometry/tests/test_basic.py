@@ -7,17 +7,12 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_allclose
 
-from spherical_geometry import graph, great_circle_arc, polygon, vector
+from spherical_geometry import graph, great_circle_arc, polygon, vector, HAS_C_UFUNCS
 from spherical_geometry.tests.helpers import (
     ROOT_DIR,
     get_point_set,
     resolve_imagename
 )
-
-try:
-    from spherical_geometry import math_util
-except ImportError:
-    math_util = None
 
 graph.DEBUG = True
 
@@ -522,18 +517,18 @@ def test_convex_hull(repeat_pts):
         assert b == r, "Polygon boundary has correct points"
 
 
-def test_math_util_angle_domain():
+def test_gca_angle_domain():
     assert not np.isfinite(
         great_circle_arc.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
     )
 
 
-def test_math_util_length_domain():
+def test_gca_length_domain():
     with pytest.raises(ValueError):
         great_circle_arc.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
 
-def test_math_util_angle_nearly_coplanar_vec():
+def test_gca_angle_nearly_coplanar_vec():
     # test from issue #222 + extra values
     vectors = [
         5 * [[1.0, 1.0, 1.0]],
@@ -559,8 +554,9 @@ def test_inner1d():
     assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
 
 
-@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
+@pytest.mark.skipif(not HAS_C_UFUNCS, reason="math_util C-ext is missing")
 def test_math_util_inner1d():
+    from spherical_geometry import math_util
     vectors = [
         [1.0, 1.0, 1.0],
         3 * [1.0 / np.sqrt(3)],
