@@ -18,7 +18,6 @@ from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
 try:
     from spherical_geometry import math_util
-    math_util = None
 except ImportError:
     math_util = None
 
