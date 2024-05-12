@@ -19,7 +19,8 @@ from spherical_geometry.vector import two_d
 # the python versions are a fallback if the C cannot be used
 try:
     from spherical_geometry import math_util
-    HAS_C_UFUNCS = True
+    math_util = None
+    HAS_C_UFUNCS = False
 except ImportError:
     HAS_C_UFUNCS = False
 
@@ -183,7 +184,7 @@ def intersection(A, B, C, D):
     return np.where(equals, np.nan, cross)
 
 
-def length(A, B, degrees=True):
+def length(A, B):
     r"""
     Returns the angular distance between two points (in vector space)
     on the unit sphere.
@@ -192,10 +193,6 @@ def length(A, B, degrees=True):
     ----------
     A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
        The endpoints of the great circle arc, in vector space.
-
-    degrees : bool, optional
-        If `True` (default) the result is returned in decimal degrees,
-        otherwise radians.
 
     Returns
     -------
@@ -213,7 +210,6 @@ def length(A, B, degrees=True):
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
     else:
-        raise AssertionError("C version should have been used")
         approx1 = 1 + 3 * np.finfo(float).eps
         A = np.asanyarray(A)
         B = np.asanyarray(B)
@@ -240,10 +236,7 @@ def length(A, B, degrees=True):
         with np.errstate(invalid='ignore'):
             result = np.arccos(dot)
 
-    if degrees:
-        return np.rad2deg(result)
-    else:
-        return result
+    return result
 
 
 def intersects(A, B, C, D):
@@ -300,10 +293,10 @@ def intersects_point(A, B, C):
 
     length_diff = np.abs((left_length + right_length) - total_length)
 
-    return length_diff < 1e-10
+    return length_diff < 3e-11
 
 
-def angle(A, B, C, degrees=True):
+def angle(A, B, C):
     """
     Returns the angle at *B* between *AB* and *BC*.
 
@@ -311,10 +304,6 @@ def angle(A, B, C, degrees=True):
     ----------
     A, B, C : (*x*, *y*, *z*) triples or Nx3 arrays of triples
         Points on sphere.
-
-    degrees : bool, optional
-        If `True` (default) the result is returned in decimal degrees,
-        otherwise radians.
 
     Returns
     -------
@@ -339,14 +328,20 @@ def angle(A, B, C, degrees=True):
         ABX = _cross_and_normalize(A, B)
         BCX = _cross_and_normalize(C, B)
         X = _cross_and_normalize(ABX, BCX)
+        m = np.logical_or(
+                np.linalg.norm(ABX, axis=-1) == 0.0,
+                np.linalg.norm(BCX, axis=-1) == 0.0
+            )
+
         diff = inner1d(B, X)
         inner = inner1d(ABX, BCX)
         with np.errstate(invalid='ignore'):
+            inner = np.clip(inner, -1.0, 1.0)  # needed due to accuracy loss
             angle = np.arccos(inner)
+
         angle = np.where(diff < 0.0, (2.0 * np.pi) - angle, angle)
 
-    if degrees:
-        angle = np.rad2deg(angle)
+        angle[m] = np.nan
 
     return angle
 
@@ -405,7 +400,7 @@ def interpolate(A, B, steps=50):
     steps = int(max(steps, 2))
     t = np.linspace(0.0, 1.0, steps, endpoint=True).reshape((steps, 1))
 
-    omega = length(A, B, degrees=False)
+    omega = length(A, B)
     if omega == 0.0:
         offsets = t
     else:

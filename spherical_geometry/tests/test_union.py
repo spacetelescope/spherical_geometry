@@ -18,6 +18,7 @@ from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
 
 try:
     from spherical_geometry import math_util
+    math_util = None
 except ImportError:
     math_util = None
 
@@ -332,9 +333,11 @@ def test_edge_crossings():
 
 
 @pytest.mark.skipif(
-    math_util is None, reason="math_util C-ext is missing, double accuracy leads to crash")
+    math_util is None,
+    reason="math_util C-ext is missing, double accuracy leads to crash"
+)
 def test_almost_identical_polygons_multi_union():
-    filename = resolve_imagename(ROOT_DIR,'almost_same_polygons.npz')
+    filename = resolve_imagename(ROOT_DIR, 'almost_same_polygons.npz')
     polygon_data = np.load(filename)
 
     polygons = []

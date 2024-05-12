@@ -161,8 +161,6 @@ def test_interpolate():
         assert abs(length - first_length) < 1.0e-10
 
 
-@pytest.mark.xfail(
-    math_util is None, reason="math_util C-ext is missing, numpy gives different results")
 def test_overlap():
     def build_polygon(offset):
         points = []
@@ -380,26 +378,26 @@ def test_great_circle_arc_length():
     B = [-90, 0]
     A = vector.lonlat_to_vector(*A)
     B = vector.lonlat_to_vector(*B)
-    assert great_circle_arc.length(A, B) == 180.0
+    assert_almost_equal(great_circle_arc.length(A, B), np.pi)
 
     A = [135, 0]
     B = [-90, 0]
     A = vector.lonlat_to_vector(*A)
     B = vector.lonlat_to_vector(*B)
-    assert_almost_equal(great_circle_arc.length(A, B), 135.0)
+    assert_almost_equal(great_circle_arc.length(A, B), (3.0 / 4.0) * np.pi)
 
     A = [0, 0]
     B = [0, 90]
     A = vector.lonlat_to_vector(*A)
     B = vector.lonlat_to_vector(*B)
-    assert_almost_equal(great_circle_arc.length(A, B), 90.0)
+    assert_almost_equal(great_circle_arc.length(A, B), np.pi / 2.0)
 
 
 def test_great_circle_arc_angle():
     A = [1, 0, 0]
     B = [0, 1, 0]
     C = [0, 0, 1]
-    assert great_circle_arc.angle(A, B, C) == 270.0
+    assert great_circle_arc.angle(A, B, C) == (3.0 / 2.0) * np.pi
 
     # TODO: More angle tests
 
@@ -522,10 +520,9 @@ def test_convex_hull(repeat_pts):
         assert b == r, "Polygon boundary has correct points"
 
 
-@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_domain():
     assert not np.isfinite(
-        math_util.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
+        great_circle_arc.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
     )
 
 
@@ -534,7 +531,6 @@ def test_math_util_length_domain():
         great_circle_arc.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
 
 
-@pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_angle_nearly_coplanar_vec():
     # test from issue #222 + extra values
     vectors = [
@@ -542,7 +538,7 @@ def test_math_util_angle_nearly_coplanar_vec():
         5 * [[1, 0.9999999, 1]],
         [[1, 0.5, 1], [1, 0.15, 1], [1, 0.001, 1], [1, 0.15, 1], [-1, 0.1, -1]]
     ]
-    angles = math_util.angle(*vectors)
+    angles = great_circle_arc.angle(*vectors)
 
     assert_allclose(angles[:-1], np.pi, rtol=0, atol=1e-16)
     assert_allclose(angles[-1], 0, rtol=0, atol=1e-32)
