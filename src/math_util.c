@@ -1,15 +1,20 @@
 #include "Python.h"
-#include "numpy/arrayobject.h"
-#include "numpy/ufuncobject.h"
 
-#include "numpy/npy_3kcompat.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/arrayobject.h"
 
 #include "numpy/npy_math.h"
+
+#if NPY_VERSION >= 0x02000000
+#include "numpy/npy_2_compat.h"
+#endif
 
 #include "qd/c_qd.h"
 #include <math.h>
 #include <stdlib.h>
-
 
 /*
   The intersects, length and intersects_point calculations use "double
@@ -181,7 +186,7 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 */
 static NPY_INLINE int
 normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
-    int i, flag;
+    int flag;
     qd aa, bb, ab;
     double aabb[4];
     double norm[4];
@@ -330,7 +335,7 @@ DOUBLE_inner1d(char **args, const intp *dimensions, const intp *steps, void *NPY
 
 static PyUFuncGenericFunction inner1d_functions[] = { DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL };
-static char inner1d_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char inner1d_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   normalize
@@ -365,7 +370,7 @@ DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *N
 
 static PyUFuncGenericFunction normalize_functions[] = { DOUBLE_normalize };
 static void * normalize_data[] = { (void *)NULL };
-static char normalize_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static char normalize_signatures[] = { NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   cross
@@ -402,7 +407,7 @@ DOUBLE_cross(char **args, const intp *dimensions, const intp *steps, void *NPY_U
 
 static PyUFuncGenericFunction cross_functions[] = { DOUBLE_cross };
 static void * cross_data[] = { (void *)NULL };
-static char cross_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char cross_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   cross_and_norm
@@ -444,7 +449,7 @@ DOUBLE_cross_and_norm(char **args, const intp *dimensions, const intp *steps, vo
 
 static PyUFuncGenericFunction cross_and_norm_functions[] = { DOUBLE_cross_and_norm };
 static void * cross_and_norm_data[] = { (void *)NULL };
-static char cross_and_norm_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char cross_and_norm_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   triple_product
@@ -490,7 +495,7 @@ DOUBLE_triple_product(char **args, const intp *dimensions, const intp *steps, vo
 
 static PyUFuncGenericFunction triple_product_functions[] = { DOUBLE_triple_product };
 static void * triple_product_data[] = { (void *)NULL };
-static char triple_product_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char triple_product_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersection
@@ -550,7 +555,7 @@ DOUBLE_intersection(char **args, const intp *dimensions, const intp *steps, void
 
 static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
 static void * intersection_data[] = { (void *)NULL };
-static char intersection_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char intersection_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects
@@ -599,7 +604,7 @@ DOUBLE_intersects(char **args, const intp *dimensions, const intp *steps, void *
 
 static PyUFuncGenericFunction intersects_functions[] = { DOUBLE_intersects };
 static void * intersects_data[] = { (void *)NULL };
-static char intersects_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
+static char intersects_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 
 /*///////////////////////////////////////////////////////////////////////////
   length
@@ -644,7 +649,7 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
 
 static PyUFuncGenericFunction length_functions[] = { DOUBLE_length };
 static void * length_data[] = { (void *)NULL };
-static char length_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char length_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects_point
@@ -703,7 +708,7 @@ DOUBLE_intersects_point(char **args, const intp *dimensions, const intp *steps, 
 
 static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects_point };
 static void * intersects_point_data[] = { (void *)NULL };
-static char intersects_point_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
+static char intersects_point_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 
 /*///////////////////////////////////////////////////////////////////////////
   angle
@@ -787,7 +792,7 @@ DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_U
 
 static PyUFuncGenericFunction angle_functions[] = { DOUBLE_angle };
 static void * angle_data[] = { (void *)NULL };
-static char angle_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char angle_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*
  *****************************************************************************
@@ -891,7 +896,6 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 }
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "math_util",
@@ -903,30 +907,30 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyObject *PyInit_math_util(void)
-#else
-#define RETVAL
-PyMODINIT_FUNC
-initmath_util(void)
-#endif
 {
     PyObject *m;
     PyObject *d;
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("math_util", NULL);
-#endif
-    if (m == NULL)
-        return RETVAL;
+    if (PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load umath_tests module.");
+        return NULL;
+    }
 
     import_array();
     import_ufunc();
+
+#if NPY_VERSION >= 0x02000000
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return NULL;
+    }
+#endif
 
     d = PyModule_GetDict(m);
 
@@ -936,7 +940,8 @@ initmath_util(void)
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath_tests module.");
+        return NULL;
     }
 
-    return RETVAL;
+    return m;
 }
