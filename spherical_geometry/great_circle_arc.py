@@ -196,7 +196,7 @@ def length(A, B):
     Returns
     -------
     length : scalar or array of scalars
-        The angular length of the great circle arc.
+        The angular length of the great circle arc in radians.
 
     Notes
     -----
