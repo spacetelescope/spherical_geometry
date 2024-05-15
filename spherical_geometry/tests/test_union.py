@@ -13,13 +13,8 @@ import pytest
 from numpy.testing import assert_array_almost_equal
 
 # LOCAL
-from spherical_geometry import polygon
+from spherical_geometry import polygon, HAS_C_UFUNCS
 from spherical_geometry.tests.helpers import ROOT_DIR, resolve_imagename
-
-try:
-    from spherical_geometry import math_util
-except ImportError:
-    math_util = None
 
 GRAPH_MODE = False
 
@@ -332,7 +327,7 @@ def test_edge_crossings():
 
 
 @pytest.mark.skipif(
-    math_util is None,
+    not HAS_C_UFUNCS,
     reason="math_util C-ext is missing, double accuracy leads to crash"
 )
 def test_almost_identical_polygons_multi_union():
