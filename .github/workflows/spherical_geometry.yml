@@ -53,5 +53,5 @@ jobs:
           posargs: -v
 
         - name: Python 3.12 with dev version of dependencies (numpy 2.x)
-          linux: py312-test-devdeps_npy2
+          linux: py312-test-devdeps-numpy2x
           posargs: -v
