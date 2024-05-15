@@ -4,6 +4,17 @@
 Release Notes
 =============
 
+1.3.2 (unreleased)
+==================
+
+- Fixed a bug in the Python implementation of ``inner1d``. [#265]
+
+- Removed the ``degree`` argument from the ``length`` and ``angle`` functions
+  in the ``spherical_geometry.great_circle_arc`` module as it was never working
+  correctly with the ``math_util`` module and add unnecessary
+  complication. [#265]
+
+
 1.3.1 (5-November-2023)
 =======================
 

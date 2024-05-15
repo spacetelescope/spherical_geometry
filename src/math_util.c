@@ -71,6 +71,8 @@ typedef struct {
     double x[4];
 } qd;
 
+#define ISNAN_QD(q) ((q.x[0]) != (q.x[0]))
+
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
 
 static NPY_INLINE void
@@ -234,7 +236,15 @@ sign(const double A) {
 
 static NPY_INLINE int
 equals_qd(const qd *A, const qd *B) {
-    return memcmp(A, B, sizeof(qd) * 3) == 0;
+    if (memcmp(A, B, sizeof(qd) * 3)) {
+        return 0;
+    }
+    for (int k = 0; k < 3; ++k) {
+        if (ISNAN_QD(A[k])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static NPY_INLINE int
@@ -252,7 +262,7 @@ length_qd(const qd *A, const qd *B, qd *l) {
 
     dot_qd(A, B, &s);
 
-    if (s.x[0] != s.x[0] ||
+    if (ISNAN_QD(s) ||
         s.x[0] < -1.0 ||
         s.x[0] > 1.0) {
         PyErr_SetString(PyExc_ValueError, "Out of domain for acos");

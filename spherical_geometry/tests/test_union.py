@@ -331,10 +331,12 @@ def test_edge_crossings():
     _ = A.union(B)
 
 
-@pytest.mark.xfail(
-    math_util is None, reason="math_util C-ext is missing, numpy gives different results")
+@pytest.mark.skipif(
+    math_util is None,
+    reason="math_util C-ext is missing, double accuracy leads to crash"
+)
 def test_almost_identical_polygons_multi_union():
-    filename = resolve_imagename(ROOT_DIR,'almost_same_polygons.npz')
+    filename = resolve_imagename(ROOT_DIR, 'almost_same_polygons.npz')
     polygon_data = np.load(filename)
 
     polygons = []
