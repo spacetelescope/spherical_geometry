@@ -40,7 +40,7 @@ Requirements
 
 - Python 3.9 or later
 
-- Numpy 1.20 or later
+- Numpy 1.23 or later
 
 - astropy 5.0.4 or later
 
