@@ -162,14 +162,16 @@ def test_interpolate():
 
 
 def test_overlap():
+    y_eps = 1e-8
+
     def build_polygon(offset):
         points = []
         corners = [(0.0, 0.0), (0.0, 10.0), (10.0, 10.0), (10.0, 0.0)]
         for corner in corners:
-            point = np.asarray(corner)
-            point[0] += offset
-            points.append(np.asarray(vector.lonlat_to_vector(point[0],
-                                                             point[1])))
+            x, y = corner
+            points.append(
+                np.asarray(vector.lonlat_to_vector(x + offset, y + y_eps))
+            )
         poly = polygon.SphericalPolygon(points)
         return poly
 
