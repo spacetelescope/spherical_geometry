@@ -57,3 +57,11 @@ jobs:
         - name: Python 3.12 with dev version of dependencies (numpy 2.x)
           linux: py312-test-devdeps-numpy2x
           posargs: -v
+
+        - name: Python 3.11 without C-ext
+          linux: py311-test-disablecufuncs
+          posargs: -v
+
+        - name: Python 3.12 with dev version of dependencies without C-ext (numpy 2.x)
+          linux: py312-test-disablecufuncs-devdeps-numpy2x
+          posargs: -v

@@ -14,14 +14,9 @@ import numpy as np
 
 # LOCAL
 from spherical_geometry.vector import two_d
-
-# C versions of the code have been written to speed up operations
+# HAS_C_UFUNCS: C versions of the code have been written to speed up operations
 # the python versions are a fallback if the C cannot be used
-try:
-    from spherical_geometry import math_util
-    HAS_C_UFUNCS = True
-except ImportError:
-    HAS_C_UFUNCS = False
+from spherical_geometry import HAS_C_UFUNCS
 
 __all__ = ['angle', 'interpolate', 'intersection', 'intersects',
            'intersects_point', 'length', 'midpoint']
@@ -32,6 +27,7 @@ def _inner1d_np(x, y):
 
 
 if HAS_C_UFUNCS:
+    from spherical_geometry import math_util
     inner1d = math_util.inner1d
 else:
     inner1d = _inner1d_np

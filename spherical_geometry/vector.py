@@ -8,11 +8,7 @@ vectors and converting them to and from other representations.
 # THIRD-PARTY
 import numpy as np
 
-try:
-    from . import math_util
-    HAS_C_UFUNCS = True
-except ImportError:
-    HAS_C_UFUNCS = False
+from spherical_geometry import HAS_C_UFUNCS
 
 __all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
            'normalize_vector', 'radec_to_vector', 'vector_to_radec',
@@ -149,6 +145,7 @@ def normalize_vector(xyz, output=None):
         output = np.empty(xyz.shape, dtype=np.float64)
 
     if HAS_C_UFUNCS:
+        from spherical_geometry import math_util
         math_util.normalize(xyz, output)
         return output
 

@@ -14,6 +14,10 @@ Release Notes
   correctly with the ``math_util`` module and add unnecessary
   complication. [#265]
 
+- Setting ``export DISABLE_SPHR_GEOM_C_UFUNCS=true`` in your shell environment
+  now disables using ``math_util`` C-extension even when it is available.
+  This is useful for development and debugging. [#268]
+
 
 1.3.1 (5-November-2023)
 =======================
