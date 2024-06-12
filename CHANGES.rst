@@ -4,8 +4,8 @@
 Release Notes
 =============
 
-1.3.2 (unreleased)
-==================
+1.3.2 (12-June-2024)
+====================
 
 - Fixed a bug in the Python implementation of ``inner1d``. [#265]
 
