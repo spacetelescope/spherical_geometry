@@ -14,6 +14,7 @@ Release Notes
   correctly with the ``math_util`` module and add unnecessary
   complication. [#265]
 
+- Build wheel with Numpy 2.0 release candidate ahead of Numpy 2.0 release [#279]
 
 1.3.1 (5-November-2023)
 =======================
