@@ -4,8 +4,8 @@
 Release Notes
 =============
 
-1.3.2 (unreleased)
-==================
+1.3.2 (12-June-2024)
+====================
 
 - Fixed a bug in the Python implementation of ``inner1d``. [#265]
 
@@ -14,6 +14,7 @@ Release Notes
   correctly with the ``math_util`` module and add unnecessary
   complication. [#265]
 
+- Build wheel with Numpy 2.0 release candidate ahead of Numpy 2.0 release [#279]
 
 1.3.1 (5-November-2023)
 =======================
