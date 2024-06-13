@@ -29,8 +29,8 @@ keywords = [
     "geometry",
 ]
 dependencies = [
-    "numpy>=1.22",
-    "astropy",
+    "numpy>=1.23",
+    "astropy>=5.0.4",
 ]
 
 [project.optional-dependencies]
