@@ -21,6 +21,8 @@ permissions:
 jobs:
   tests:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       submodules: false
       coverage: ''
@@ -50,4 +52,8 @@ jobs:
 
         - name: Python 3.12 with dev version of dependencies
           linux: py312-test-devdeps
+          posargs: -v
+
+        - name: Python 3.12 with dev version of dependencies (numpy 2.x)
+          linux: py312-test-devdeps-numpy2x
           posargs: -v
