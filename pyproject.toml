@@ -9,7 +9,7 @@ authors = [
     { name = "STScI", email = "help@stsci.edu" }
 ]
 license = { text = "BSD-3-Clause" }
-requires-python = ">=3.9"
+requires-python = ">=3.13"
 classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
@@ -31,6 +31,7 @@ keywords = [
 dependencies = [
     "numpy>=1.23",
     "astropy>=5.0.4",
+    "s2geometry @ git+https://github.com/zacharyburnett/s2geometry@ci/build",
 ]
 
 [project.optional-dependencies]
