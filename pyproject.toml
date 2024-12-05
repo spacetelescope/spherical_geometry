@@ -9,7 +9,7 @@ authors = [
     { name = "STScI", email = "help@stsci.edu" }
 ]
 license = { text = "BSD-3-Clause" }
-requires-python = ">=3.13"
+requires-python = ">=3.9"
 classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
