@@ -146,11 +146,6 @@ normalize_qd(const qd *A, qd *B) {
     double l[4];
 
     for (i = 0; i < 3; ++i) {
-        if (ISNAN_QD(A[i])) {
-            c_qd_copy_d(NPY_NAN, B->x);
-            return 1;
-        }
-
         c_qd_sqr(A[i].x, T[i]);
     }
 
@@ -181,15 +176,12 @@ dot_qd(const qd *A, const qd *B, qd *C) {
     double tmp[4][4];
 
     for (i = 0; i < 3; ++i) {
-        if (ISNAN_QD(A[i]) || ISNAN_QD(B[i])) {
-            c_qd_copy_d(NPY_NAN, C->x);
-            return;
-        }
         c_qd_mul(A[i].x, B[i].x, tmp[i]);
     }
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
+    PyUFunc_clearfperr();
 }
 
 /*
@@ -197,7 +189,6 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 */
 static NPY_INLINE int
 normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
-    int flag;
     qd aa, bb, ab;
     double aabb[4];
     double norm[4];
@@ -215,7 +206,7 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
         return 1;
     }
 
-    flag = c_qd_sqrt(aabb, norm);
+    c_qd_sqrt(aabb, norm);
 
     if (norm[0] == 0.0) {
         /* return non-normalized value: */
@@ -661,7 +652,7 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
 #else
             *((double *)op) = strtod("NaN", NULL);
 #endif
-            continue;
+            return;
         }
 
         *((double *)op) = s.x[0];
