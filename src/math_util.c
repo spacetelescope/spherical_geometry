@@ -176,6 +176,10 @@ dot_qd(const qd *A, const qd *B, qd *C) {
     double tmp[4][4];
 
     for (i = 0; i < 3; ++i) {
+        if (ISNAN_QD(A[i]) || ISNAN_QD(B[i])) {
+            c_qd_copy_d(NPY_NAN, C->x);
+            return;
+        }
         c_qd_mul(A[i].x, B[i].x, tmp[i]);
     }
 
