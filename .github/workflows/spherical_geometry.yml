@@ -50,10 +50,11 @@ jobs:
           posargs: -v
           coverage: codecov
 
+        - name: Python 3.13 with numpy 1.x
+          linux: py313-test-cov-numpy1x
+          posargs: -v
+          coverage: codecov
+
         - name: Python 3.13 with dev version of dependencies
           linux: py313-test-devdeps
-          posargs: -v
-
-        - name: Python 3.13 with dev version of dependencies (numpy 2.x)
-          linux: py313-test-devdeps-numpy2x
           posargs: -v
