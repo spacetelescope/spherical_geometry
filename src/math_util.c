@@ -181,6 +181,15 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
+
+    // In Python 3.13 it seems that the code above sets a floating point error
+    // flag (when input vectors contain nan/inf values) and this raises a
+    // warning/error "RuntimeWarning: invalid value encountered in length"
+    // and which results in a SystemError once
+    // PyErr_SetString(PyExc_ValueError, "Out of domain for acos") is called
+    // in length_qd. This clears FP error flags before raising the above
+    // exception.
+    // Also See https://github.com/spacetelescope/spherical_geometry/pull/288
     PyUFunc_clearfperr();
 }
 
