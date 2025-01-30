@@ -10,6 +10,7 @@ from copy import deepcopy
 
 # THIRD-PARTY
 import numpy as np
+import s2geometry
 
 # LOCAL
 from spherical_geometry import great_circle_arc, vector
@@ -64,6 +65,11 @@ class SingleSphericalPolygon(object):
             raise ValueError("Polygon made of too few points")
 
         self._points = points = np.asanyarray(points)
+
+        s2loop = s2geometry.S2Loop()
+        s2loop.Init([s2geometry.S2Point(*point) for point in points])
+        self._s2polygon = s2geometry.S2Polygon(s2loop)
+        
         new_inside = self._find_new_inside()
 
         if inside is None:
@@ -381,7 +387,7 @@ class SingleSphericalPolygon(object):
 
         return cls(hull, inside)
 
-    def invert_polygon(self):
+    def invert_polygon(self) -> "SingleSphericalPolygon":
         """
         Compute the inverse (complement) of a single polygon
         """
@@ -389,15 +395,6 @@ class SingleSphericalPolygon(object):
         poly._points = poly._points[::-1]
         poly._inside = np.asanyarray(self._find_new_outside())
         return poly
-
-    def _contains_point(self, point, P, r):
-        point = np.asanyarray(point)
-        if np.array_equal(r, point):
-            return True
-
-        intersects = great_circle_arc.intersects(P[:-1], P[1:], r, point)
-        crossings = np.sum(intersects)
-        return (crossings % 2) == 0
 
     def contains_point(self, point):
         r"""
@@ -413,7 +410,7 @@ class SingleSphericalPolygon(object):
         contains : bool
             Returns `True` if the polygon contains the given *point*.
         """
-        return self._contains_point(point, self._points, self._inside)
+        return polygon_contains_point(point, self)
 
     def contains_lonlat(self, lon, lat, degrees=True):
         r"""
@@ -435,7 +432,7 @@ class SingleSphericalPolygon(object):
             Returns `True` if the polygon contains the given *point*.
         """
         point = vector.lonlat_to_vector(lon, lat, degrees=degrees)
-        return self._contains_point(point, self._points, self._inside)
+        return polygon_contains_point(point, self)
 
     # Alias for contains_lonlat
     contains_radec = contains_lonlat
@@ -1286,3 +1283,13 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         for polygon in self._polygons:
             polygon.draw(m, **plot_args)
+
+def polygon_contains_point(point: tuple[float, float, float], polygon: SingleSphericalPolygon) -> bool:
+    point = np.asanyarray(point)
+    if np.array_equal(polygon._inside, point):
+        return True
+
+    intersects = great_circle_arc.intersects(polygon._points[:-1], polygon._points[1:], polygon._inside, point)
+    crossings = np.sum(intersects)
+    return (crossings % 2) == 0
+
