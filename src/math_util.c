@@ -146,6 +146,11 @@ normalize_qd(const qd *A, qd *B) {
     double l[4];
 
     for (i = 0; i < 3; ++i) {
+        if (ISNAN_QD(A[i])) {
+            c_qd_copy_d(NPY_NAN, B->x);
+            return 1;
+        }
+
         c_qd_sqr(A[i].x, T[i]);
     }
 
@@ -650,10 +655,14 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
         load_point_qd(ip1, is1, A);
         load_point_qd(ip2, is2, B);
 
-        if (normalize_qd(A, A)) return;
-        if (normalize_qd(B, B)) return;
-
-        if (length_qd(A, B, &s)) return;
+        if (normalize_qd(A, A) || normalize_qd(B, B) || length_qd(A, B, &s)) {
+#if defined(NAN)
+            *((double *)op) = NAN;
+#else
+            *((double *)op) = strtod("NaN", NULL);
+#endif
+            continue;
+        }
 
         *((double *)op) = s.x[0];
     END_OUTER_LOOP
