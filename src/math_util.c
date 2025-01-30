@@ -646,15 +646,15 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
         load_point_qd(ip1, is1, A);
         load_point_qd(ip2, is2, B);
 
-        if (normalize_qd(A, A) || normalize_qd(B, B) || length_qd(A, B, &s)) {
-#if defined(NAN)
-            *((double *)op) = NAN;
-#else
-            *((double *)op) = strtod("NaN", NULL);
-#endif
+        if (normalize_qd(A, A)) {
             return;
         }
-
+        if (normalize_qd(B, B)) {
+            return;
+        }
+        if (length_qd(A, B, &s)) {
+            return;
+        }
         *((double *)op) = s.x[0];
     END_OUTER_LOOP
 
