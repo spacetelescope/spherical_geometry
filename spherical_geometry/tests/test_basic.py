@@ -548,9 +548,8 @@ def test_math_util_length_domain():
         [0, 0, 0],
     ]
 
-    v = great_circle_arc.length(a, b)
-
-    assert np.all(np.logical_not(np.isfinite(v)))
+    with pytest.raises(ValueError):
+        great_circle_arc.length(a, b)
 
 
 def test_math_util_angle_nearly_coplanar_vec():
