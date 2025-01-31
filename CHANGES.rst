@@ -4,12 +4,13 @@
 Release Notes
 =============
 
-1.3.3 (30-January-2025)
+
+1.3.3 (31-January-2025)
 =======================
 
 - Fixed a bug in the C implementation of ``dot_qd`` that may result in
-  "invalid value encountered in length" runtime warning when input vectors
-  contain NaN values. [#288]
+  "invalid value encountered in length" runtime warning in Python 3.13
+  when input vectors contain NaN values. [#288]
 
 
 1.3.2 (12-June-2024)
