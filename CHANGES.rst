@@ -4,6 +4,14 @@
 Release Notes
 =============
 
+1.3.3 (30-January-2025)
+=======================
+
+- Fixed a bug in the C implementation of ``dot_qd`` that may result in
+  "invalid value encountered in length" runtime warning when input vectors
+  contain NaN values. [#288]
+
+
 1.3.2 (12-June-2024)
 ====================
 
@@ -15,6 +23,7 @@ Release Notes
   complication. [#265]
 
 - Build wheel with Numpy 2.0 release candidate ahead of Numpy 2.0 release [#279]
+
 
 1.3.1 (5-November-2023)
 =======================

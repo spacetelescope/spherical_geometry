@@ -529,8 +529,27 @@ def test_math_util_angle_domain():
 
 
 def test_math_util_length_domain():
+    a = [
+        [np.nan, 0, 0],
+        [np.nan, 0, 0],
+        [np.nan, np.nan, np.nan],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, np.nan],
+        [0, 0, 0],
+    ]
+    b = [
+        [0, 0, np.inf],
+        [0, 0, np.inf],
+        [0, 0, 0],
+        [np.inf, np.inf, np.inf],
+        [0, 0, np.inf],
+        [0, 0, 0],
+        [0, 0, 0],
+    ]
+
     with pytest.raises(ValueError):
-        great_circle_arc.length([[np.nan, 0, 0]], [[0, 0, np.inf]])
+        great_circle_arc.length(a, b)
 
 
 def test_math_util_angle_nearly_coplanar_vec():

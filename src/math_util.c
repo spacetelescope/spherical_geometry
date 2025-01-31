@@ -181,6 +181,16 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
+
+    // In Python 3.13 it seems that the code above sets a floating point error
+    // flag (when input vectors contain nan/inf values) and this raises a
+    // warning/error "RuntimeWarning: invalid value encountered in length"
+    // and which results in a SystemError once
+    // PyErr_SetString(PyExc_ValueError, "Out of domain for acos") is called
+    // in length_qd. This clears FP error flags before raising the above
+    // exception.
+    // Also See https://github.com/spacetelescope/spherical_geometry/pull/288
+    PyUFunc_clearfperr();
 }
 
 /*
@@ -188,7 +198,6 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 */
 static NPY_INLINE int
 normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
-    int flag;
     qd aa, bb, ab;
     double aabb[4];
     double norm[4];
@@ -206,7 +215,7 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
         return 1;
     }
 
-    flag = c_qd_sqrt(aabb, norm);
+    c_qd_sqrt(aabb, norm);
 
     if (norm[0] == 0.0) {
         /* return non-normalized value: */
@@ -646,11 +655,15 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
         load_point_qd(ip1, is1, A);
         load_point_qd(ip2, is2, B);
 
-        if (normalize_qd(A, A)) return;
-        if (normalize_qd(B, B)) return;
-
-        if (length_qd(A, B, &s)) return;
-
+        if (normalize_qd(A, A)) {
+            return;
+        }
+        if (normalize_qd(B, B)) {
+            return;
+        }
+        if (length_qd(A, B, &s)) {
+            return;
+        }
         *((double *)op) = s.x[0];
     END_OUTER_LOOP
 
