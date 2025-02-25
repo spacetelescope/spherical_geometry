@@ -37,24 +37,35 @@ jobs:
         - name: PEP 8
           linux: codestyle
 
-        - name: Python 3.11 (OSX)
-          macos: py311-test
+        - name: Python 3.11
+          linux: py311-test
           posargs: -v
 
-        - name: Python 3.12 (Windows)
-          windows: py312-test
+        - name: Python 3.12
+          linux: py312-test
           posargs: -v
 
-        - name: Python 3.13 with coverage
-          linux: py313-test-cov
-          posargs: -v
-          coverage: codecov
+        # `tox` does not currently respect `requires-python` versions when creating testing environments;
+        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
 
-        - name: Python 3.13 with numpy 1.x
-          linux: py313-test-cov-numpy1x
+        - name: Python 3 with numpy 1.x
+          linux: py3-test-cov-numpy1x
           posargs: -v
           coverage: codecov
 
-        - name: Python 3.13 with dev version of dependencies
-          linux: py313-test-devdeps
+        - name: Python 3 with coverage
+          linux: py3-test-cov
+          posargs: -v
+          coverage: codecov
+
+        - name: Python 3 (macOS)
+          macos: py3-test
+          posargs: -v
+
+        - name: Python 3 (Windows)
+          windows: py3-test
+          posargs: -v
+
+        - name: Python 3 with dev version of dependencies
+          linux: py3-test-devdeps
           posargs: -v
