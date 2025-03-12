@@ -72,5 +72,3 @@ jobs:
         # Windows wheels
         - cp3*win32
         - cp3*win_amd64
-    secrets:
-      pypi_token: ${{ secrets.PYPI_TOKEN }}
