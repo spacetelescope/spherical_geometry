@@ -378,3 +378,59 @@ def test_intersection_crash_similar_poly():
     pts1 = np.sort(list(p1.points)[0][:-1], axis=0)
     pts3 = np.sort(list(p3.points)[0][:-1], axis=0)
     assert_allclose(pts1, pts3, rtol=0, atol=1e-15)
+
+
+@pytest.mark.parametrize(
+    "polygons",
+    [
+        [
+            polygon.SphericalPolygon.from_lonlat(lon=lon, lat=lat, degrees=False)
+            for (lon, lat) in [
+                ([3.0, 5.0, 5.0, 3.0], [7.0, 7.0, 10.0, 10.0]),
+                ([3.0, 4.0, 5.0, 4.0], [5.0, 5.0, 8.0, 8.0]),
+                ([1.0, 4.0, 4.0, 1.0], [6.0, 6.0, 9.0, 9.0]),
+            ]
+        ],
+        [
+            polygon.SphericalPolygon.from_cone(
+                lat=lat,
+                lon=lon,
+                radius=radius,
+                degrees=True,
+                steps=16,
+            )
+            for (lat, lon, radius) in [
+                (40.5785, -122.4005, 126.08093425137112),
+                (-33.5605, -70.5815, 90.64909777330483),
+                (38.9005, -77.0505, 92.53797630605003),
+                (45.0905, 7.6575, 108.34122674041656),
+                (-25.7795, -56.4515, 73.960984449381),
+            ]
+        ],
+    ],
+)
+def test_commutative_intersection(polygons):
+    """from https://github.com/spacetelescope/spherical_geometry/issues/292"""
+
+    # pair polygons with their areas for later sorting
+    polygons = [(polygon, polygon.area()) for polygon in polygons]
+
+    # Compute the iterative intersection of all polygons
+    unsorted_intersection = polygons[0][0]
+    for region in polygons[1:]:
+        assert unsorted_intersection.intersects_poly(region[0])
+        unsorted_intersection = unsorted_intersection.intersection(region[0])
+
+    unsorted_intersection_area = unsorted_intersection.area()
+
+    # Sort the polygons by their areas
+    # Recompute their mutual intersection area
+    polygons.sort(key=lambda x: x[1])
+    sorted_intersection = polygons[0][0]
+    for region in polygons[1:]:
+        assert sorted_intersection.intersects_poly(region[0])
+        sorted_intersection = sorted_intersection.intersection(region[0])
+
+    sorted_intersection_area = sorted_intersection.area()
+
+    assert unsorted_intersection_area == sorted_intersection_area
