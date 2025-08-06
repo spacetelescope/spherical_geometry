@@ -804,3 +804,14 @@ def test_nearly_degenerate_polygon():
 
     assert single.area > 0
     assert multi.area > 0
+
+
+# TODO make this test pass
+@pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/278")
+def test_polygon_contains_inside_point():
+    """https://github.com/spacetelescope/spherical_geometry/issues/278"""
+
+    p1 = polygon.SingleSphericalPolygon.from_cone(90, 0, 100)
+
+    assert p1.contains_point(p1._find_new_inside())
+    assert not p1.contains_point(p1._find_new_outside())
