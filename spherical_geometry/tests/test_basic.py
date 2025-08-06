@@ -787,3 +787,12 @@ def test_degenerate_polygon():
     assert p.inside is not None
     assert not p._degenerate
     assert p.area() != 0.0
+
+
+def test_polygon_contains_inside_point():
+    """https://github.com/spacetelescope/spherical_geometry/issues/278"""
+
+    p1 = polygon.SingleSphericalPolygon.from_cone(90, 0, 100)
+
+    assert p1.contains_point(p1._find_new_inside())
+    assert not p1.contains_point(p1._find_new_outside())
