@@ -590,3 +590,11 @@ def test_math_util_inner1d():
     lengths = math_util.inner1d(vectors, vectors)
 
     assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
+
+def test_polygon_contains_inside_point():
+    """https://github.com/spacetelescope/spherical_geometry/issues/278"""
+
+    p1 = polygon.SingleSphericalPolygon.from_cone(90, 0, 100)
+
+    assert p1.contains_point(p1._find_new_inside())
+    assert not p1.contains_point(p1._find_new_outside())
