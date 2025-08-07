@@ -31,6 +31,7 @@ keywords = [
 dependencies = [
     "numpy>=1.25",
     "astropy>=5.2.0",
+    "gwcs",
 ]
 
 [project.optional-dependencies]
