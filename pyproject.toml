@@ -17,14 +17,29 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Physics",
 ]
 keywords = [
-  "astronomy",
-  "astrophysics",
-  "space",
-  "science",
-  "spherical",
-  "geometry",
+    "astronomy",
+    "astrophysics",
+    "space",
+    "science",
+    "spherical",
+    "geometry",
 ]
-dependencies = ["numpy>=1.25", "astropy>=5.2.0"]
+dependencies = [
+    "numpy>=1.25",
+    "astropy>=5.2.0",
+]
+    "astronomy",
+    "astrophysics",
+    "space",
+    "science",
+    "spherical",
+    "geometry",
+]
+dependencies = [
+    "numpy>=1.25",
+    "astropy>=5.2.0",
+    "gwcs",
+]
 
 [project.optional-dependencies]
 test = ["pytest>=9.0", "pytest-astropy-header"]
