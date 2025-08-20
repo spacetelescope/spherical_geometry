@@ -255,7 +255,7 @@ class SingleSphericalPolygon(object):
     @classmethod
     def from_wcs(
         cls,
-        wcs: gwcs.WCS | astropy.wcs.WCS,
+        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str,
         edges_per_side: int = 1,
         crval=None,
     ) -> "SingleSphericalPolygon":
@@ -268,7 +268,7 @@ class SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        wcs: gwcs.WCS :
+        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str :
             WCS object
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
@@ -967,7 +967,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
     @classmethod
     def from_wcs(
-        cls, wcs: gwcs.WCS | astropy.wcs.WCS, edges_per_side: int = 1, crval=None
+        cls, wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str, edges_per_side: int = 1, crval=None
     ) -> "SphericalPolygon":
         """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
@@ -978,7 +978,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         Parameters
         ----------
-        wcs: gwcs.WCS :
+        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str :
             WCS object
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
