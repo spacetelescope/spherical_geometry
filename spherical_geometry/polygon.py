@@ -10,7 +10,6 @@ from copy import deepcopy
 
 # THIRD-PARTY
 import astropy.wcs
-import gwcs
 import numpy as np
 
 # LOCAL
@@ -255,7 +254,7 @@ class SingleSphericalPolygon(object):
     @classmethod
     def from_wcs(
         cls,
-        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str,
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
         edges_per_side: int = 1,
         crval=None,
     ) -> "SingleSphericalPolygon":
@@ -268,8 +267,8 @@ class SingleSphericalPolygon(object):
 
         Parameters
         ----------
-        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str :
-            WCS object
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
+            any WCS object that implements the common WCS API
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
 
@@ -278,7 +277,7 @@ class SingleSphericalPolygon(object):
         polygon : `SingleSphericalPolygon` object
         """
 
-        if not isinstance(wcs, (gwcs.WCS, astropy.wcs.WCS)):
+        if isinstance(wcs, (astropy.io.fits.Header | str)):
             wcs = astropy.wcs.WCS(wcs)
 
         if crval is not None:
@@ -967,7 +966,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
     @classmethod
     def from_wcs(
-        cls, wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str, edges_per_side: int = 1, crval=None
+        cls, wcs: astropy.wcs.WCS | astropy.io.fits.Header | str, edges_per_side: int = 1, crval=None
     ) -> "SphericalPolygon":
         """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
@@ -978,8 +977,8 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         Parameters
         ----------
-        wcs: gwcs.WCS | astropy.wcs.WCS | astropy.io.fits.Header | str :
-            WCS object
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
+            any WCS object that implements the common WCS API
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
 
