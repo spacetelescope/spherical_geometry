@@ -1,15 +1,20 @@
 #include "Python.h"
-#include "numpy/arrayobject.h"
-#include "numpy/ufuncobject.h"
 
-#include "numpy/npy_3kcompat.h"
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
+#include "numpy/ndarraytypes.h"
+#include "numpy/ufuncobject.h"
+#include "numpy/arrayobject.h"
 
 #include "numpy/npy_math.h"
+
+#if NPY_VERSION >= 0x02000000
+#include "numpy/npy_2_compat.h"
+#endif
 
 #include "qd/c_qd.h"
 #include <math.h>
 #include <stdlib.h>
-
 
 /*
   The intersects, length and intersects_point calculations use "double
@@ -65,6 +70,8 @@ typedef npy_intp intp;
 typedef struct {
     double x[4];
 } qd;
+
+#define ISNAN_QD(q) ((q.x[0]) != (q.x[0]))
 
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
 
@@ -174,6 +181,16 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
+
+    // In Python 3.13 it seems that the code above sets a floating point error
+    // flag (when input vectors contain nan/inf values) and this raises a
+    // warning/error "RuntimeWarning: invalid value encountered in length"
+    // and which results in a SystemError once
+    // PyErr_SetString(PyExc_ValueError, "Out of domain for acos") is called
+    // in length_qd. This clears FP error flags before raising the above
+    // exception.
+    // Also See https://github.com/spacetelescope/spherical_geometry/pull/288
+    PyUFunc_clearfperr();
 }
 
 /*
@@ -181,7 +198,6 @@ dot_qd(const qd *A, const qd *B, qd *C) {
 */
 static NPY_INLINE int
 normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
-    int i, flag;
     qd aa, bb, ab;
     double aabb[4];
     double norm[4];
@@ -199,7 +215,7 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
         return 1;
     }
 
-    flag = c_qd_sqrt(aabb, norm);
+    c_qd_sqrt(aabb, norm);
 
     if (norm[0] == 0.0) {
         /* return non-normalized value: */
@@ -229,7 +245,15 @@ sign(const double A) {
 
 static NPY_INLINE int
 equals_qd(const qd *A, const qd *B) {
-    return memcmp(A, B, sizeof(qd) * 3) == 0;
+    if (memcmp(A, B, sizeof(qd) * 3)) {
+        return 0;
+    }
+    for (int k = 0; k < 3; ++k) {
+        if (ISNAN_QD(A[k])) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static NPY_INLINE int
@@ -247,7 +271,7 @@ length_qd(const qd *A, const qd *B, qd *l) {
 
     dot_qd(A, B, &s);
 
-    if (s.x[0] != s.x[0] ||
+    if (ISNAN_QD(s) ||
         s.x[0] < -1.0 ||
         s.x[0] > 1.0) {
         PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
@@ -310,7 +334,7 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D,
 char *inner1d_signature = "(i),(i)->()";
 
 static void
-DOUBLE_inner1d(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_inner1d(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
     intp di = dimensions[0];
@@ -330,7 +354,7 @@ DOUBLE_inner1d(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 
 static PyUFuncGenericFunction inner1d_functions[] = { DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL };
-static char inner1d_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char inner1d_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   normalize
@@ -339,7 +363,7 @@ static char inner1d_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOU
 char *normalize_signature = "(i)->(i)";
 
 static void
-DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd IN[3];
     qd OUT[3];
@@ -365,7 +389,7 @@ DOUBLE_normalize(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 
 static PyUFuncGenericFunction normalize_functions[] = { DOUBLE_normalize };
 static void * normalize_data[] = { (void *)NULL };
-static char normalize_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static char normalize_signatures[] = { NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   cross
@@ -374,7 +398,7 @@ static char normalize_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
 char *cross_signature = "(i),(i)->(i)";
 
 static void
-DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_cross(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -402,7 +426,7 @@ DOUBLE_cross(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 
 static PyUFuncGenericFunction cross_functions[] = { DOUBLE_cross };
 static void * cross_data[] = { (void *)NULL };
-static char cross_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char cross_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   cross_and_norm
@@ -415,7 +439,7 @@ char *cross_and_norm_signature = "(i),(i)->(i)";
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
 static void
-DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_cross_and_norm(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -444,7 +468,7 @@ DOUBLE_cross_and_norm(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 
 static PyUFuncGenericFunction cross_and_norm_functions[] = { DOUBLE_cross_and_norm };
 static void * cross_and_norm_data[] = { (void *)NULL };
-static char cross_and_norm_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char cross_and_norm_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   triple_product
@@ -456,7 +480,7 @@ char *triple_product_signature = "(i),(i),(i)->()";
  * Finds the triple_product at *B* between *A*, *B*,  and *C*.
  */
 static void
-DOUBLE_triple_product(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_triple_product(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -490,7 +514,7 @@ DOUBLE_triple_product(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 
 static PyUFuncGenericFunction triple_product_functions[] = { DOUBLE_triple_product };
 static void * triple_product_data[] = { (void *)NULL };
-static char triple_product_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char triple_product_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersection
@@ -502,7 +526,7 @@ char *intersection_signature = "(i),(i),(i),(i)->(i)";
  * Finds the intersection of 2 great circle arcs AB and CD.
  */
 static void
-DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersection(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -550,7 +574,7 @@ DOUBLE_intersection(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED
 
 static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
 static void * intersection_data[] = { (void *)NULL };
-static char intersection_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char intersection_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects
@@ -562,7 +586,7 @@ char *intersects_signature = "(i),(i),(i),(i)->()";
  * Returns True where the great circle arcs AB and CD intersects
  */
 static void
-DOUBLE_intersects(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersects(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -599,7 +623,7 @@ DOUBLE_intersects(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(f
 
 static PyUFuncGenericFunction intersects_functions[] = { DOUBLE_intersects };
 static void * intersects_data[] = { (void *)NULL };
-static char intersects_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
+static char intersects_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 
 /*///////////////////////////////////////////////////////////////////////////
   length
@@ -611,7 +635,7 @@ char *length_signature = "(i),(i)->()";
  * Finds the length of the given great circle arc AB
  */
 static void
-DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -631,11 +655,15 @@ DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
         load_point_qd(ip1, is1, A);
         load_point_qd(ip2, is2, B);
 
-        if (normalize_qd(A, A)) return;
-        if (normalize_qd(B, B)) return;
-
-        if (length_qd(A, B, &s)) return;
-
+        if (normalize_qd(A, A)) {
+            return;
+        }
+        if (normalize_qd(B, B)) {
+            return;
+        }
+        if (length_qd(A, B, &s)) {
+            return;
+        }
         *((double *)op) = s.x[0];
     END_OUTER_LOOP
 
@@ -644,7 +672,7 @@ DOUBLE_length(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 
 static PyUFuncGenericFunction length_functions[] = { DOUBLE_length };
 static void * length_data[] = { (void *)NULL };
-static char length_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char length_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects_point
@@ -656,7 +684,7 @@ char *intersects_point_signature = "(i),(i),(i)->()";
  * Returns True is if the point C intersects arc AB
  */
 static void
-DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersects_point(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -703,7 +731,7 @@ DOUBLE_intersects_point(char **args, intp *dimensions, intp *steps, void *NPY_UN
 
 static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects_point };
 static void * intersects_point_data[] = { (void *)NULL };
-static char intersects_point_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_BOOL };
+static char intersects_point_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
 
 /*///////////////////////////////////////////////////////////////////////////
   angle
@@ -715,7 +743,7 @@ char *angle_signature = "(i),(i),(i)->()";
  * Finds the angle at *B* between *AB* and *BC*.
  */
 static void
-DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     int comp, ret;
     qd A[3];
@@ -787,7 +815,7 @@ DOUBLE_angle(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
 
 static PyUFuncGenericFunction angle_functions[] = { DOUBLE_angle };
 static void * angle_data[] = { (void *)NULL };
-static char angle_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char angle_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 /*
  *****************************************************************************
@@ -891,7 +919,6 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 }
 
-#if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "math_util",
@@ -903,30 +930,30 @@ static struct PyModuleDef moduledef = {
         NULL,
         NULL
 };
-#endif
 
-#if defined(NPY_PY3K)
-#define RETVAL m
 PyObject *PyInit_math_util(void)
-#else
-#define RETVAL
-PyMODINIT_FUNC
-initmath_util(void)
-#endif
 {
     PyObject *m;
     PyObject *d;
 
-#if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule("math_util", NULL);
-#endif
-    if (m == NULL)
-        return RETVAL;
+    if (PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load umath_tests module.");
+        return NULL;
+    }
 
     import_array();
     import_ufunc();
+
+#if NPY_VERSION >= 0x02000000
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return NULL;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return NULL;
+    }
+#endif
 
     d = PyModule_GetDict(m);
 
@@ -936,7 +963,8 @@ initmath_util(void)
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath_tests module.");
+        return NULL;
     }
 
-    return RETVAL;
+    return m;
 }

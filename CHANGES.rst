@@ -4,6 +4,28 @@
 Release Notes
 =============
 
+
+1.3.3 (31-January-2025)
+=======================
+
+- Fixed a bug in the C implementation of ``dot_qd`` that may result in
+  "invalid value encountered in length" runtime warning in Python 3.13
+  when input vectors contain NaN values. [#288]
+
+
+1.3.2 (12-June-2024)
+====================
+
+- Fixed a bug in the Python implementation of ``inner1d``. [#265]
+
+- Removed the ``degree`` argument from the ``length`` and ``angle`` functions
+  in the ``spherical_geometry.great_circle_arc`` module as it was never working
+  correctly with the ``math_util`` module and add unnecessary
+  complication. [#265]
+
+- Build wheel with Numpy 2.0 release candidate ahead of Numpy 2.0 release [#279]
+
+
 1.3.1 (5-November-2023)
 =======================
 

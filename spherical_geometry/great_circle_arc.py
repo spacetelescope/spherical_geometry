@@ -23,12 +23,12 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
-__all__ = ['angle', 'intersection', 'intersects', 'intersects_point',
-           'length', 'midpoint', 'interpolate']
+__all__ = ['angle', 'interpolate', 'intersection', 'intersects',
+           'intersects_point', 'length', 'midpoint']
 
 
 def _inner1d_np(x, y):
-    return np.multiply(x, y).sum(axis=1)
+    return np.multiply(x, y).sum(axis=-1)
 
 
 if HAS_C_UFUNCS:
@@ -183,7 +183,7 @@ def intersection(A, B, C, D):
     return np.where(equals, np.nan, cross)
 
 
-def length(A, B, degrees=True):
+def length(A, B):
     r"""
     Returns the angular distance between two points (in vector space)
     on the unit sphere.
@@ -193,14 +193,10 @@ def length(A, B, degrees=True):
     A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
        The endpoints of the great circle arc, in vector space.
 
-    degrees : bool, optional
-        If `True` (default) the result is returned in decimal degrees,
-        otherwise radians.
-
     Returns
     -------
     length : scalar or array of scalars
-        The angular length of the great circle arc.
+        The angular length of the great circle arc in radians.
 
     Notes
     -----
@@ -213,6 +209,7 @@ def length(A, B, degrees=True):
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
     else:
+        approx1 = 1 + 3 * np.finfo(float).eps
         A = np.asanyarray(A)
         B = np.asanyarray(B)
 
@@ -221,18 +218,24 @@ def length(A, B, degrees=True):
         B2 = B ** 2.0
         Bl = np.sqrt(np.sum(B2, axis=-1))
 
-        A = A / two_d(Al)
-        B = B / two_d(Bl)
+        try:
+            with np.errstate(invalid='raise'):
+                A = A / two_d(Al)
+                B = B / two_d(Bl)
+        except FloatingPointError:
+            raise ValueError("Out of domain for acos")
 
         dot = inner1d(A, B)
-        dot = np.clip(dot, -1.0, 1.0)
+
+        for d in np.atleast_1d(dot):
+            if np.isnan(d) or abs(d) > approx1:
+                raise ValueError("Out of domain for acos")
+
+        dot = np.clip(dot, -1.0, 1.0)  # needed due to accuracy loss
         with np.errstate(invalid='ignore'):
             result = np.arccos(dot)
 
-    if degrees:
-        return np.rad2deg(result)
-    else:
-        return result
+    return result
 
 
 def intersects(A, B, C, D):
@@ -289,10 +292,10 @@ def intersects_point(A, B, C):
 
     length_diff = np.abs((left_length + right_length) - total_length)
 
-    return length_diff < 1e-10
+    return length_diff < 3e-11
 
 
-def angle(A, B, C, degrees=True):
+def angle(A, B, C):
     """
     Returns the angle at *B* between *AB* and *BC*.
 
@@ -300,10 +303,6 @@ def angle(A, B, C, degrees=True):
     ----------
     A, B, C : (*x*, *y*, *z*) triples or Nx3 arrays of triples
         Points on sphere.
-
-    degrees : bool, optional
-        If `True` (default) the result is returned in decimal degrees,
-        otherwise radians.
 
     Returns
     -------
@@ -328,14 +327,20 @@ def angle(A, B, C, degrees=True):
         ABX = _cross_and_normalize(A, B)
         BCX = _cross_and_normalize(C, B)
         X = _cross_and_normalize(ABX, BCX)
+        m = np.logical_or(
+                np.linalg.norm(ABX, axis=-1) == 0.0,
+                np.linalg.norm(BCX, axis=-1) == 0.0
+            )
+
         diff = inner1d(B, X)
         inner = inner1d(ABX, BCX)
         with np.errstate(invalid='ignore'):
+            inner = np.clip(inner, -1.0, 1.0)  # needed due to accuracy loss
             angle = np.arccos(inner)
+
         angle = np.where(diff < 0.0, (2.0 * np.pi) - angle, angle)
 
-    if degrees:
-        angle = np.rad2deg(angle)
+        angle[m] = np.nan
 
     return angle
 
@@ -394,7 +399,7 @@ def interpolate(A, B, steps=50):
     steps = int(max(steps, 2))
     t = np.linspace(0.0, 1.0, steps, endpoint=True).reshape((steps, 1))
 
-    omega = length(A, B, degrees=False)
+    omega = length(A, B)
     if omega == 0.0:
         offsets = t
     else:

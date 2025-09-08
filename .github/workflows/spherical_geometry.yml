@@ -21,6 +21,8 @@ permissions:
 jobs:
   tests:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       submodules: false
       coverage: ''
@@ -35,19 +37,35 @@ jobs:
         - name: PEP 8
           linux: codestyle
 
-        - name: Python 3.9 (OSX)
-          macos: py39-test
+        - name: Python 3.11
+          linux: py311-test
           posargs: -v
 
-        - name: Python 3.10 (Windows)
-          windows: py310-test
+        - name: Python 3.12
+          linux: py312-test
           posargs: -v
 
-        - name: Python 3.11 with coverage
-          linux: py311-test-cov
+        # `tox` does not currently respect `requires-python` versions when creating testing environments;
+        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
+
+        - name: Python 3 with numpy 1.x
+          linux: py3-test-cov-numpy1x
           posargs: -v
           coverage: codecov
 
-        - name: Python 3.12 with dev version of dependencies
-          linux: py312-test-devdeps
+        - name: Python 3 with coverage
+          linux: py3-test-cov
+          posargs: -v
+          coverage: codecov
+
+        - name: Python 3 (macOS)
+          macos: py3-test
+          posargs: -v
+
+        - name: Python 3 (Windows)
+          windows: py3-test
+          posargs: -v
+
+        - name: Python 3 with dev version of dependencies
+          linux: py3-test-devdeps
           posargs: -v

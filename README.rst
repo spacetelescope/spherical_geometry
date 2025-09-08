@@ -40,18 +40,18 @@ Requirements
 
 - Python 3.9 or later
 
-- Numpy 1.20 or later
+- Numpy 1.23 or later
 
 - astropy 5.0.4 or later
 
 - qd-library 2.3.7 or later (optional: if not available, the
   bundled version will be used).  To force using the system-installed
-  version, build with ``USE_SYSTEM_QD=1 setup.py build``.
+  version, build with ``USE_SYSTEM_QD=1 pip install .``.
 
 Bundled qd-library
 ------------------
 
-Origin: https://www.davidhbailey.com/dhbsoftware/qd-2.3.22.tar.gz
+Origin: https://www.davidhbailey.com/dhbsoftware/qd-2.3.24.tar.gz
 
 - A custom ``libqd/include/qd/qd_config.h`` is provided to circumvent the need
   to run any configuration scripts. This generalized configuration may not be

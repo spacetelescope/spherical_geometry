@@ -9,7 +9,7 @@ authors = [
     { name = "STScI", email = "help@stsci.edu" }
 ]
 license = { text = "BSD-3-Clause" }
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
@@ -29,8 +29,8 @@ keywords = [
     "geometry",
 ]
 dependencies = [
-    "numpy>=1.20",
-    "astropy>=5.0.4",
+    "numpy>=1.25",
+    "astropy>=5.2.0",
 ]
 
 [project.optional-dependencies]
@@ -51,9 +51,9 @@ documentation = "http://spherical-geometry.readthedocs.io/"
 
 [build-system]
 requires = [
-    "setuptools",
-    "setuptools_scm",
-    "numpy>=1.25,<2",
+    "setuptools>=61.2",
+    "setuptools_scm[toml]>=3.6",
+    "numpy>=2.0.0",
 ]
 build-backend = "setuptools.build_meta"
 

@@ -546,8 +546,7 @@ class SingleSphericalPolygon(object):
             return np.array(0.0)
 
         points = np.vstack((self._points, self._points[1]))
-        angles = great_circle_arc.angle(points[:-2], points[1:-1],
-                                        points[2:], degrees=False)
+        angles = great_circle_arc.angle(points[:-2], points[1:-1], points[2:])
 
         return np.sum(angles) - (len(angles) - 2) * np.pi
 
@@ -704,7 +703,7 @@ class SingleSphericalPolygon(object):
 
         alpha = 1.0
         for A, B in zip(points[0:-1], points[1:]):
-            length = great_circle_arc.length(A, B, degrees=True)
+            length = np.rad2deg(great_circle_arc.length(A, B))
             if not np.isfinite(length):
                 length = 2
             interpolated = great_circle_arc.interpolate(A, B, length * 4)

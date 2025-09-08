@@ -50,3 +50,9 @@ libqd/autom4te.cache
 
 # Mac OSX
 .DS_Store
+
+# uv
+uv.lock
+
+# test-generated files
+test*.svg
