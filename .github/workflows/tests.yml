@@ -9,7 +9,7 @@ on:
   pull_request:
   schedule:
     # Run every Monday at 6am UTC
-    - cron: '0 6 * * 1'
+    - cron: "0 6 * * 1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +25,7 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       submodules: false
-      coverage: ''
+      coverage: ""
       envs: |
         - name: Python 3.11
           linux: py311-test

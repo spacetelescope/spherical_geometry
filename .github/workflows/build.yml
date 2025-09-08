@@ -12,7 +12,7 @@ on:
     branches:
       - main
     tags:
-      - '*'
+      - "*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
