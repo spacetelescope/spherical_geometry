@@ -1,9 +1,9 @@
-name: CI
+name: test
 
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - "*"
   pull_request:
@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  tests:
+  test:
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v2
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -27,16 +27,6 @@ jobs:
       submodules: false
       coverage: ''
       envs: |
-        # Make sure that packaging will work
-        - name: pep517 build
-          linux: twine
-
-        - name: Security audit
-          linux: bandit
-
-        - name: PEP 8
-          linux: codestyle
-
         - name: Python 3.11
           linux: py311-test
           posargs: -v

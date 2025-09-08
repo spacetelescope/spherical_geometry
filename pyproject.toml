@@ -121,3 +121,9 @@ filterwarnings = [
             # Don't complain about IPython completion helper
             "def _ipython_key_completions_",
         ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-ignore = ["E201", "E202", "E203", "E221", "E231", "E741"]
