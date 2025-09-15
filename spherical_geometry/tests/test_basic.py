@@ -184,7 +184,7 @@ def test_overlap():
         assert abs(overlap_area - calculated_area) < 0.0005
 
 
-def test_from_wcs():
+def test_from_wcs_fits_header():
     from astropy.io import fits
 
     filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
@@ -192,10 +192,61 @@ def test_from_wcs():
 
     poly = polygon.SphericalPolygon.from_wcs(header)
     for lonlat in poly.to_lonlat():
-        lon = lonlat[0]
-        lat = lonlat[1]
-        assert np.all(np.absolute(lon - 6.027148333333) < 0.2)
-        assert np.all(np.absolute(lat + 72.08351111111) < 0.2)
+        lonlat = np.array(lonlat).T
+        assert_allclose(
+            lonlat,
+            np.repeat([(6.027148333333, -72.08351111111)], repeats=lonlat.shape[0], axis=0),
+            atol=0.2,
+        )
+
+
+@pytest.mark.parametrize(
+    "test_point",
+    [
+        (0.88955854, 87.53857137),
+        (20.6543883, 87.60498618),
+        (343.19474696, 85.05565535),
+        (8.94286202, 85.50465173),
+        (27.38417684, 85.03404907),
+        (310.53503934, 88.56749324),
+        (0, 60),
+        (0, 90),
+        (12, 66),
+    ],
+)
+@pytest.mark.parametrize("rotation", [0, 32])
+@pytest.mark.parametrize(
+    "bounding_box,pixel_shape",
+    [(((-0.5, 4096 - 0.5), (-0.5, 4096 - 0.5)), None)],
+)
+def test_from_wcs_gwcs(test_point, rotation, bounding_box, pixel_shape):
+    import astropy.coordinates as coord
+    import astropy.modeling.models as amm
+    import astropy.units as u
+    from gwcs import WCS, coordinate_frames
+
+    transform = (amm.Shift(-2048) & amm.Shift(-2048)) | (
+        amm.Scale(0.11 / 3600.0) & amm.Scale(0.11 / 3600.0)
+        | amm.Rotation2D(rotation)
+        | amm.Pix2Sky_TAN()
+        | amm.RotateNative2Celestial(*test_point, 180.0)
+    )
+    detector_frame = coordinate_frames.Frame2D(
+        name="detector", axes_names=("x", "y"), unit=(u.pix, u.pix)
+    )
+    sky_frame = coordinate_frames.CelestialFrame(
+        reference_frame=coord.ICRS(), name="icrs", unit=(u.deg, u.deg)
+    )
+    wcsobj = WCS([(detector_frame, transform), (sky_frame, None)])
+    if pixel_shape is not None:
+        wcsobj.pixel_shape = pixel_shape
+    if bounding_box is not None:
+        wcsobj.bounding_box = bounding_box
+
+    poly = polygon.SphericalPolygon.from_wcs(wcsobj)
+
+    assert poly.area() > 0
+    assert poly.contains_point(vector.lonlat_to_vector(*test_point))
 
 
 def test_intersects_poly_simple():

@@ -298,8 +298,10 @@ class SingleSphericalPolygon(object):
             and hasattr(wcs, "bounding_box")
             and wcs.bounding_box is not None
         ):
-            vertex_lonlats = wcs.footprint(center=False).T
+            vertex_lonlats = wcs.footprint(center=False)
             center = np.mean(vertex_lonlats, axis=0)
+            vertex_lon = vertex_lonlats[:, 0]
+            vertex_lat = vertex_lonlats[:, 1]
         else:
             vertices_per_side = edges_per_side + 1
 
@@ -337,13 +339,14 @@ class SingleSphericalPolygon(object):
 
             # query the WCS for pixel indices at the edges
             vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
-            vertex_lonlats = vertex_skycoords.ra.degree, vertex_skycoords.dec.degree
+            vertex_lon = vertex_skycoords.ra.degree
+            vertex_lat = vertex_skycoords.dec.degree
             center_skycoord = wcs.pixel_to_world(
                 *(origin_indices + (origin_indices + array_shape) / 2)
             )
             center = center_skycoord.ra.degree, center_skycoord.dec.degree
 
-        return cls.from_lonlat(*vertex_lonlats, center=center)
+        return cls.from_lonlat(vertex_lon, vertex_lat, center=center)
 
     @classmethod
     def convex_hull(cls, points):

@@ -30,8 +30,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=9.0", "pytest-astropy-header"]
-docs = ["sphinx-automodapi", "numpydoc"]
+test = [
+    "pytest>=9.0",
+    "pytest-astropy-header",
+    "gwcs",
+]
+docs = [
+    "sphinx-automodapi",
+    "numpydoc",
+]
 
 [project.urls]
 bug = "https://github.com/spacetelescope/spherical_geometry/issues/"
