@@ -4,6 +4,10 @@
 Release Notes
 =============
 
+1.3.4 (unreleased)
+==================
+
+- Update ``from_wcs`` to accept any WCS object that implements the WCS API.
 
 1.3.4 (06-November-2025)
 ========================
