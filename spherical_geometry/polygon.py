@@ -256,7 +256,6 @@ class SingleSphericalPolygon(object):
         cls,
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
         edges_per_side: int = 1,
-        crval: float = None,
     ) -> "SingleSphericalPolygon":
         """Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
 
@@ -271,8 +270,6 @@ class SingleSphericalPolygon(object):
             any WCS object that implements the common WCS API
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
-        crval: float :
-            (Deprecated) FITS keyword indicating rotation value of physical coordinate.
 
         Returns
         -------
@@ -281,9 +278,6 @@ class SingleSphericalPolygon(object):
 
         if isinstance(wcs, (astropy.io.fits.Header | str)):
             wcs = astropy.wcs.WCS(wcs)
-
-        if crval is not None:
-            wcs.wcs.crval = crval
 
         array_shape = (
             wcs.array_shape
@@ -974,7 +968,6 @@ class SphericalPolygon(SingleSphericalPolygon):
         cls,
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
         edges_per_side: int = 1,
-        crval: float = None,
     ) -> "SphericalPolygon":
         """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
@@ -989,14 +982,12 @@ class SphericalPolygon(SingleSphericalPolygon):
             any WCS object that implements the common WCS API
         edges_per_side: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
-        crval: float :
-            (Deprecated) FITS keyword indicating rotation value of physical coordinate.
 
         Returns
         -------
         polygon : `SphericalPolygon` object
         """
-        return cls((SingleSphericalPolygon.from_wcs(wcs, edges_per_side, crval),))
+        return cls((SingleSphericalPolygon.from_wcs(wcs, edges_per_side),))
 
     @classmethod
     def convex_hull(cls, points):
