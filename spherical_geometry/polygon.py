@@ -257,7 +257,7 @@ class SingleSphericalPolygon(object):
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
         edges_per_side: int = 1,
     ) -> "SingleSphericalPolygon":
-        """Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
+        r"""Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
 
         If the number of edges per side is set to 1, the polygon will be rectangular.
         Otherwise, the polygon will capture WCS distortion along the edges of the footprint.
