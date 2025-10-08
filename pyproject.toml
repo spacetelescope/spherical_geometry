@@ -3,7 +3,7 @@ name = "spherical_geometry"
 dynamic = ["version"]
 description = "Python based tools for spherical geometry"
 readme = "README.rst"
-authors = [{ name = "STScI", email = "help@stsci.edu" }]
+authors = [{ name = "STScI" }]
 license = { text = "BSD-3-Clause" }
 requires-python = ">=3.11"
 classifiers = [
