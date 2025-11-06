@@ -35,6 +35,10 @@ jobs:
           linux: py312-test
           posargs: -v
 
+        - name: Python 3.13
+          linux: py313-test
+          posargs: -v
+
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
 
