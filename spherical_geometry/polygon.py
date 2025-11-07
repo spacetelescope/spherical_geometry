@@ -282,8 +282,6 @@ class SingleSphericalPolygon(object):
         array_shape = (
             wcs.array_shape
             if hasattr(wcs, "array_shape") and wcs.array_shape is not None
-            else wcs.pixel_shape[::-1]
-            if hasattr(wcs, "pixel_shape") and wcs.pixel_shape is not None
             else tuple(
                 wcs.bounding_box[index][1] - wcs.bounding_box[index][0]
                 for index in range(len(wcs.bounding_box))
