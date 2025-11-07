@@ -287,60 +287,49 @@ class SingleSphericalPolygon(object):
                 for index in range(len(wcs.bounding_box))
             )
         )
-        if (
-            steps <= 1
-            and hasattr(wcs, "bounding_box")
-            and wcs.bounding_box is not None
-        ):
-            vertex_lonlats = wcs.footprint(center=False)
-            center = np.mean(vertex_lonlats, axis=0)
-            vertex_lon = vertex_lonlats[:, 0]
-            vertex_lat = vertex_lonlats[:, 1]
-        else:
-            vertices_per_side = steps + 1
 
-            # constrain number of vertices to the maximum number of pixels on an edge
-            if vertices_per_side > max(array_shape):
-                vertices_per_side = max(array_shape)
+        vertices_per_side = steps + 1
 
-            # build a list of pixel indices that represent equally-spaced edge vertices
-            origin_indices = np.zeros(vertices_per_side) - 0.5
-            x_end_indices = array_shape[0] - origin_indices
-            y_end_indices = array_shape[1] - origin_indices
-            vertices_x = np.linspace(
-                0, array_shape[0], num=vertices_per_side, endpoint=False
-            )
-            vertices_y = np.linspace(
-                0, array_shape[1], num=vertices_per_side, endpoint=False
-            )
-            vertex_indices = np.concatenate(
-                [
-                    # north edge
-                    np.stack([origin_indices, vertices_y], axis=1),
-                    # east edge
-                    np.stack([vertices_x, y_end_indices], axis=1),
-                    # south edge
-                    np.stack([x_end_indices, y_end_indices - vertices_y], axis=1),
-                    # west edge
-                    np.stack([x_end_indices - vertices_x, origin_indices], axis=1),
-                ],
-                axis=0,
-            )
+        # constrain number of vertices to the maximum number of pixels on an edge
+        if vertices_per_side > max(array_shape):
+            vertices_per_side = max(array_shape)
 
-            # ensure bounding box is None
-            if hasattr(wcs, "bounding_box"):
-                wcs.bounding_box = None
+        # build a list of pixel indices that represent equally-spaced edge vertices
+        origin_indices = np.zeros(vertices_per_side) - 0.5
+        x_end_indices = array_shape[0] - origin_indices
+        y_end_indices = array_shape[1] - origin_indices
+        vertices_x = np.linspace(
+            0, array_shape[0], num=vertices_per_side, endpoint=False
+        )
+        vertices_y = np.linspace(
+            0, array_shape[1], num=vertices_per_side, endpoint=False
+        )
+        vertex_indices = np.concatenate(
+            [
+                # north edge
+                np.stack([origin_indices, vertices_y], axis=1),
+                # east edge
+                np.stack([vertices_x, y_end_indices], axis=1),
+                # south edge
+                np.stack([x_end_indices, y_end_indices - vertices_y], axis=1),
+                # west edge
+                np.stack([x_end_indices - vertices_x, origin_indices], axis=1),
+            ],
+            axis=0,
+        )
 
-            # query the WCS for pixel indices at the edges
-            vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
-            vertex_lon = vertex_skycoords.ra.degree
-            vertex_lat = vertex_skycoords.dec.degree
-            center_skycoord = wcs.pixel_to_world(
-                *(origin_indices + (origin_indices + array_shape) / 2)
-            )
-            center = center_skycoord.ra.degree, center_skycoord.dec.degree
+        # ensure bounding box is None
+        if hasattr(wcs, "bounding_box"):
+            wcs.bounding_box = None
 
-        return cls.from_lonlat(vertex_lon, vertex_lat, center=center)
+        # query the WCS for pixel indices at the edges
+        vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
+        center_skycoord = wcs.pixel_to_world(
+            *(origin_indices + (origin_indices + array_shape) / 2)
+        )
+        center = center_skycoord.ra.degree, center_skycoord.dec.degree
+
+        return cls.from_lonlat(vertex_skycoords.ra.degree, vertex_skycoords.dec.degree, center=center)
 
     @classmethod
     def convex_hull(cls, points):
