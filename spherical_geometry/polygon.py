@@ -255,7 +255,7 @@ class SingleSphericalPolygon(object):
     def from_wcs(
         cls,
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
-        edges_per_side: int = 1,
+        steps: int = 1,
     ) -> "SingleSphericalPolygon":
         r"""Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
 
@@ -268,7 +268,7 @@ class SingleSphericalPolygon(object):
         ----------
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
             any WCS object that implements the common WCS API
-        edges_per_side: int, optional :
+        steps: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
 
         Returns
@@ -290,7 +290,7 @@ class SingleSphericalPolygon(object):
             )
         )
         if (
-            edges_per_side <= 1
+            steps <= 1
             and hasattr(wcs, "bounding_box")
             and wcs.bounding_box is not None
         ):
@@ -299,7 +299,7 @@ class SingleSphericalPolygon(object):
             vertex_lon = vertex_lonlats[:, 0]
             vertex_lat = vertex_lonlats[:, 1]
         else:
-            vertices_per_side = edges_per_side + 1
+            vertices_per_side = steps + 1
 
             # constrain number of vertices to the maximum number of pixels on an edge
             if vertices_per_side > max(array_shape):
@@ -967,7 +967,7 @@ class SphericalPolygon(SingleSphericalPolygon):
     def from_wcs(
         cls,
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
-        edges_per_side: int = 1,
+        steps: int = 1,
     ) -> "SphericalPolygon":
         """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
@@ -980,14 +980,14 @@ class SphericalPolygon(SingleSphericalPolygon):
         ----------
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
             any WCS object that implements the common WCS API
-        edges_per_side: int, optional :
+        steps: int, optional :
             The number of edges to create along each side of the polygon. (Default value = 1)
 
         Returns
         -------
         polygon : `SphericalPolygon` object
         """
-        return cls((SingleSphericalPolygon.from_wcs(wcs, edges_per_side),))
+        return cls((SingleSphericalPolygon.from_wcs(wcs, steps),))
 
     @classmethod
     def convex_hull(cls, points):
