@@ -357,22 +357,30 @@ def test_point_in_poly():
 
 
 def test_point_in_poly_lots():
+    from astropy import wcs as pywcs
     from astropy.io import fits
-    header = fits.getheader(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'),
-                            ext=0)
 
-    poly1 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[0, 87])
-    poly2 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[20, 89])
-    poly3 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[180, 89])
+    header = fits.getheader(resolve_imagename(ROOT_DIR, "1904-77_TAN.fits"), ext=0)
+
+    wcsobj1 = pywcs.WCS(header)
+    wcsobj1.wcs.crval = [0, 87]
+    wcsobj2 = pywcs.WCS(header)
+    wcsobj2.wcs.crval = [20, 89]
+    wcsobj3 = pywcs.WCS(header)
+    wcsobj3.wcs.crval = [180, 89]
+
+    poly1 = polygon.SphericalPolygon.from_wcs(wcsobj1, 1)
+    poly2 = polygon.SphericalPolygon.from_wcs(wcsobj2, 1)
+    poly3 = polygon.SphericalPolygon.from_wcs(wcsobj3, 1)
 
     points = get_point_set()
     count = 0
     for point in points:
-        if (poly1.contains_point(point) or poly2.contains_point(point) or
-                poly3.contains_point(point)):
+        if (
+            poly1.contains_point(point)
+            or poly2.contains_point(point)
+            or poly3.contains_point(point)
+        ):
             count += 1
 
     assert count == 5
