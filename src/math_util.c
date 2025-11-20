@@ -32,40 +32,40 @@
 
 typedef npy_intp intp;
 
-#define INIT_OUTER_LOOP_1       \
-    intp dN = *dimensions++;    \
-    intp N_;                    \
+#define INIT_OUTER_LOOP_1    \
+    intp dN = *dimensions++; \
+    intp N_;                 \
     intp s0 = *steps++;
 
-#define INIT_OUTER_LOOP_2       \
-    INIT_OUTER_LOOP_1           \
+#define INIT_OUTER_LOOP_2 \
+    INIT_OUTER_LOOP_1     \
     intp s1 = *steps++;
 
-#define INIT_OUTER_LOOP_3       \
-    INIT_OUTER_LOOP_2           \
+#define INIT_OUTER_LOOP_3 \
+    INIT_OUTER_LOOP_2     \
     intp s2 = *steps++;
 
-#define INIT_OUTER_LOOP_4       \
-    INIT_OUTER_LOOP_3           \
+#define INIT_OUTER_LOOP_4 \
+    INIT_OUTER_LOOP_3     \
     intp s3 = *steps++;
 
-#define INIT_OUTER_LOOP_5       \
-    INIT_OUTER_LOOP_4           \
+#define INIT_OUTER_LOOP_5 \
+    INIT_OUTER_LOOP_4     \
     intp s4 = *steps++;
 
-#define BEGIN_OUTER_LOOP_2      \
-    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+#define BEGIN_OUTER_LOOP_2 for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
 
-#define BEGIN_OUTER_LOOP_3      \
+#define BEGIN_OUTER_LOOP_3                                                     \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
-#define BEGIN_OUTER_LOOP_4      \
+#define BEGIN_OUTER_LOOP_4                                                                    \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
 
-#define BEGIN_OUTER_LOOP_5      \
-    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3, args[4] += s4) {
+#define BEGIN_OUTER_LOOP_5                                                                  \
+    for (N_ = 0; N_ < dN;                                                                   \
+         N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3, args[4] += s4) {
 
-#define END_OUTER_LOOP  }
+#define END_OUTER_LOOP }
 
 typedef struct {
     double x[4];
@@ -76,52 +76,57 @@ typedef struct {
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
 
 static NPY_INLINE void
-load_point(const char *in, const intp s, double* out) {
-    out[0] = (*(double *)in);
+load_point(const char *in, const intp s, double *out)
+{
+    out[0] = (*(double *) in);
     in += s;
-    out[1] = (*(double *)in);
+    out[1] = (*(double *) in);
     in += s;
-    out[2] = (*(double *)in);
+    out[2] = (*(double *) in);
 }
 
 static NPY_INLINE void
-load_point_qd(const char *in, const intp s, qd* out) {
-    out[0].x[0] = (*(double *)in);
+load_point_qd(const char *in, const intp s, qd *out)
+{
+    out[0].x[0] = (*(double *) in);
     out[0].x[1] = 0.0;
     out[0].x[2] = 0.0;
     out[0].x[3] = 0.0;
     in += s;
-    out[1].x[0] = (*(double *)in);
+    out[1].x[0] = (*(double *) in);
     out[1].x[1] = 0.0;
     out[1].x[2] = 0.0;
     out[1].x[3] = 0.0;
     in += s;
-    out[2].x[0] = (*(double *)in);
+    out[2].x[0] = (*(double *) in);
     out[2].x[1] = 0.0;
     out[2].x[2] = 0.0;
     out[2].x[3] = 0.0;
 }
 
 static NPY_INLINE void
-save_point(const double* in, char *out, const intp s) {
-    *(double *)out = in[0];
+save_point(const double *in, char *out, const intp s)
+{
+    *(double *) out = in[0];
     out += s;
-    *(double *)out = in[1];
+    *(double *) out = in[1];
     out += s;
-    *(double *)out = in[2];
+    *(double *) out = in[2];
 }
 
 static NPY_INLINE void
-save_point_qd(const qd* in, char *out, const intp s) {
-    *(double *)out = in[0].x[0];
+save_point_qd(const qd *in, char *out, const intp s)
+{
+    *(double *) out = in[0].x[0];
     out += s;
-    *(double *)out = in[1].x[0];
+    *(double *) out = in[1].x[0];
     out += s;
-    *(double *)out = in[2].x[0];
+    *(double *) out = in[2].x[0];
 }
 
 static NPY_INLINE void
-cross_qd(const qd *A, const qd *B, qd *C) {
+cross_qd(const qd *A, const qd *B, qd *C)
+{
     double tmp1[4];
     double tmp2[4];
 
@@ -139,7 +144,8 @@ cross_qd(const qd *A, const qd *B, qd *C) {
 }
 
 static NPY_INLINE int
-normalize_qd(const qd *A, qd *B) {
+normalize_qd(const qd *A, qd *B)
+{
     size_t i;
 
     double T[4][4];
@@ -171,7 +177,8 @@ normalize_qd(const qd *A, qd *B) {
 }
 
 static NPY_INLINE void
-dot_qd(const qd *A, const qd *B, qd *C) {
+dot_qd(const qd *A, const qd *B, qd *C)
+{
     size_t i;
     double tmp[4][4];
 
@@ -197,7 +204,8 @@ dot_qd(const qd *A, const qd *B, qd *C) {
     normalized_dot_qd returns dot product of normalized input vectors.
 */
 static NPY_INLINE int
-normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
+normalized_dot_qd(const qd *A, const qd *B, qd *dot_val)
+{
     qd aa, bb, ab;
     double aabb[4];
     double norm[4];
@@ -226,8 +234,7 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
         c_qd_div(ab.x, norm, dot_val->x);
     }
 
-    if ((*v0 == 1.0 && *v1 > 0.0 && *v1 < eps) ||
-        (*v0 == -1.0 && *v1 < 0.0 && *v1 > -eps)) {
+    if ((*v0 == 1.0 && *v1 > 0.0 && *v1 < eps) || (*v0 == -1.0 && *v1 < 0.0 && *v1 > -eps)) {
         c_qd_copy_d(dot_val->x[0], dot_val->x);
     }
 
@@ -235,7 +242,8 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val) {
 }
 
 static NPY_INLINE double
-sign(const double A) {
+sign(const double A)
+{
 #if defined(_MSC_VER) || defined(__MINGW32__)
     return (A < 0) ? -1.0 : 1.0;
 #else
@@ -244,7 +252,8 @@ sign(const double A) {
 }
 
 static NPY_INLINE int
-equals_qd(const qd *A, const qd *B) {
+equals_qd(const qd *A, const qd *B)
+{
     if (memcmp(A, B, sizeof(qd) * 3)) {
         return 0;
     }
@@ -257,7 +266,8 @@ equals_qd(const qd *A, const qd *B) {
 }
 
 static NPY_INLINE int
-length_qd(const qd *A, const qd *B, qd *l) {
+length_qd(const qd *A, const qd *B, qd *l)
+{
     qd s;
 
     /* Special case for "exactly equal" that avoids all of the calculation. */
@@ -271,9 +281,7 @@ length_qd(const qd *A, const qd *B, qd *l) {
 
     dot_qd(A, B, &s);
 
-    if (ISNAN_QD(s) ||
-        s.x[0] < -1.0 ||
-        s.x[0] > 1.0) {
+    if (ISNAN_QD(s) || s.x[0] < -1.0 || s.x[0] > 1.0) {
         PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
         return 1;
     }
@@ -283,8 +291,8 @@ length_qd(const qd *A, const qd *B, qd *l) {
 }
 
 static NPY_INLINE void
-intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D,
-                qd *T, double *s, int *match) {
+intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D, qd *T, double *s, int *match)
+{
     qd ABX[3];
     qd CDX[3];
     qd tmp[3];
@@ -339,22 +347,22 @@ DOUBLE_inner1d(char **args, const intp *dimensions, const intp *steps, void *NPY
     INIT_OUTER_LOOP_3
     intp di = dimensions[0];
     intp i;
-    intp is1=steps[0], is2=steps[1];
+    intp is1 = steps[0], is2 = steps[1];
     BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
-        double sum = 0;
-        for (i = 0; i < di; i++) {
-            sum += (*(double *)ip1) * (*(double *)ip2);
-            ip1 += is1;
-            ip2 += is2;
-        }
-        *(double *)op = sum;
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];
+    double sum = 0;
+    for (i = 0; i < di; i++) {
+        sum += (*(double *) ip1) * (*(double *) ip2);
+        ip1 += is1;
+        ip2 += is2;
+    }
+    *(double *) op = sum;
     END_OUTER_LOOP
 }
 
-static PyUFuncGenericFunction inner1d_functions[] = { DOUBLE_inner1d };
-static void * inner1d_data[] = { (void *)NULL };
-static char inner1d_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction inner1d_functions[] = {DOUBLE_inner1d};
+static void *inner1d_data[] = {(void *) NULL};
+static char inner1d_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   normalize
@@ -370,26 +378,28 @@ DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *N
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_2
-    intp is1=steps[0], is2=steps[1];
+    intp is1 = steps[0], is2 = steps[1];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_2
-        char *ip1=args[0], *op=args[1];
+    char *ip1 = args[0], *op = args[1];
 
-        load_point_qd(ip1, is1, IN);
+    load_point_qd(ip1, is1, IN);
 
-        if (normalize_qd(IN, OUT)) return;
+    if (normalize_qd(IN, OUT)) {
+        return;
+    }
 
-        save_point_qd(OUT, op, is2);
+    save_point_qd(OUT, op, is2);
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction normalize_functions[] = { DOUBLE_normalize };
-static void * normalize_data[] = { (void *)NULL };
-static char normalize_signatures[] = { NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction normalize_functions[] = {DOUBLE_normalize};
+static void *normalize_data[] = {(void *) NULL};
+static char normalize_signatures[] = {NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   cross
@@ -406,27 +416,27 @@ DOUBLE_cross(char **args, const intp *dimensions, const intp *steps, void *NPY_U
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_3
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
 
-        cross_qd(A, B, C);
+    cross_qd(A, B, C);
 
-        save_point_qd(C, op, is3);
+    save_point_qd(C, op, is3);
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction cross_functions[] = { DOUBLE_cross };
-static void * cross_data[] = { (void *)NULL };
-static char cross_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross_functions[] = {DOUBLE_cross};
+static void *cross_data[] = {(void *) NULL};
+static char cross_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   cross_and_norm
@@ -439,7 +449,8 @@ char *cross_and_norm_signature = "(i),(i)->(i)";
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
 static void
-DOUBLE_cross_and_norm(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
+DOUBLE_cross_and_norm(
+    char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -447,28 +458,30 @@ DOUBLE_cross_and_norm(char **args, const intp *dimensions, const intp *steps, vo
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_3
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
 
-        cross_qd(A, B, C);
-        if (normalize_qd(C, C)) return;
+    cross_qd(A, B, C);
+    if (normalize_qd(C, C)) {
+        return;
+    }
 
-        save_point_qd(C, op, is3);
+    save_point_qd(C, op, is3);
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction cross_and_norm_functions[] = { DOUBLE_cross_and_norm };
-static void * cross_and_norm_data[] = { (void *)NULL };
-static char cross_and_norm_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction cross_and_norm_functions[] = {DOUBLE_cross_and_norm};
+static void *cross_and_norm_data[] = {(void *) NULL};
+static char cross_and_norm_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   triple_product
@@ -480,7 +493,8 @@ char *triple_product_signature = "(i),(i),(i)->()";
  * Finds the triple_product at *B* between *A*, *B*,  and *C*.
  */
 static void
-DOUBLE_triple_product(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
+DOUBLE_triple_product(
+    char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -492,29 +506,29 @@ DOUBLE_triple_product(char **args, const intp *dimensions, const intp *steps, vo
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_4
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_4
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op = args[3];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
-        load_point_qd(ip3, is3, C);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
+    load_point_qd(ip3, is3, C);
 
-        cross_qd(A, B, ABX);
-        dot_qd(ABX, C, &prod);
+    cross_qd(A, B, ABX);
+    dot_qd(ABX, C, &prod);
 
-        *(double *)op = prod.x[0];
+    *(double *) op = prod.x[0];
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction triple_product_functions[] = { DOUBLE_triple_product };
-static void * triple_product_data[] = { (void *)NULL };
-static char triple_product_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction triple_product_functions[] = {DOUBLE_triple_product};
+static void *triple_product_data[] = {(void *) NULL};
+static char triple_product_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   intersection
@@ -543,38 +557,39 @@ DOUBLE_intersection(char **args, const intp *dimensions, const intp *steps, void
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_5
-    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3], is5=steps[4];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2], is4 = steps[3], is5 = steps[4];
 
     nans[0] = nans[1] = nans[2] = NPY_NAN;
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_5
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *ip4 = args[3], *op = args[4];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
-        load_point_qd(ip3, is3, C);
-        load_point_qd(ip4, is4, D);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
+    load_point_qd(ip3, is3, C);
+    load_point_qd(ip4, is4, D);
 
-        intersection_qd(A, B, C, D, T, &s, &match);
+    intersection_qd(A, B, C, D, T, &s, &match);
 
-        if (match) {
-            T[0].x[0] *= s;
-            T[1].x[0] *= s;
-            T[2].x[0] *= s;
-            save_point_qd(T, op, is5);
-        } else {
-            save_point(nans, op, is5);
-        }
+    if (match) {
+        T[0].x[0] *= s;
+        T[1].x[0] *= s;
+        T[2].x[0] *= s;
+        save_point_qd(T, op, is5);
+    } else {
+        save_point(nans, op, is5);
+    }
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction intersection_functions[] = { DOUBLE_intersection };
-static void * intersection_data[] = { (void *)NULL };
-static char intersection_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction intersection_functions[] = {DOUBLE_intersection};
+static void *intersection_data[] = {(void *) NULL};
+static char intersection_signatures[] = {
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects
@@ -601,29 +616,29 @@ DOUBLE_intersects(char **args, const intp *dimensions, const intp *steps, void *
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_5
-    intp is1=steps[0], is2=steps[1], is3=steps[2], is4=steps[3];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2], is4 = steps[3];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_5
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *ip4=args[3], *op=args[4];
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *ip4 = args[3], *op = args[4];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
-        load_point_qd(ip3, is3, C);
-        load_point_qd(ip4, is4, D);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
+    load_point_qd(ip3, is3, C);
+    load_point_qd(ip4, is4, D);
 
-        intersection_qd(A, B, C, D, T, &s, &match);
+    intersection_qd(A, B, C, D, T, &s, &match);
 
-        *((char *)op) = match;
+    *((char *) op) = match;
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction intersects_functions[] = { DOUBLE_intersects };
-static void * intersects_data[] = { (void *)NULL };
-static char intersects_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
+static PyUFuncGenericFunction intersects_functions[] = {DOUBLE_intersects};
+static void *intersects_data[] = {(void *) NULL};
+static char intersects_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL};
 
 /*///////////////////////////////////////////////////////////////////////////
   length
@@ -645,34 +660,34 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_3
-    intp is1=steps[0], is2=steps[1];
+    intp is1 = steps[0], is2 = steps[1];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
+    char *ip1 = args[0], *ip2 = args[1], *op = args[2];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
 
-        if (normalize_qd(A, A)) {
-            return;
-        }
-        if (normalize_qd(B, B)) {
-            return;
-        }
-        if (length_qd(A, B, &s)) {
-            return;
-        }
-        *((double *)op) = s.x[0];
+    if (normalize_qd(A, A)) {
+        return;
+    }
+    if (normalize_qd(B, B)) {
+        return;
+    }
+    if (length_qd(A, B, &s)) {
+        return;
+    }
+    *((double *) op) = s.x[0];
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction length_functions[] = { DOUBLE_length };
-static void * length_data[] = { (void *)NULL };
-static char length_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction length_functions[] = {DOUBLE_length};
+static void *length_data[] = {(void *) NULL};
+static char length_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*///////////////////////////////////////////////////////////////////////////
   intersects_point
@@ -684,7 +699,8 @@ char *intersects_point_signature = "(i),(i),(i)->()";
  * Returns True is if the point C intersects arc AB
  */
 static void
-DOUBLE_intersects_point(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
+DOUBLE_intersects_point(
+    char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3];
     qd B[3];
@@ -699,39 +715,51 @@ DOUBLE_intersects_point(char **args, const intp *dimensions, const intp *steps, 
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_4
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_4
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op = args[3];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
-        load_point_qd(ip3, is3, C);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
+    load_point_qd(ip3, is3, C);
 
-        if (normalize_qd(A, A)) return;
-        if (normalize_qd(B, B)) return;
-        if (normalize_qd(C, C)) return;
+    if (normalize_qd(A, A)) {
+        return;
+    }
+    if (normalize_qd(B, B)) {
+        return;
+    }
+    if (normalize_qd(C, C)) {
+        return;
+    }
 
-        if (length_qd(A, B, &total)) return;
-        if (length_qd(A, C, &left)) return;
-        if (length_qd(C, B, &right)) return;
+    if (length_qd(A, B, &total)) {
+        return;
+    }
+    if (length_qd(A, C, &left)) {
+        return;
+    }
+    if (length_qd(C, B, &right)) {
+        return;
+    }
 
-        c_qd_add(left.x, right.x, t1);
-        c_qd_sub(t1, total.x, t2);
-        c_qd_abs(t2, t1);
+    c_qd_add(left.x, right.x, t1);
+    c_qd_sub(t1, total.x, t2);
+    c_qd_abs(t2, t1);
 
-        c_qd_comp_qd_d(t1, 1e-10, &result);
-        *((npy_bool *)op) = (result == -1);
+    c_qd_comp_qd_d(t1, 1e-10, &result);
+    *((npy_bool *) op) = (result == -1);
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction intersects_point_functions[] = { DOUBLE_intersects_point };
-static void * intersects_point_data[] = { (void *)NULL };
-static char intersects_point_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL };
+static PyUFuncGenericFunction intersects_point_functions[] = {DOUBLE_intersects_point};
+static void *intersects_point_data[] = {(void *) NULL};
+static char intersects_point_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_BOOL};
 
 /*///////////////////////////////////////////////////////////////////////////
   angle
@@ -764,58 +792,58 @@ DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_U
     unsigned int old_cw;
 
     INIT_OUTER_LOOP_4
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
     BEGIN_OUTER_LOOP_4
-        char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
+    char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op = args[3];
 
-        load_point_qd(ip1, is1, A);
-        load_point_qd(ip2, is2, B);
-        load_point_qd(ip3, is3, C);
+    load_point_qd(ip1, is1, A);
+    load_point_qd(ip2, is2, B);
+    load_point_qd(ip3, is3, C);
 
-        cross_qd(A, B, ABX);
-        cross_qd(C, B, BCX);
-        cross_qd(ABX, BCX, X);
-        dot_qd(B, X, &diff);
-        ret = normalized_dot_qd(ABX, BCX, &inner);
-        if (ret == 1)  {
-            return;
-        } else if (ret == 2) {
-            PyErr_Clear();
+    cross_qd(A, B, ABX);
+    cross_qd(C, B, BCX);
+    cross_qd(ABX, BCX, X);
+    dot_qd(B, X, &diff);
+    ret = normalized_dot_qd(ABX, BCX, &inner);
+    if (ret == 1) {
+        return;
+    } else if (ret == 2) {
+        PyErr_Clear();
 #if defined(NAN)
-            *((double *)op) = NAN;
+        *((double *) op) = NAN;
 #else
-            *((double *)op) = strtod("NaN", NULL);
+        *((double *) op) = strtod("NaN", NULL);
 #endif
-            continue;
-        }
+        continue;
+    }
 
-        c_qd_abs(inner.x, abs_inner);
-        c_qd_comp(abs_inner, QD_ONE, &comp);
-        if (inner.x[0] != inner.x[0] || comp == 1) {
-            PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
-            return;
-        }
+    c_qd_abs(inner.x, abs_inner);
+    c_qd_comp(abs_inner, QD_ONE, &comp);
+    if (inner.x[0] != inner.x[0] || comp == 1) {
+        PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
+        return;
+    }
 
-        c_qd_acos(inner.x, angle);
+    c_qd_acos(inner.x, angle);
 
-        c_qd_comp_qd_d(diff.x, 0.0, &comp);
-        if (comp == -1) {
-            c_qd_2pi(_2pi);
-            c_qd_sub(_2pi, angle, angle);
-        }
+    c_qd_comp_qd_d(diff.x, 0.0, &comp);
+    if (comp == -1) {
+        c_qd_2pi(_2pi);
+        c_qd_sub(_2pi, angle, angle);
+    }
 
-        *((double *)op) = angle[0];
+    *((double *) op) = angle[0];
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
 }
 
-static PyUFuncGenericFunction angle_functions[] = { DOUBLE_angle };
-static void * angle_data[] = { (void *)NULL };
-static char angle_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static PyUFuncGenericFunction angle_functions[] = {DOUBLE_angle};
+static void *angle_data[] = {(void *) NULL};
+static char angle_signatures[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 /*
  *****************************************************************************
@@ -824,31 +852,30 @@ static char angle_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBL
  */
 
 static void
-addUfuncs(PyObject *dictionary) {
+addUfuncs(PyObject *dictionary)
+{
     PyObject *f;
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        inner1d_functions, inner1d_data, inner1d_signatures, 1, 2, 1,
-        PyUFunc_None, "inner1d",
-        "inner on the last dimension and broadcast on the rest \n"      \
+        inner1d_functions, inner1d_data, inner1d_signatures, 1, 2, 1, PyUFunc_None, "inner1d",
+        "inner on the last dimension and broadcast on the rest \n"
         "     \"(i),(i)->()\" \n",
         0, inner1d_signature);
     PyDict_SetItemString(dictionary, "inner1d", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        normalize_functions, normalize_data, normalize_signatures, 1, 1, 1,
-        PyUFunc_None, "normalize",
-        "Normalize the vector to the unit sphere. \n"      \
+        normalize_functions, normalize_data, normalize_signatures, 1, 1, 1, PyUFunc_None,
+        "normalize",
+        "Normalize the vector to the unit sphere. \n"
         "     \"(i)->(i)\" \n",
         0, normalize_signature);
     PyDict_SetItemString(dictionary, "normalize", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        cross_functions, cross_data, cross_signatures, 1, 2, 1,
-        PyUFunc_None, "cross",
-        "cross product of 3-vectors only \n" \
+        cross_functions, cross_data, cross_signatures, 1, 2, 1, PyUFunc_None, "cross",
+        "cross product of 3-vectors only \n"
         "     \"(i),(i)->(i)\" \n",
         0, cross_signature);
     PyDict_SetItemString(dictionary, "cross", f);
@@ -857,7 +884,7 @@ addUfuncs(PyObject *dictionary) {
     f = PyUFunc_FromFuncAndDataAndSignature(
         cross_and_norm_functions, cross_and_norm_data, cross_and_norm_signatures, 1, 2, 1,
         PyUFunc_None, "cross_and_norm",
-        "cross_and_norm product of 3-vectors only \n" \
+        "cross_and_norm product of 3-vectors only \n"
         "     \"(i),(i)->(i)\" \n",
         0, cross_and_norm_signature);
     PyDict_SetItemString(dictionary, "cross_and_norm", f);
@@ -866,7 +893,7 @@ addUfuncs(PyObject *dictionary) {
     f = PyUFunc_FromFuncAndDataAndSignature(
         triple_product_functions, triple_product_data, triple_product_signatures, 1, 3, 1,
         PyUFunc_None, "triple_product",
-        "Calculate the triple_product between A, B and C.\n" \
+        "Calculate the triple_product between A, B and C.\n"
         "     \"(i),(i),(i)->()\" \n",
         0, triple_product_signature);
 
@@ -874,27 +901,26 @@ addUfuncs(PyObject *dictionary) {
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        intersection_functions, intersection_data, intersection_signatures, 1, 4, 1,
-        PyUFunc_None, "intersection",
-        "intersection product of 3-vectors only \n" \
+        intersection_functions, intersection_data, intersection_signatures, 1, 4, 1, PyUFunc_None,
+        "intersection",
+        "intersection product of 3-vectors only \n"
         "     \"(i),(i),(i),(i)->(i)\" \n",
         0, intersection_signature);
     PyDict_SetItemString(dictionary, "intersection", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        intersects_functions, intersects_data, intersects_signatures, 1, 4, 1,
-        PyUFunc_None, "intersects",
-        "true where AB intersects CD \n" \
+        intersects_functions, intersects_data, intersects_signatures, 1, 4, 1, PyUFunc_None,
+        "intersects",
+        "true where AB intersects CD \n"
         "     \"(i),(i),(i),(i)->()\" \n",
         0, intersects_signature);
     PyDict_SetItemString(dictionary, "intersects", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        length_functions, length_data, length_signatures, 1, 2, 1,
-        PyUFunc_None, "length",
-        "length of great circle arc \n" \
+        length_functions, length_data, length_signatures, 1, 2, 1, PyUFunc_None, "length",
+        "length of great circle arc \n"
         "     \"(i),(i)->()\" \n",
         0, length_signature);
     PyDict_SetItemString(dictionary, "length", f);
@@ -903,16 +929,15 @@ addUfuncs(PyObject *dictionary) {
     f = PyUFunc_FromFuncAndDataAndSignature(
         intersects_point_functions, intersects_point_data, intersects_point_signatures, 1, 3, 1,
         PyUFunc_None, "intersects_point",
-        "True where point C intersects arc AB \n" \
+        "True where point C intersects arc AB \n"
         "     \"(i),(i),(i)->()\" \n",
         0, intersects_point_signature);
     PyDict_SetItemString(dictionary, "intersects_point", f);
     Py_DECREF(f);
 
     f = PyUFunc_FromFuncAndDataAndSignature(
-        angle_functions, angle_data, angle_signatures, 1, 3, 1,
-        PyUFunc_None, "angle",
-        "Calculate the angle at B between AB and BC.\n" \
+        angle_functions, angle_data, angle_signatures, 1, 3, 1, PyUFunc_None, "angle",
+        "Calculate the angle at B between AB and BC.\n"
         "     \"(i),(i),(i)->()\" \n",
         0, angle_signature);
     PyDict_SetItemString(dictionary, "angle", f);
@@ -920,26 +945,17 @@ addUfuncs(PyObject *dictionary) {
 }
 
 static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "math_util",
-        NULL,
-        -1,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+    PyModuleDef_HEAD_INIT, "math_util", NULL, -1, NULL, NULL, NULL, NULL, NULL};
 
-PyObject *PyInit_math_util(void)
+PyObject *
+PyInit_math_util(void)
 {
     PyObject *m;
     PyObject *d;
 
     m = PyModule_Create(&moduledef);
     if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath_tests module.");
+        PyErr_SetString(PyExc_RuntimeError, "cannot load umath_tests module.");
         return NULL;
     }
 
@@ -961,8 +977,7 @@ PyObject *PyInit_math_util(void)
     addUfuncs(d);
 
     if (PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath_tests module.");
+        PyErr_SetString(PyExc_RuntimeError, "cannot load umath_tests module.");
         return NULL;
     }
 
