@@ -4,9 +4,9 @@
    qd-library. */
 
 #define QD_API
-#define QD_INLINE 1
-#define QD_HAVE_STD 1
-#define QD_IEEE_ADD 1
-#define QD_ISINF(x) ( (x) != 0.0 && (x) == 2.0 * (x) )
-#define QD_ISFINITE(x) ( ((x) == 0.0) || ((x) != (2.0 * (x))) )
-#define QD_ISNAN(x) ((x) != (x))
+#define QD_INLINE      1
+#define QD_HAVE_STD    1
+#define QD_IEEE_ADD    1
+#define QD_ISINF(x)    ((x) != 0.0 && (x) == 2.0 * (x))
+#define QD_ISFINITE(x) (((x) == 0.0) || ((x) != (2.0 * (x))))
+#define QD_ISNAN(x)    ((x) != (x))

@@ -22,6 +22,7 @@ repos:
       - id: detect-private-key
       # - id: end-of-file-fixer
       # - id: trailing-whitespace
+
   # simple text searches for common issues
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
@@ -29,7 +30,15 @@ repos:
       - id: rst-directive-colons
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
+
   # lint and format
+  # C style
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.0
+    hooks:
+      - id: clang-format
+        types_or: [c]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.11
     hooks:
