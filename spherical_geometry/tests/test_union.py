@@ -89,18 +89,23 @@ class union_test:
 
 @union_test(0, 90)
 def test1():
+    from astropy import wcs as pywcs
     from astropy.io import fits
-    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+
+    filename = resolve_imagename(ROOT_DIR, "1904-66_TAN.fits")
     header = fits.getheader(filename, ext=0)
 
-    poly1 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[0, 87])
-    poly2 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[20, 89])
-    poly3 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[175, 89])
-    poly4 = polygon.SphericalPolygon.from_cone(
-        90, 70, 10, steps=8)
+    wcsobj1 = pywcs.WCS(header)
+    wcsobj1.wcs.crval = [0, 87]
+    wcsobj2 = pywcs.WCS(header)
+    wcsobj2.wcs.crval = [20, 89]
+    wcsobj3 = pywcs.WCS(header)
+    wcsobj3.wcs.crval = [175, 89]
+
+    poly1 = polygon.SphericalPolygon.from_wcs(wcsobj1, 1)
+    poly2 = polygon.SphericalPolygon.from_wcs(wcsobj2, 1)
+    poly3 = polygon.SphericalPolygon.from_wcs(wcsobj3, 1)
+    poly4 = polygon.SphericalPolygon.from_cone(90, 70, 10, steps=8)
 
     return [poly1, poly2, poly3, poly4]
 

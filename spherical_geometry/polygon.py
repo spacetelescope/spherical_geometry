@@ -9,6 +9,7 @@ managing polygons on the unit sphere.
 from copy import deepcopy
 
 # THIRD-PARTY
+import astropy.wcs
 import numpy as np
 
 # LOCAL
@@ -251,72 +252,84 @@ class SingleSphericalPolygon(object):
         return cls(np.dstack((X, Y, Z))[0], (u, v, w))
 
     @classmethod
-    def from_wcs(cls, fitspath, steps=1, crval=None):
-        r"""
-        Create a new `SingleSphericalPolygon` from the footprint of a FITS
-        WCS specification.
+    def from_wcs(
+        cls,
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
+        steps: int = 1,
+    ) -> "SingleSphericalPolygon":
+        r"""Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
 
-        This method requires having `astropy <http://astropy.org>`__
-        installed.
+        If the number of edges per side is set to 1, the polygon will be rectangular.
+        Otherwise, the polygon will capture WCS distortion along the edges of the footprint.
+
+        This method requires `astropy <http://astropy.org>`__ installed.
 
         Parameters
         ----------
-        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
-            Refers to a FITS header containing a WCS specification.
-
-        steps : int, optional
-            The number of steps along each edge to convert into
-            polygon edges.
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
+            any WCS object that implements the common WCS API
+        steps: int, optional :
+            The number of edges to create along each side of the polygon. (Default value = 1)
 
         Returns
         -------
         polygon : `SingleSphericalPolygon` object
         """
-        from astropy import wcs as pywcs
-        from astropy.io import fits
 
-        if isinstance(fitspath, fits.Header):
-            header = fitspath
-            wcs = pywcs.WCS(header)
-        elif isinstance(fitspath, pywcs.WCS):
-            wcs = fitspath
-        else:
-            wcs = pywcs.WCS(fitspath)
-        if crval is not None:
-            wcs.wcs.crval = crval
+        if isinstance(wcs, (astropy.io.fits.Header | str)):
+            wcs = astropy.wcs.WCS(wcs)
 
-        try:
-            xa, ya = wcs.pixel_shape
-        except AttributeError:
-            xa, ya = (wcs._naxis1, wcs._naxis2)
+        array_shape = (
+            wcs.array_shape
+            if hasattr(wcs, "array_shape") and wcs.array_shape is not None
+            else tuple(
+                wcs.bounding_box[index][1] - wcs.bounding_box[index][0]
+                for index in range(len(wcs.bounding_box))
+            )
+        )
 
-        length = steps * 4 + 1
-        X = np.empty(length)
-        Y = np.empty(length)
+        vertices_per_side = steps + 1
 
-        # Now define each of the 4 edges of the quadrilateral
-        X[0      :steps  ] = np.linspace(1, xa, steps, False)
-        Y[0      :steps  ] = 1
-        X[steps  :steps*2] = xa
-        Y[steps  :steps*2] = np.linspace(1, ya, steps, False)
-        X[steps*2:steps*3] = np.linspace(xa, 1, steps, False)
-        Y[steps*2:steps*3] = ya
-        X[steps*3:steps*4] = 1
-        Y[steps*3:steps*4] = np.linspace(ya, 1, steps, False)
-        X[-1]              = 1
-        Y[-1]              = 1
+        # constrain number of vertices to the maximum number of pixels on an edge
+        if vertices_per_side > max(array_shape):
+            vertices_per_side = max(array_shape)
 
-        # Use wcslib to convert to (lon, lat)
-        lon, lat = wcs.all_pix2world(X, Y, 1)
+        # build a list of pixel indices that represent equally-spaced edge vertices
+        origin_indices = np.zeros(vertices_per_side) - 0.5
+        x_end_indices = array_shape[0] - origin_indices
+        y_end_indices = array_shape[1] - origin_indices
+        vertices_x = np.linspace(
+            0, array_shape[0], num=vertices_per_side, endpoint=False
+        )
+        vertices_y = np.linspace(
+            0, array_shape[1], num=vertices_per_side, endpoint=False
+        )
+        vertex_indices = np.concatenate(
+            [
+                # north edge
+                np.stack([origin_indices, vertices_y], axis=1),
+                # east edge
+                np.stack([vertices_x, y_end_indices], axis=1),
+                # south edge
+                np.stack([x_end_indices, y_end_indices - vertices_y], axis=1),
+                # west edge
+                np.stack([x_end_indices - vertices_x, origin_indices], axis=1),
+            ],
+            axis=0,
+        )
 
-        # Convert to Cartesian
-        x, y, z = vector.lonlat_to_vector(lon, lat)
+        # ensure bounding box is None
+        if hasattr(wcs, "bounding_box"):
+            wcs.bounding_box = None
 
-        # Calculate an inside point
-        lon, lat = wcs.all_pix2world(xa / 2.0, ya / 2.0, 1)
-        xc, yc, zc = vector.lonlat_to_vector(lon, lat)
+        # query the WCS for pixel indices at the edges
+        vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
+        center_skycoord = wcs.pixel_to_world(
+            *(origin_indices + (origin_indices + array_shape) / 2)
+        )
+        center = center_skycoord.ra.degree, center_skycoord.dec.degree
 
-        return cls(np.dstack((x, y, z))[0], (xc, yc, zc))
+        return cls.from_lonlat(vertex_skycoords.ra.degree, vertex_skycoords.dec.degree, center=center)
 
     @classmethod
     def convex_hull(cls, points):
@@ -938,30 +951,30 @@ class SphericalPolygon(SingleSphericalPolygon):
         return cls((polygon,))
 
     @classmethod
-    def from_wcs(cls, fitspath, steps=1, crval=None):
-        r"""
-        Create a new `SphericalPolygon` from the footprint of a FITS
-        WCS specification.
+    def from_wcs(
+        cls,
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
+        steps: int = 1,
+    ) -> "SphericalPolygon":
+        """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
-        This method requires having `astropy <http://astropy.org>`__
-        installed.
+        If the number of edges per side is set to 1, the polygon will be rectangular.
+        Otherwise, the polygon will capture WCS distortion along the edges of the footprint.
+
+        This method requires `astropy <http://astropy.org>`__ installed.
 
         Parameters
         ----------
-        fitspath : path to a FITS file, `astropy.io.fits.Header`, or `astropy.wcs.WCS`
-            Refers to a FITS header containing a WCS specification.
-
-        steps : int, optional
-            The number of steps along each edge to convert into
-            polygon edges.
+        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
+            any WCS object that implements the common WCS API
+        steps: int, optional :
+            The number of edges to create along each side of the polygon. (Default value = 1)
 
         Returns
         -------
         polygon : `SphericalPolygon` object
         """
-        polygon = SingleSphericalPolygon.from_wcs(fitspath,
-                                                  steps=steps, crval=crval)
-        return cls((polygon,))
+        return cls((SingleSphericalPolygon.from_wcs(wcs, steps),))
 
     @classmethod
     def convex_hull(cls, points):

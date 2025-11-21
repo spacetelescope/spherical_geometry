@@ -82,15 +82,19 @@ class intersection_test:
 
 @intersection_test(0, 90)
 def test1():
+    from astropy import wcs as pywcs
     from astropy.io import fits
 
-    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+    filename = resolve_imagename(ROOT_DIR, "1904-66_TAN.fits")
     header = fits.getheader(filename, ext=0)
 
-    poly1 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[0, 87])
-    poly2 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[20, 89])
+    wcsobj1 = pywcs.WCS(header)
+    wcsobj1.wcs.crval = [0, 87]
+    wcsobj2 = pywcs.WCS(header)
+    wcsobj2.wcs.crval = [20, 89]
+
+    poly1 = polygon.SphericalPolygon.from_wcs(wcsobj1, 1)
+    poly2 = polygon.SphericalPolygon.from_wcs(wcsobj2, 1)
 
     return [poly1, poly2]
 
@@ -105,14 +109,19 @@ def test2():
 
 @intersection_test(0, 90)
 def test3():
+    from astropy import wcs as pywcs
     from astropy.io import fits
-    filename = resolve_imagename(ROOT_DIR,'1904-66_TAN.fits')
+
+    filename = resolve_imagename(ROOT_DIR, "1904-66_TAN.fits")
     header = fits.getheader(filename, ext=0)
 
-    poly1 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[0, 87])
-    poly3 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[175, 89])
+    wcsobj1 = pywcs.WCS(header)
+    wcsobj1.wcs.crval = [0, 87]
+    wcsobj2 = pywcs.WCS(header)
+    wcsobj2.wcs.crval = [175, 89]
+
+    poly1 = polygon.SphericalPolygon.from_wcs(wcsobj1, 1)
+    poly3 = polygon.SphericalPolygon.from_wcs(wcsobj2, 1)
 
     return [poly1, poly3]
 
