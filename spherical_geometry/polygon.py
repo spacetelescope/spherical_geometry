@@ -291,8 +291,8 @@ class SingleSphericalPolygon(object):
         vertices_per_side = steps + 1
 
         # constrain number of vertices to the maximum number of pixels on an edge
-        if vertices_per_side > max(array_shape):
-            vertices_per_side = max(array_shape)
+        if vertices_per_side > min(array_shape):
+            vertices_per_side = min(array_shape)
 
         # build a list of pixel indices that represent equally-spaced edge vertices
         origin_indices = np.zeros(vertices_per_side) - 0.5
