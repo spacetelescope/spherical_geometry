@@ -295,25 +295,24 @@ class SingleSphericalPolygon(object):
             vertices_per_side = min(array_shape)
 
         # build a list of pixel indices that represent equally-spaced edge vertices
-        origin_indices = np.zeros(vertices_per_side) - 0.5
-        x_end_indices = array_shape[0] - origin_indices
-        y_end_indices = array_shape[1] - origin_indices
-        vertices_x = np.linspace(
-            0, array_shape[0], num=vertices_per_side, endpoint=False
-        )
-        vertices_y = np.linspace(
-            0, array_shape[1], num=vertices_per_side, endpoint=False
-        )
+        origin_index = -0.5
+        origin_indices = np.repeat(origin_index, vertices_per_side - 1)
+        x_indices = np.linspace(0, array_shape[0], num=vertices_per_side - 1, endpoint=False) + origin_index
+        y_indices = np.linspace(0, array_shape[1], num=vertices_per_side - 1, endpoint=False) + origin_index
+
+        x_end_indices = np.repeat(origin_index + array_shape[0], vertices_per_side - 1)
+        y_end_indices = np.repeat(origin_index + array_shape[1], vertices_per_side - 1)
+
         vertex_indices = np.concatenate(
             [
-                # north edge
-                np.stack([origin_indices, vertices_y], axis=1),
-                # east edge
-                np.stack([vertices_x, y_end_indices], axis=1),
                 # south edge
-                np.stack([x_end_indices, y_end_indices - vertices_y], axis=1),
+                np.stack([x_indices, origin_indices], axis=1),
+                # east edge
+                np.stack([x_end_indices, y_indices], axis=1),
+                # north edge
+                np.stack([x_end_indices - x_indices + origin_index, y_end_indices], axis=1),
                 # west edge
-                np.stack([x_end_indices - vertices_x, origin_indices], axis=1),
+                np.stack([origin_indices, y_end_indices - y_indices + origin_index], axis=1),
             ],
             axis=0,
         )
