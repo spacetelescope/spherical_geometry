@@ -27,7 +27,7 @@ keywords = [
 dependencies = ["numpy>=1.25", "astropy>=5.2.0"]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-astropy-header"]
+test = ["pytest>=9.0", "pytest-astropy-header"]
 docs = ["sphinx-automodapi", "numpydoc"]
 
 [project.urls]
@@ -56,9 +56,9 @@ namespaces = false
 [tool.setuptools_scm]
 write_to = "spherical_geometry/_version.py"
 
-[tool.pytest.ini_options]
-minversion = 6.0
-addopts = "--color=yes --import-mode=append"
+[tool.pytest]
+minversion = "9.0"
+addopts = ["--color=yes", "--import-mode=append"]
 testpaths = ["spherical_geometry"]
 norecursedirs = ["build", "docs[\\/]_build"]
 astropy_header = true
