@@ -369,3 +369,16 @@ def test_intersection_crash_similar_poly():
     pts1 = np.sort(list(p1.points)[0][:-1], axis=0)
     pts3 = np.sort(list(p3.points)[0][:-1], axis=0)
     assert_allclose(pts1, pts3, rtol=0, atol=1e-15)
+
+def test_complement_regression():
+    """https://github.com/spacetelescope/spherical_geometry/issues/278"""
+
+    p1 = polygon.SingleSphericalPolygon.from_cone(90, 0, 100)
+    p2 = polygon.SingleSphericalPolygon.from_cone(270, 0, 100)
+
+    assert p1.contains_lonlat(0, 0)
+    assert p2.contains_lonlat(0, 0)
+
+    p12 = p1.intersection(p2)
+
+    assert p12.contains_lonlat(0, 0)
