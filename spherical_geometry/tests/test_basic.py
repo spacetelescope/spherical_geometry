@@ -184,7 +184,7 @@ def test_overlap():
         assert abs(overlap_area - calculated_area) < 0.0005
 
 
-def test_from_wcs():
+def test_from_wcs_fits_header():
     from astropy.io import fits
 
     filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
@@ -192,10 +192,168 @@ def test_from_wcs():
 
     poly = polygon.SphericalPolygon.from_wcs(header)
     for lonlat in poly.to_lonlat():
-        lon = lonlat[0]
-        lat = lonlat[1]
-        assert np.all(np.absolute(lon - 6.027148333333) < 0.2)
-        assert np.all(np.absolute(lat + 72.08351111111) < 0.2)
+        lonlat = np.array(lonlat).T
+        assert_allclose(
+            lonlat,
+            np.repeat([(6.027148333333, -72.08351111111)], repeats=lonlat.shape[0], axis=0),
+            atol=0.2,
+        )
+
+
+@pytest.mark.parametrize(
+    "test_point,rotation,reference_vertices",
+    [
+        (
+            (0.88955854, 87.53857137),
+            32,
+            np.array(
+                [
+                    [0.44159697, 87.45224248],
+                    [358.86610698, 87.55693661],
+                    [1.36978903, 87.62469705],
+                    [2.88036391, 87.51714578],
+                    [0.44159697, 87.45224248],
+                ]
+            ),
+        ),
+        (
+            (20.6543883, 87.60498618),
+            32,
+            np.array(
+                [
+                    [20.19444467, 87.51865521],
+                    [18.57443849, 87.62330885],
+                    [21.14842456, 87.69110946],
+                    [22.69986438, 87.5835194],
+                    [20.19444467, 87.51865521],
+                ]
+            ),
+        ),
+        (
+            (343.19474696, 85.05565535),
+            32,
+            np.array(
+                [
+                    [342.96766232, 84.96936492],
+                    [342.19027446, 85.07478896],
+                    [343.4297577, 85.1418237],
+                    [344.19107242, 85.0349796],
+                    [342.96766232, 84.96936492],
+                ]
+            ),
+        ),
+        (
+            (8.94286202, 85.50465173),
+            32,
+            np.array(
+                [
+                    [8.69357802, 85.41835743],
+                    [7.83787748, 85.52370944],
+                    [9.2017496, 85.59081592],
+                    [10.0380017, 85.48390137],
+                    [8.69357802, 85.41835743],
+                ]
+            ),
+        ),
+        (
+            (27.38417684, 85.03404907),
+            32,
+            np.array(
+                [
+                    [27.15806084, 84.94775881],
+                    [26.38408053, 85.05318598],
+                    [27.61814952, 85.1202176],
+                    [28.37619642, 85.01337658],
+                    [27.15806084, 84.94775881],
+                ]
+            ),
+        ),
+        (
+            (310.53503934, 88.56749324),
+            32,
+            np.array(
+                [
+                    [309.78378196, 88.48111162],
+                    [307.04133564, 88.58475081],
+                    [311.38208432, 88.65355518],
+                    [313.93283528, 88.54500777],
+                    [309.78378196, 88.48111162],
+                ]
+            ),
+        ),
+        (
+            (0, 60),
+            32,
+            np.array(
+                [
+                    [3.59960278e02, 5.99137429e01],
+                    [3.59827427e02, 6.00197743e01],
+                    [3.99098728e-02, 6.00862030e01],
+                    [1.72346200e-01, 5.99799589e01],
+                    [3.59960278e02, 5.99137429e01],
+                ]
+            ),
+        ),
+        (
+            (0, 90),
+            32,
+            np.array(
+                [
+                    [347.0, 89.91148012],
+                    [257.01398823, 89.91150173],
+                    [167.0, 89.91152333],
+                    [76.98601177, 89.91150173],
+                    [347.0, 89.91148012],
+                ]
+            ),
+        ),
+        (
+            (12, 66),
+            32,
+            np.array(
+                [
+                    [11.95120786, 65.91374114],
+                    [11.78781877, 66.01974085],
+                    [12.04909914, 66.08620122],
+                    [12.21182644, 65.97992557],
+                    [11.95120786, 65.91374114],
+                ]
+            ),
+        ),
+    ],
+)
+def test_from_wcs_gwcs(test_point, rotation, reference_vertices):
+    import astropy.coordinates as coord
+    import astropy.modeling.models as amm
+    import astropy.units as u
+    from gwcs import WCS, coordinate_frames
+
+    bounding_box = ((-0.5, 4096 - 0.5), (-0.5, 4096 - 0.5))
+    pixel_shape = None
+
+    transform = (amm.Shift(-2048) & amm.Shift(-2048)) | (
+        amm.Scale(0.11 / 3600.0) & amm.Scale(0.11 / 3600.0)
+        | amm.Rotation2D(rotation)
+        | amm.Pix2Sky_TAN()
+        | amm.RotateNative2Celestial(*test_point, 180.0)
+    )
+    detector_frame = coordinate_frames.Frame2D(
+        name="detector", axes_names=("x", "y"), unit=(u.pix, u.pix)
+    )
+    sky_frame = coordinate_frames.CelestialFrame(
+        reference_frame=coord.ICRS(), name="icrs", unit=(u.deg, u.deg)
+    )
+    wcsobj = WCS([(detector_frame, transform), (sky_frame, None)])
+    if pixel_shape is not None:
+        wcsobj.pixel_shape = pixel_shape
+    if bounding_box is not None:
+        wcsobj.bounding_box = bounding_box
+
+    poly = polygon.SphericalPolygon.from_wcs(wcsobj)
+
+    assert poly.area() > 0
+    assert poly.contains_point(vector.lonlat_to_vector(*test_point))
+    assert_allclose(np.stack(list(poly.to_lonlat())[0], axis=1), reference_vertices)
 
 
 def test_intersects_poly_simple():
@@ -306,22 +464,30 @@ def test_point_in_poly():
 
 
 def test_point_in_poly_lots():
+    from astropy import wcs as pywcs
     from astropy.io import fits
-    header = fits.getheader(resolve_imagename(ROOT_DIR, '1904-77_TAN.fits'),
-                            ext=0)
 
-    poly1 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[0, 87])
-    poly2 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[20, 89])
-    poly3 = polygon.SphericalPolygon.from_wcs(
-        header, 1, crval=[180, 89])
+    header = fits.getheader(resolve_imagename(ROOT_DIR, "1904-77_TAN.fits"), ext=0)
+
+    wcsobj1 = pywcs.WCS(header)
+    wcsobj1.wcs.crval = [0, 87]
+    wcsobj2 = pywcs.WCS(header)
+    wcsobj2.wcs.crval = [20, 89]
+    wcsobj3 = pywcs.WCS(header)
+    wcsobj3.wcs.crval = [180, 89]
+
+    poly1 = polygon.SphericalPolygon.from_wcs(wcsobj1, 1)
+    poly2 = polygon.SphericalPolygon.from_wcs(wcsobj2, 1)
+    poly3 = polygon.SphericalPolygon.from_wcs(wcsobj3, 1)
 
     points = get_point_set()
     count = 0
     for point in points:
-        if (poly1.contains_point(point) or poly2.contains_point(point) or
-                poly3.contains_point(point)):
+        if (
+            poly1.contains_point(point)
+            or poly2.contains_point(point)
+            or poly3.contains_point(point)
+        ):
             count += 1
 
     assert count == 5
