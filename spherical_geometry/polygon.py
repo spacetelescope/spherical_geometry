@@ -303,6 +303,7 @@ class SingleSphericalPolygon(object):
         x_end_indices = np.repeat(origin_index + array_shape[0], vertices_per_side - 1)
         y_end_indices = np.repeat(origin_index + array_shape[1], vertices_per_side - 1)
 
+        # define each of the 4 edges of the quadrilateral
         vertex_indices = np.concatenate(
             [
                 # south edge
@@ -321,13 +322,14 @@ class SingleSphericalPolygon(object):
         if hasattr(wcs, "bounding_box"):
             wcs.bounding_box = None
 
-        # query the WCS for pixel indices at the edges
+        # convert the pixel indices into sky coordinates using the WCS
         vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
         center_skycoord = wcs.pixel_to_world(
             *(origin_indices + (origin_indices + array_shape) / 2)
         )
         center = center_skycoord.ra.degree, center_skycoord.dec.degree
 
+        # pass the sky coordinates to a new polygon object as degrees
         return cls.from_lonlat(vertex_skycoords.ra.degree, vertex_skycoords.dec.degree, center=center)
 
     @classmethod
