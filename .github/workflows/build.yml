@@ -13,6 +13,9 @@ on:
       - main
     tags:
       - "*"
+  release:
+    types:
+      - released
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
