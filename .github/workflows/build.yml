@@ -17,10 +17,6 @@ on:
     types:
       - released
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -30,7 +26,7 @@ jobs:
     permissions:
       contents: none
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v2
-    if: github.event_name == 'pull_request' || ((github.event_name == 'release') && (github.event.action == 'released'))
+    if: github.event_name == 'pull_request'
     with:
       upload_to_pypi: false
       upload_to_anaconda: false
@@ -47,7 +43,7 @@ jobs:
 
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v2
 
-    if: (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'Build wheels')) || ((github.event_name == 'release') && (github.event.action == 'released'))
+    if: ((github.event_name == 'release') && (github.event.action == 'released')) || contains(github.event.pull_request.labels.*.name, 'Build wheels')
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
 
