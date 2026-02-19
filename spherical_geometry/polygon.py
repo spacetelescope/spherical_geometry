@@ -9,7 +9,6 @@ managing polygons on the unit sphere.
 from copy import deepcopy
 
 # THIRD-PARTY
-import astropy.wcs
 import numpy as np
 
 # LOCAL
@@ -252,11 +251,7 @@ class SingleSphericalPolygon(object):
         return cls(np.dstack((X, Y, Z))[0], (u, v, w))
 
     @classmethod
-    def from_wcs(
-        cls,
-        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
-        steps: int = 1,
-    ) -> "SingleSphericalPolygon":
+    def from_wcs(cls, wcs, steps: int = 1) -> "SingleSphericalPolygon":
         r"""Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
 
         If the number of edges per side is set to 1, the polygon will be rectangular.
@@ -276,8 +271,11 @@ class SingleSphericalPolygon(object):
         polygon : `SingleSphericalPolygon` object
         """
 
-        if isinstance(wcs, (astropy.io.fits.Header | str)):
-            wcs = astropy.wcs.WCS(wcs)
+        from astropy import wcs as pywcs
+        from astropy.io import fits
+
+        if isinstance(wcs, (fits.Header | str)):
+            wcs = pywcs.WCS(wcs)
 
         array_shape = (
             wcs.array_shape
@@ -952,11 +950,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         return cls((polygon,))
 
     @classmethod
-    def from_wcs(
-        cls,
-        wcs: astropy.wcs.WCS | astropy.io.fits.Header | str,
-        steps: int = 1,
-    ) -> "SphericalPolygon":
+    def from_wcs(cls, wcs, steps: int = 1) -> "SphericalPolygon":
         """Create a `SphericalPolygon` from the footprint of a world coordinate system.
 
         If the number of edges per side is set to 1, the polygon will be rectangular.
