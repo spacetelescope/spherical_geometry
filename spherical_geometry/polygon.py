@@ -271,11 +271,10 @@ class SingleSphericalPolygon(object):
         polygon : `SingleSphericalPolygon` object
         """
 
-        from astropy import wcs as pywcs
-        from astropy.io import fits
+        import astropy
 
-        if isinstance(wcs, (fits.Header | str)):
-            wcs = pywcs.WCS(wcs)
+        if isinstance(wcs, (astropy.io.fits.Header | str)):
+            wcs = astropy.wcs.WCS(wcs)
 
         array_shape = (
             wcs.array_shape
