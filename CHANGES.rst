@@ -4,8 +4,13 @@
 Release Notes
 =============
 
-1.3.5 (17-February-2026)
+1.3.6 (unreleased)
 ==================
+
+- Make ``astropy`` an optional dependency
+
+1.3.5 (17-February-2026)
+========================
 
 - Update ``from_wcs`` to accept any WCS object that implements the WCS API.
 
