@@ -27,8 +27,8 @@ keywords = [
 dependencies = ["numpy>=1.25"]
 
 [project.optional-dependencies]
-test = ["pytest>=9.0", "pytest-astropy-header", "gwcs"]
-docs = ["sphinx-automodapi", "numpydoc"]
+test = ["astropy>=5.2.0", "pytest>=9.0", "pytest-astropy-header", "gwcs"]
+docs = ["astropy>=5.2.0", "sphinx-automodapi", "numpydoc"]
 wcs = ["astropy>=5.2.0"]
 
 [project.urls]
