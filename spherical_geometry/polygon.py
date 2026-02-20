@@ -322,7 +322,7 @@ class SingleSphericalPolygon(object):
         # convert the pixel indices into sky coordinates using the WCS
         vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
         center_skycoord = wcs.pixel_to_world(
-            *(origin_indices + (origin_indices + array_shape) / 2)
+            *((np.array(array_shape) + origin_index) / 2 + origin_index)
         )
         center = center_skycoord.ra.degree, center_skycoord.dec.degree
 
