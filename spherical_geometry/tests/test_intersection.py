@@ -71,7 +71,7 @@ class intersection_test:
                 assert np.all(intersection_area * 0.9 <= areas)
 
             lengths = np.array([
-                sum(len(x._points) for x in y.iter_polygons_flat())
+                sum(len(x._points) for x in y)
                 for y in intersections])
             assert np.all(lengths == [lengths[0]])
             areas = np.array([x.area() for x in intersections])
@@ -268,7 +268,7 @@ def test_ordering():
             points = p.points
             points = np.roll(points[:-1], i, 0)
             points = np.append(points, [points[0]], 0)
-            p = polygon._SingleSphericalPolygon(points, p.inside)
+            p = polygon.SingleSphericalPolygon(points, p.inside)
             polygons.append(p)
         return polygon.SphericalPolygon(polygons)
 

@@ -78,7 +78,7 @@ class union_test:
                 assert np.all(union_area * 1.1 >= areas)
 
             lengths = np.array([
-                sum(len(x._points) for x in y.iter_polygons_flat())
+                sum(len(x._points) for x in y)
                 for y in unions])
             assert np.all(lengths == [lengths[0]])
             areas = np.array([x.area() for x in unions])
@@ -363,5 +363,6 @@ def test_almost_identical_polygons_multi_union():
         p_shapes = [(66, 3)]
 
     p = polygon.SphericalPolygon.multi_union(polygons)
+
     assert np.shape(list(p.points)[0]) in p_shapes
     assert abs(p.area() - 2.6672666e-8) < area_tol
