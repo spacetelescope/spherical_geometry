@@ -329,7 +329,6 @@ def test_from_wcs_gwcs(test_point, rotation, reference_vertices):
     from gwcs import WCS, coordinate_frames
 
     bounding_box = ((-0.5, 4096 - 0.5), (-0.5, 4096 - 0.5))
-    pixel_shape = None
 
     transform = (amm.Shift(-2048) & amm.Shift(-2048)) | (
         amm.Scale(0.11 / 3600.0) & amm.Scale(0.11 / 3600.0)
@@ -344,10 +343,7 @@ def test_from_wcs_gwcs(test_point, rotation, reference_vertices):
         reference_frame=coord.ICRS(), name="icrs", unit=(u.deg, u.deg)
     )
     wcsobj = WCS([(detector_frame, transform), (sky_frame, None)])
-    if pixel_shape is not None:
-        wcsobj.pixel_shape = pixel_shape
-    if bounding_box is not None:
-        wcsobj.bounding_box = bounding_box
+    wcsobj.bounding_box = bounding_box
 
     poly = polygon.SphericalPolygon.from_wcs(wcsobj)
 
