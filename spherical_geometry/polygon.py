@@ -296,6 +296,9 @@ class SingleSphericalPolygon(object):
             height = ymax - ymin
 
             if (shape := getattr(wcs, "array_shape", None)) is not None:
+                # clip (intersect) the bounding box with the array shape
+                # if it is available, to avoid having edge vertices outside
+                # of the image footprint.
                 xmin = max(xmin, -0.5)
                 ymin = max(ymin, -0.5)
                 xmax = min(xmax, shape[1] - 0.5)
@@ -309,7 +312,8 @@ class SingleSphericalPolygon(object):
 
         else:
             raise ValueError(
-                "WCS must have either a bounding box or an array shape"
+                "Unable to infer footprint from WCS: the WCS object must have "
+                "either a 'bounding_box' or an 'array_shape' property set."
             )
 
         # constrain number of vertices to the maximum number
