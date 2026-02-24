@@ -252,10 +252,14 @@ class SingleSphericalPolygon(object):
 
     @classmethod
     def from_wcs(cls, wcs, steps: int = 1) -> "SingleSphericalPolygon":
-        r"""Create a `SingleSphericalPolygon` from the footprint of a world coordinate system.
+        r"""Create a `SingleSphericalPolygon` from image footprint - the
+        intersection of the image shape given by ``wcs.array_shape`` and
+        the ``wcs.bounding_box`` if available) - converted to a world
+        coordinate system.
 
-        If the number of edges per side is set to 1, the polygon will be rectangular.
-        Otherwise, the polygon will capture WCS distortion along the edges of the footprint.
+        If the number of edges per side is set to 1, the polygon will be
+        rectangular. Otherwise, the polygon will capture WCS distortion along
+        the edges of the footprint.
 
         This method requires `astropy <http://astropy.org>`__ installed.
 
@@ -264,7 +268,8 @@ class SingleSphericalPolygon(object):
         wcs: astropy.wcs.WCS | astropy.io.fits.Header | str :
             any WCS object that implements the common WCS API
         steps: int, optional :
-            The number of edges to create along each side of the polygon. (Default value = 1)
+            The number of edges to create along each side of the polygon.
+            (Default value = 1)
 
         Returns
         -------
@@ -273,61 +278,97 @@ class SingleSphericalPolygon(object):
 
         import astropy
 
-        if isinstance(wcs, (astropy.io.fits.Header | str)):
+        if isinstance(wcs, astropy.io.fits.Header | str):
             wcs = astropy.wcs.WCS(wcs)
 
-        array_shape = (
-            wcs.array_shape
-            if hasattr(wcs, "array_shape") and wcs.array_shape is not None
-            else tuple(
-                wcs.bounding_box[index][1] - wcs.bounding_box[index][0]
-                for index in range(len(wcs.bounding_box))
+        if (bbox_attr := getattr(wcs, "bounding_box", None)) is not None:
+            if isinstance(
+                bbox_attr,
+                astropy.modeling.bounding_box.ModelBoundingBox
+            ):
+                bbox = bbox_attr.bounding_box(order="F")
+            else:
+                bbox = tuple(bbox_attr)
+
+            xmin, xmax = bbox[0]
+            ymin, ymax = bbox[1]
+            width = xmax - xmin
+            height = ymax - ymin
+
+            if (shape := getattr(wcs, "array_shape", None)) is not None:
+                # clip (intersect) the bounding box with the array shape
+                # if it is available, to avoid having edge vertices outside
+                # of the image footprint.
+                xmin = max(xmin, -0.5)
+                ymin = max(ymin, -0.5)
+                xmax = min(xmax, shape[1] - 0.5)
+                ymax = min(ymax, shape[0] - 0.5)
+
+        elif (shape := getattr(wcs, "array_shape", None)) is not None:
+            height, width = shape
+            xmin = ymin = -0.5
+            xmax = width - 0.5
+            ymax = height - 0.5
+
+        else:
+            raise ValueError(
+                "Unable to infer footprint from WCS: the WCS object must have "
+                "either a 'bounding_box' or an 'array_shape' property set."
             )
-        )
 
-        vertices_per_side = steps + 1
+        # constrain number of vertices to the maximum number
+        # of pixels on an edge:
+        steps = max(1, min(int(steps), int(width), int(height)))
 
-        # constrain number of vertices to the maximum number of pixels on an edge
-        if vertices_per_side > min(array_shape):
-            vertices_per_side = min(array_shape)
-
-        # build a list of pixel indices that represent equally-spaced edge vertices
-        origin_index = -0.5
-        origin_indices = np.repeat(origin_index, vertices_per_side - 1)
-        x_indices = np.linspace(0, array_shape[0], num=vertices_per_side - 1, endpoint=False) + origin_index
-        y_indices = np.linspace(0, array_shape[1], num=vertices_per_side - 1, endpoint=False) + origin_index
-
-        x_end_indices = np.repeat(origin_index + array_shape[0], vertices_per_side - 1)
-        y_end_indices = np.repeat(origin_index + array_shape[1], vertices_per_side - 1)
+        # build a list of pixel indices that represent
+        # equally-spaced edge vertices:
+        x0 = np.repeat(xmin, steps)
+        y0 = np.repeat(ymin, steps)
+        x1 = np.repeat(xmax, steps)
+        y1 = np.repeat(ymax, steps)
+        x = np.linspace(xmin, xmax, num=steps, endpoint=False)
+        y = np.linspace(ymin, ymax, num=steps, endpoint=False)
 
         # define each of the 4 edges of the quadrilateral
-        vertex_indices = np.concatenate(
+        vertices = np.concatenate(
             [
                 # south edge
-                np.stack([x_indices, origin_indices], axis=1),
+                np.stack([x, y0], axis=1),
                 # east edge
-                np.stack([x_end_indices, y_indices], axis=1),
+                np.stack([x1, y], axis=1),
                 # north edge
-                np.stack([x_end_indices - x_indices + origin_index, y_end_indices], axis=1),
+                np.stack([x1 - x + x0, y1], axis=1),
                 # west edge
-                np.stack([origin_indices, y_end_indices - y_indices + origin_index], axis=1),
+                np.stack([x0, y1 - y + y0], axis=1),
             ],
             axis=0,
         )
 
-        # ensure bounding box is None
+        # ensure bounding box is None because, due to rounding errors,
+        # edge vertices may be outside of the bounding box, which would
+        # result in ``NaN`` values when converting to sky coordinates
         if hasattr(wcs, "bounding_box"):
             wcs.bounding_box = None
 
         # convert the pixel indices into sky coordinates using the WCS
-        vertex_skycoords = wcs.pixel_to_world(*vertex_indices.T)
-        center_skycoord = wcs.pixel_to_world(
-            *(origin_indices + (origin_indices + array_shape) / 2)
-        )
-        center = center_skycoord.ra.degree, center_skycoord.dec.degree
+        try:
+            vertex_skycoords = wcs.pixel_to_world(*vertices.T)
+            xc = xmin + width / 2
+            yc = ymin + height / 2
+            center_skycoord = wcs.pixel_to_world(xc, yc)
+            center = center_skycoord.ra.degree, center_skycoord.dec.degree
+        finally:
+            # restore the original bounding box if it was set, since we do not
+            # want to have side effects on the WCS object passed in by the user
+            if bbox_attr is not None:
+                wcs.bounding_box = bbox_attr
 
         # pass the sky coordinates to a new polygon object as degrees
-        return cls.from_lonlat(vertex_skycoords.ra.degree, vertex_skycoords.dec.degree, center=center)
+        return cls.from_lonlat(
+            vertex_skycoords.ra.degree,
+            vertex_skycoords.dec.degree,
+            center=center
+        )
 
     @classmethod
     def convex_hull(cls, points):
