@@ -24,6 +24,9 @@ Release Notes
 - Polygon unions and intersections now filter out degenerate polygons in input
   arguments before processing. [#316]
 
+- Removed deprecated ``_SingleSphericalPolygon`` and ``_SphericalPolygon``
+  classes. [#316].
+
 
 1.3.5 (17-February-2026)
 ========================
