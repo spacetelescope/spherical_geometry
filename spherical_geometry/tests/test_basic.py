@@ -787,3 +787,19 @@ def test_degenerate_polygon():
     assert p.inside is not None
     assert not p._degenerate
     assert p.area() != 0.0
+
+
+def test_nearly_degenerate_polygon():
+    # from https://github.com/spacetelescope/spherical_geometry/issues/192
+
+    points = [
+        (0.87772279707663836, 0.34018023965617028, 0.33746125116734926),
+        (0.92276918091486326, 0.36291770695506587, 0.12956765310905877),
+        (0.92574575323628161, 0.36907299235098134, -0.082340310189372115),
+    ]
+
+    single = polygon.SingleSphericalPolygon(points)
+    multi = polygon.SphericalPolygon(points)
+
+    assert single.area > 0
+    assert multi.area > 0
