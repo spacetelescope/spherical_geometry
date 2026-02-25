@@ -4,15 +4,33 @@
 Release Notes
 =============
 
-1.3.6 (unreleased)
+
+1.4.0 (unreleased)
 ==================
 
-- Make ``astropy`` an optional dependency
+- Make ``astropy`` an optional dependency. [#315]
+
+- Fixed a bug in ``SingleSphericalPolygon.is_clockwise`` that caused it
+  to always report `False` for polygons with points on a great circle. Updated
+  the code to detect degenerate polygons and return `None` in such
+  cases. [#316]
+
+- Area of degenerate polygons is now defined to be zero. [#316]
+
+- Degenerate polygons are now considered to contain no ``inside`` point. [#316]
+
+- ``invert_polygon()`` returns `None` for degenerate polygons. [#316]
+
+- Polygon unions and intersections now filter out degenerate polygons in input
+  arguments before processing. [#316]
+
 
 1.3.5 (17-February-2026)
 ========================
 
 - Update ``from_wcs`` to accept any WCS object that implements the WCS API.
+  [#301]
+
 
 1.3.4 (06-November-2025)
 ========================

@@ -752,3 +752,38 @@ def test_math_util_inner1d():
     lengths = math_util.inner1d(vectors, vectors)
 
     assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
+
+
+def test_degenerate_polygon():
+    # Test that a polygon with all points the same is degenerate
+    points = np.array(4 * [[1, 0, 0]])
+    p = polygon.SingleSphericalPolygon(points)
+    assert p.is_clockwise() is None
+    assert p.inside is None
+    assert p._degenerate
+    assert p.area() == 0.0
+
+    # Test that a polygon with all points the same is degenerate
+    points = np.array([[1, 0, 0], [0, 1, 0], [-1, 0, 0]])
+    p = polygon.SingleSphericalPolygon(points)
+    assert p.is_clockwise() is None
+    assert p.inside is None
+    assert p._degenerate
+    assert p.area() == 0.0
+
+    # Test that a polygon on a great circle is degenerate:
+    p = polygon.SphericalPolygon.from_lonlat(90 * np.arange(5), 5 * [0])
+    assert p._degenerate
+    assert p.is_clockwise() is None
+    assert None in list(p.inside)
+    assert p.area() == 0.0
+
+    # Test that a polygon close to but not on a great circle is not degenerate:
+    z = np.sin(np.deg2rad(1e-9))
+    pts = np.array([[1, 0, z], [0, 1, z], [-1, 0, z], [0, -1, z], [1, 0, z]])
+    p = polygon.SingleSphericalPolygon(pts)
+
+    assert p.is_clockwise()
+    assert p.inside is not None
+    assert not p._degenerate
+    assert p.area() != 0.0

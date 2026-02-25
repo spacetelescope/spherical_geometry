@@ -189,7 +189,7 @@ class Graph:
         """
         points = polygon._points
 
-        if len(points) < 3:
+        if len(points) < 4 or polygon._degenerate:
             return
 
         self._source_polygons.add(polygon)
