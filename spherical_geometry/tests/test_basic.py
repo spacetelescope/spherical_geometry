@@ -760,7 +760,7 @@ def test_degenerate_polygon():
     p = polygon.SingleSphericalPolygon(points)
     assert p.is_clockwise() is None
     assert p.inside is None
-    assert p.is_degenerate()
+    assert p._degenerate
     assert p.area() == 0.0
 
     # Test that a polygon with all points the same is degenerate
@@ -768,12 +768,12 @@ def test_degenerate_polygon():
     p = polygon.SingleSphericalPolygon(points)
     assert p.is_clockwise() is None
     assert p.inside is None
-    assert p.is_degenerate()
+    assert p._degenerate
     assert p.area() == 0.0
 
     # Test that a polygon on a great circle is degenerate:
     p = polygon.SphericalPolygon.from_lonlat(90 * np.arange(5), 5 * [0])
-    assert p.is_degenerate()
+    assert p._degenerate
     assert p.is_clockwise() is None
     assert None in list(p.inside)
     assert p.area() == 0.0
@@ -785,5 +785,5 @@ def test_degenerate_polygon():
 
     assert p.is_clockwise()
     assert p.inside is not None
-    assert not p.is_degenerate()
+    assert not p._degenerate
     assert p.area() != 0.0

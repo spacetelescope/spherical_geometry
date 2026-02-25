@@ -24,9 +24,6 @@ Release Notes
 - Polygon unions and intersections now filter out degenerate polygons in input
   arguments before processing. [#316]
 
-- Added a new method ``is_degenerate()`` to check if a polygon is
-  degenerate. [#316]
-
 
 1.3.5 (17-February-2026)
 ========================

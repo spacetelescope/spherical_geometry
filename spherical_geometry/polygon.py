@@ -146,16 +146,20 @@ class SingleSphericalPolygon(object):
         # the points lie almost in a plane through the origin.
         return w1 < tol * w3
 
-    def is_degenerate(self):
-        """
-        Return `True` if the polygon is degenerate (i.e., has no points,
-        or is otherwise invalid).
-        """
-        # If we want to compute this at runtime, we can check whether
-        # the points are all on a great circle (too expensive to do in general,
-        # so we compute it at initialization and store the result).
-        # return self._is_clockwise() is None
-        return self._degenerate
+    # TODO: Not sure if we want to make this a public method since in the
+    #       future we might not allow instantiation of degenerate polygons
+    #       at all. For more info, see:
+    # https://github.com/spacetelescope/spherical_geometry/pull/316#discussion_r2834501132
+    #
+    # def is_degenerate(self):
+    #     """
+    #     Return `True` if the polygon is degenerate (i.e., has no points,
+    #     or is otherwise invalid).
+    #     """
+    #     # If we want to compute this at runtime, we can check whether
+    #     # the points are all on a great circle (too expensive to do in general,
+    #     # so we compute it at initialization and store the result).
+    #     return self._degenerate
 
     def _get_orient(self, compute_inside=False):
         npoints = len(self._points)
@@ -882,14 +886,14 @@ class SphericalPolygon(SingleSphericalPolygon):
         for polygon in init:
             if not isinstance(polygon, (SphericalPolygon, SingleSphericalPolygon)):
                 break
-            if polygon.is_degenerate():
+            if polygon._degenerate:
                 self._degenerate = True
         else:
             self._polygons = tuple(init)
             return
 
         p = SingleSphericalPolygon(init, inside)
-        if p.is_degenerate():
+        if p._degenerate:
             self._degenerate = True
             self._polygons = tuple()
             return
@@ -900,7 +904,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         polygons = []
         for polygon in self:
-            if polygon.is_degenerate():
+            if polygon._degenerate:
                 continue
             g = graph.Graph((polygon,))
             polygons.extend(g.disjoint_polygons())
@@ -1154,7 +1158,7 @@ class SphericalPolygon(SingleSphericalPolygon):
             Returns `True` if the polygon contains the given *point*.
             Returns `None` if the polygon is degenerate.
         """
-        if self.is_degenerate():
+        if self._degenerate:
             return None
         for polygon in self:
             if polygon.contains_point(point):
@@ -1181,7 +1185,7 @@ class SphericalPolygon(SingleSphericalPolygon):
             Returns `True` if the polygon contains the given *point*.
             Returns `None` if the polygon is degenerate.
         """
-        if self.is_degenerate():
+        if self._degenerate:
             return None
         for polygon in self:
             if polygon.contains_lonlat(lon, lat, degrees=degrees):
@@ -1212,7 +1216,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         if not isinstance(other, SphericalPolygon):
             raise TypeError
 
-        if self.is_degenerate() or other.is_degenerate():
+        if self._degenerate or other._degenerate:
             return None
 
         for polya in self:
@@ -1226,7 +1230,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         Determines if this `SphericalPolygon` intersects or contains
         the given arc. Returns `None` if the polygon is degenerate.
         """
-        if self.is_degenerate():
+        if self._degenerate:
             return None
         for subpolygon in self:
             if subpolygon.intersects_arc(a, b):
@@ -1238,7 +1242,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         Returns `True` if the polygon fully encloses the arc given by a
         and b. Returns `None` if the polygon is degenerate.
         """
-        if self.is_degenerate():
+        if self._degenerate:
             return None
         for subpolygon in self:
             if subpolygon.contains_arc(a, b):
@@ -1332,7 +1336,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         for polygon in polygons:
             if not isinstance(polygon, SphericalPolygon):
                 raise TypeError("Expected a sequence of SphericalPolygon")
-            if not polygon.is_degenerate():
+            if not polygon._degenerate:
                 valid_polygons.append(polygon)
 
         if not valid_polygons:
@@ -1366,10 +1370,10 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         all_polygons = []
         for polygon in filtered_polygons:
-            if polygon.is_degenerate():
+            if polygon._degenerate:
                 continue
             for p in polygon:
-                if p.is_degenerate():
+                if p._degenerate:
                     continue
                 all_polygons.append(p)
 
@@ -1411,7 +1415,7 @@ class SphericalPolygon(SingleSphericalPolygon):
                     if subpolygons is None:
                         continue
                     for p in subpolygons:
-                        if p.is_degenerate():
+                        if p._degenerate:
                             continue
                         all_polygons.append(p)
 
@@ -1440,7 +1444,7 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         results = None
         for polygon in polygons:
-            if results is None and not polygon.is_degenerate():
+            if results is None and not polygon._degenerate:
                 results = polygon
             elif len(results.polygons) == 0:
                 return results
