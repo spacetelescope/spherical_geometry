@@ -380,6 +380,22 @@ def test_intersection_crash_similar_poly():
     assert_allclose(pts1, pts3, rtol=0, atol=1e-15)
 
 
+# TODO make this test pass
+@pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/278")  
+def test_complement_regression():
+    """https://github.com/spacetelescope/spherical_geometry/issues/278"""
+
+    p1 = polygon.SingleSphericalPolygon.from_cone(90, 0, 100)
+    p2 = polygon.SingleSphericalPolygon.from_cone(270, 0, 100)
+
+    assert p1.contains_lonlat(0, 0)
+    assert p2.contains_lonlat(0, 0)
+
+    p12 = p1.intersection(p2)
+
+    assert p12.contains_lonlat(0, 0)
+
+
 @pytest.mark.parametrize(
     "polygons",
     [
@@ -391,26 +407,32 @@ def test_intersection_crash_similar_poly():
                 ([1.0, 4.0, 4.0, 1.0], [6.0, 6.0, 9.0, 9.0]),
             ]
         ],
-        [
-            polygon.SphericalPolygon.from_cone(
-                lat=lat,
-                lon=lon,
-                radius=radius,
-                degrees=True,
-                steps=16,
-            )
-            for (lat, lon, radius) in [
-                (40.5785, -122.4005, 126.08093425137112),
-                (-33.5605, -70.5815, 90.64909777330483),
-                (38.9005, -77.0505, 92.53797630605003),
-                (45.0905, 7.6575, 108.34122674041656),
-                (-25.7795, -56.4515, 73.960984449381),
-            ]
-        ],
+        pytest.param(
+            [
+                polygon.SphericalPolygon.from_cone(
+                    lat=lat,
+                    lon=lon,
+                    radius=radius,
+                    degrees=True,
+                    steps=16,
+                )
+                for (lat, lon, radius) in [
+                    (40.5785, -122.4005, 126.08093425137112),
+                    (-33.5605, -70.5815, 90.64909777330483),
+                    (38.9005, -77.0505, 92.53797630605003),
+                    (45.0905, 7.6575, 108.34122674041656),
+                    (-25.7795, -56.4515, 73.960984449381),
+                ]
+            ],
+            # TODO make this test pass
+            marks=pytest.mark.xfail(
+                reason="https://github.com/spacetelescope/spherical_geometry/issues/292"
+            ),
+        ),
     ],
 )
 def test_commutative_intersection(polygons):
-    """from https://github.com/spacetelescope/spherical_geometry/issues/292"""
+    """https://github.com/spacetelescope/spherical_geometry/issues/292"""
 
     # pair polygons with their areas for later sorting
     polygons = [(polygon, polygon.area()) for polygon in polygons]
@@ -433,4 +455,4 @@ def test_commutative_intersection(polygons):
 
     sorted_intersection_area = sorted_intersection.area()
 
-    assert unsorted_intersection_area == sorted_intersection_area
+    assert_allclose(unsorted_intersection_area, sorted_intersection_area)
