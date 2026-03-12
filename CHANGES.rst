@@ -5,7 +5,13 @@ Release Notes
 =============
 
 
-1.4.0 (unreleased)
+1.4.1 (unreleased)
+==================
+
+- 
+
+
+1.4.0 (2026-03-11)
 ==================
 
 - Make ``astropy`` an optional dependency. [#315]
