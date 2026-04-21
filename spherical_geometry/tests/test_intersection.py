@@ -456,6 +456,8 @@ def test_commutative_intersection(polygons):
     sorted_intersection_area = sorted_intersection.area()
 
     assert_allclose(unsorted_intersection_area, sorted_intersection_area)
+
+
 @pytest.mark.xfail(reason="currently there is no solution to get this to pass")
 def test_intersection_order_independent_from_large_cones():
     """
