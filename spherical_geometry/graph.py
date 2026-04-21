@@ -11,6 +11,8 @@ import weakref
 # THIRD-PARTY
 import numpy as np
 
+from . import math_util
+
 # LOCAL
 from spherical_geometry import great_circle_arc as gca
 from spherical_geometry import vector
@@ -67,7 +69,7 @@ class Graph:
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
-        def equals(self, other, thresh=1.e-9):
+        def equals(self, other, thresh=1.0e-10):
             """
             Returns `True` if the location of this and the *other*
             `~Graph.Node` are the same.
@@ -77,13 +79,17 @@ class Graph:
             other : `~Graph.Node` instance
                 The other node.
 
-            thres : float
+            thresh : float
                 If difference is smaller than this, points are equal.
-                The default value of 2e-8 radians is set based on
+                The default value of 1e-10 radians is set based on
                 empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
-            return np.array_equal(self._point, other._point)
+            # return np.array_equal(self._point, other._point)
+            return np.linalg.norm(self._point - other._point) < thresh
+            # Possibly more accurate but much slower.
+            # TODO: do more testing once the main stability issues are dealt with.
+            # return math_util.length(self._point, other._point) < thresh
 
     class Edge:
         """
@@ -236,6 +242,12 @@ class Graph:
             node_array = np.array([node._point for node in nodes])
 
             diff = np.all(np.abs(point - node_array) < 2 ** -32, axis=-1)
+            # TODO: consider using arccos: v1 . v2 = cos(angle), so angle = arccos(v1 . v2).
+            # diff = np.arccos(np.clip(node_array @ point, -1, 1)) < 4e-9
+            # TODO: even more accurate but slower (makes one xfailed test to
+            # pass and another test to fail that was expected to pass -
+            # different number of vertices):
+            # diff = gca.length(node_array, point) < 4e-10
 
             indices = np.nonzero(diff)[0]
             if len(indices):

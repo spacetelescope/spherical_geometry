@@ -8,7 +8,18 @@ Release Notes
 1.4.1 (unreleased)
 ==================
 
-- 
+- Improved stability of ``length()`` in the ``math_util`` and
+  ``great_circle_arc`` modules. [#322]
+
+- Changed default threshold for considering two nodes to be equal in
+  the ``graph`` module from 1e-9 to 1e-10 in the ``graph.Graph.Node.equals()``
+  method. Updated docstring. [#322]
+
+- Added debug functions for saving polygon parameters to a text file. These
+  functions are not intended for public use. [#322]
+
+- Aded two unit tests based on #292 (and possibly #278)that are marked
+  with ``xfail`` for now. [#322]
 
 
 1.4.0 (2026-03-11)

@@ -710,6 +710,10 @@ def test_math_util_length_domain():
         [0, 0, 0],
     ]
 
+    for b_i in b:
+        with pytest.raises(ValueError):
+            great_circle_arc.length(a, b_i)
+
     with pytest.raises(ValueError):
         great_circle_arc.length(a, b)
 
