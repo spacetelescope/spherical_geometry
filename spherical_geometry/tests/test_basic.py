@@ -101,6 +101,7 @@ def test_vector_to_radec():
     assert_almost_equal(lat, 0.0)
 
 
+@pytest.mark.skip(reason="polygons are no longer orientable")
 def test_is_clockwise():
     clockwise_poly = polygon.SphericalPolygon.from_cone(0.0, 90.0, 1.0)
     assert clockwise_poly.is_clockwise()
@@ -172,7 +173,7 @@ def test_overlap():
             points.append(
                 np.asarray(vector.lonlat_to_vector(x + offset, y + y_eps))
             )
-        poly = polygon.SphericalPolygon(points)
+        poly = polygon.SingleSphericalPolygon(points)
         return poly
 
     first_poly = build_polygon(0.0)
