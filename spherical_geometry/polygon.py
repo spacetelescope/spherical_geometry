@@ -14,8 +14,7 @@ import numpy as np
 # LOCAL
 from spherical_geometry import great_circle_arc, vector
 
-__all__ = ['SingleSphericalPolygon', 'SphericalPolygon',
-           'MalformedPolygonError']
+__all__ = ["SingleSphericalPolygon", "SphericalPolygon", "MalformedPolygonError"]
 
 
 class MalformedPolygonError(Exception):
@@ -94,8 +93,7 @@ class SingleSphericalPolygon(object):
         return 1
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__,
-                               self.points, self.inside)
+        return "%s(%r, %r)" % (self.__class__.__name__, self.points, self.inside)
 
     def __iter__(self):
         """
@@ -174,9 +172,9 @@ class SingleSphericalPolygon(object):
         orient = great_circle_arc.triple_product(A - B, C - B, B)
         clockwise = np.sum(orient) > 0.0
 
-        if (np.max(np.abs(orient)) < 1e-11 and
-                SingleSphericalPolygon._is_on_great_circle(
-                    self._points, tol=1e-16)):
+        if np.max(np.abs(orient)) < 1e-11 and SingleSphericalPolygon._is_on_great_circle(
+            self._points, tol=1e-16
+        ):
             # The points are all on a great circle, so the polygon is
             # degenerate and we can't determine if it's clockwise or
             # counter-clockwise. Return None to indicate this.
@@ -247,8 +245,9 @@ class SingleSphericalPolygon(object):
         """
         if len(self.points) == 0:
             return np.array([])
-        return vector.vector_to_lonlat(self.points[:, 0], self.points[:, 1],
-                                       self.points[:, 2], degrees=True)
+        return vector.vector_to_lonlat(
+            self.points[:, 0], self.points[:, 1], self.points[:, 2], degrees=True
+        )
 
     # Alias for to_lonlat
     to_radec = to_lonlat
@@ -325,19 +324,18 @@ class SingleSphericalPolygon(object):
 
         # Get an arbitrary perpendicular vector.  This be be obtained
         # by crossing (u, v, w) with any unit vector that is not itself.
-        which_min = np.argmin([u*u, v*v, w*w])
+        which_min = np.argmin([u * u, v * v, w * w])
         if which_min == 0:
-            perp = np.cross([u, v, w], [1., 0., 0.])
+            perp = np.cross([u, v, w], [1.0, 0.0, 0.0])
         elif which_min == 1:
-            perp = np.cross([u, v, w], [0., 1., 0.])
+            perp = np.cross([u, v, w], [0.0, 1.0, 0.0])
         else:
-            perp = np.cross([u, v, w], [0., 0., 1.])
+            perp = np.cross([u, v, w], [0.0, 0.0, 1.0])
         perp = vector.normalize_vector(perp)
 
         # Rotate by radius around the perpendicular vector to get the
         # "pen"
-        x, y, z = vector.rotate_around(
-            u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
+        x, y, z = vector.rotate_around(u, v, w, perp[0], perp[1], perp[2], radius, degrees=False)
 
         # Then rotate the pen around the center point all 360 degrees
         C = np.linspace(0, np.pi * 2.0, steps)
@@ -381,10 +379,7 @@ class SingleSphericalPolygon(object):
             wcs = astropy.wcs.WCS(wcs)
 
         if (bbox_attr := getattr(wcs, "bounding_box", None)) is not None:
-            if isinstance(
-                bbox_attr,
-                astropy.modeling.bounding_box.ModelBoundingBox
-            ):
+            if isinstance(bbox_attr, astropy.modeling.bounding_box.ModelBoundingBox):
                 bbox = bbox_attr.bounding_box(order="F")
             else:
                 bbox = tuple(bbox_attr)
@@ -464,9 +459,7 @@ class SingleSphericalPolygon(object):
 
         # pass the sky coordinates to a new polygon object as degrees
         return cls.from_lonlat(
-            vertex_skycoords.ra.degree,
-            vertex_skycoords.dec.degree,
-            center=center
+            vertex_skycoords.ra.degree, vertex_skycoords.dec.degree, center=center
         )
 
     @classmethod
@@ -487,15 +480,15 @@ class SingleSphericalPolygon(object):
 
         # Find an extremal point, it must be on boundary
 
-        j = np.argmin(np.arctan2(points[:,1], points[:,0]))
-        extreme = points[j,:]
-        points = np.vstack((points[0:j,:], points[j+1:,:]))
+        j = np.argmin(np.arctan2(points[:, 1], points[:, 0]))
+        extreme = points[j, :]
+        points = np.vstack((points[0:j, :], points[j + 1 :, :]))
 
         # Sort points around extreme point by angle from true north
 
-        north = [0., 0., 1.]
+        north = [0.0, 0.0, 1.0]
         ang = great_circle_arc.angle(north, extreme, points)
-        pt = [points[i,:] for i in range(points.shape[0])]
+        pt = [points[i, :] for i in range(points.shape[0])]
 
         duo = list(zip(pt, ang))
         duo = sorted(duo, key=lambda d: d[1])
@@ -517,13 +510,12 @@ class SingleSphericalPolygon(object):
         while i < points.shape[0]:
             ptop = hull[-1]
             if ptop is pbottom:
-                hull.append(points[i,:])
+                hull.append(points[i, :])
                 i += 1
             else:
                 pprevious = hull[-2]
-                if great_circle_arc.triple_product(pprevious, ptop,
-                                                   points[i,:]) > 0.0:
-                    hull.append(points[i,:])
+                if great_circle_arc.triple_product(pprevious, ptop, points[i, :]) > 0.0:
+                    hull.append(points[i, :])
                     i += 1
                 else:
                     inside = hull.pop()
@@ -574,23 +566,23 @@ class SingleSphericalPolygon(object):
 
     def contains_lonlat(self, lon, lat, degrees=True):
         r"""
-        Determines if this `SingleSphericalPolygon` contains a given
-        longitude and latitude.
+         Determines if this `SingleSphericalPolygon` contains a given
+         longitude and latitude.
 
-        Parameters
-        ----------
-        lon, lat: Longitude and latitude. Must be scalars.
+         Parameters
+         ----------
+         lon, lat: Longitude and latitude. Must be scalars.
 
-        degrees : bool, optional
+         degrees : bool, optional
 
-       If `True`, (default) *lon* and *lat* are in decimal degrees,
-       otherwise in radians.
+        If `True`, (default) *lon* and *lat* are in decimal degrees,
+        otherwise in radians.
 
-        Returns
-        -------
-        contains : bool, None
-            Returns `True` if the polygon contains the given *point*.
-            Returns `None` if the polygon is degenerate.
+         Returns
+         -------
+         contains : bool, None
+             Returns `True` if the polygon contains the given *point*.
+             Returns `None` if the polygon is degenerate.
         """
         point = vector.lonlat_to_vector(lon, lat, degrees=degrees)
         return self._contains_point(point, self._points, self._inside)
@@ -659,9 +651,8 @@ class SingleSphericalPolygon(object):
         #
         for i in range(len(self._points) - 1):
             A = self._points[i]
-            B = self._points[i+1]
-            if np.any(great_circle_arc.intersects(
-                    A, B, other._points[:-1], other._points[1:])):
+            B = self._points[i + 1]
+            if np.any(great_circle_arc.intersects(A, B, other._points[:-1], other._points[1:])):
                 return True
         return False
 
@@ -742,6 +733,7 @@ class SingleSphericalPolygon(object):
         :mod:`~spherical_geometry.graph` module.
         """
         from . import graph
+
         if self._degenerate:
             return SphericalPolygon([other.copy()])
         elif other._degenerate:
@@ -777,6 +769,7 @@ class SingleSphericalPolygon(object):
         :mod:`~spherical_geometry.graph` module.
         """
         from . import graph
+
         if self._degenerate or other._degenerate:
             return SphericalPolygon([])
 
@@ -824,10 +817,10 @@ class SingleSphericalPolygon(object):
         if not len(self._points):
             return
         if not len(plot_args):
-            plot_args = {'color': 'blue'}
+            plot_args = {"color": "blue"}
         points = self._points
-        if 'alpha' in plot_args:
-            del plot_args['alpha']
+        if "alpha" in plot_args:
+            del plot_args["alpha"]
 
         alpha = 1.0
         for A, B in zip(points[0:-1], points[1:]):
@@ -836,14 +829,13 @@ class SingleSphericalPolygon(object):
                 length = 2
             interpolated = great_circle_arc.interpolate(A, B, length * 4)
             lon, lat = vector.vector_to_lonlat(
-                interpolated[:, 0], interpolated[:, 1], interpolated[:, 2],
-                degrees=True)
+                interpolated[:, 0], interpolated[:, 1], interpolated[:, 2], degrees=True
+            )
             for lon0, lat0, lon1, lat1 in zip(lon[0:-1], lat[0:-1], lon[1:], lat[1:]):
                 m.drawgreatcircle(lon0, lat0, lon1, lat1, alpha=alpha, **plot_args)
             alpha -= 1.0 / len(points)
 
-        lon, lat = vector.vector_to_lonlat(
-            *self._inside, degrees=True)
+        lon, lat = vector.vector_to_lonlat(*self._inside, degrees=True)
         x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
@@ -926,7 +918,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         buffer = []
         for polygon in self._polygons:
             buffer.append(repr(polygon))
-        return '[' + ',\n'.join(buffer) + ']'
+        return "[" + ",\n".join(buffer) + "]"
 
     def __iter__(self):
         """
@@ -1004,6 +996,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         intersects itself
         """
         from . import graph
+
         polygon = SingleSphericalPolygon(points)
         g = graph.Graph((polygon,))
         return g._find_all_intersections()
@@ -1049,8 +1042,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         -------
         polygon : `SphericalPolygon` object
         """
-        polygon = SingleSphericalPolygon.from_lonlat(lon, lat,
-                                                     center, degrees)
+        polygon = SingleSphericalPolygon.from_lonlat(lon, lat, center, degrees)
         return cls((polygon,))
 
     # from_radec is an alias for from_lon_lat
@@ -1086,8 +1078,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         -------
         polygon : `SphericalPolygon` object
         """
-        polygon = SingleSphericalPolygon.from_cone(lon, lat, radius,
-                                                   degrees=degrees, steps=steps)
+        polygon = SingleSphericalPolygon.from_cone(lon, lat, radius, degrees=degrees, steps=steps)
         return cls((polygon,))
 
     @classmethod
@@ -1141,7 +1132,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         inverted_polygon = self._polygons[0].invert_polygon()
         if inverted_polygon is None:
             return None
-        return klass((inverted_polygon, ))
+        return klass((inverted_polygon,))
 
     def contains_point(self, point):
         r"""
@@ -1167,23 +1158,23 @@ class SphericalPolygon(SingleSphericalPolygon):
 
     def contains_lonlat(self, lon, lat, degrees=True):
         r"""
-        Determines if this `SphericalPolygon` contains a given
-        longitude and latitude.
+         Determines if this `SphericalPolygon` contains a given
+         longitude and latitude.
 
-        Parameters
-        ----------
-        lon, lat: Longitude and latitude. Must be scalars.
+         Parameters
+         ----------
+         lon, lat: Longitude and latitude. Must be scalars.
 
-        degrees : bool, optional
+         degrees : bool, optional
 
-       If `True`, (default) *lon* and *lat* are in decimal degrees,
-       otherwise in radians.
+        If `True`, (default) *lon* and *lat* are in decimal degrees,
+        otherwise in radians.
 
-        Returns
-        -------
-        contains : bool, None
-            Returns `True` if the polygon contains the given *point*.
-            Returns `None` if the polygon is degenerate.
+         Returns
+         -------
+         contains : bool, None
+             Returns `True` if the polygon contains the given *point*.
+             Returns `None` if the polygon is degenerate.
         """
         if self._degenerate:
             return None
@@ -1358,8 +1349,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         for p in valid_polygons[1:]:
             pts = np.sort(list(p.points)[0], axis=0)
             for pts2 in accepted_polygon_points:
-                if (pts.size == pts2.size and
-                        np.allclose(pts, pts2, rtol=0, atol=5e-9)):
+                if pts.size == pts2.size and np.allclose(pts, pts2, rtol=0, atol=5e-9):
                     break
             else:
                 filtered_polygons.append(p)

@@ -32,5 +32,3 @@ SpaceBeforeParens: ControlStatements
 
 TabWidth: 4
 UseTab: Never
-
-...

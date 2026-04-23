@@ -15,14 +15,14 @@ import sys
 
 from spherical_geometry import __version__
 
-sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(1, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath("."))
+sys.path.insert(1, os.path.abspath(".."))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Spherical Geometry'
-copyright = '2023, STScI'
-author = 'STScI'
+project = "Spherical Geometry"
+copyright = "2023, STScI"
+author = "STScI"
 
 release = __version__
 
@@ -32,27 +32,27 @@ release = __version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'numpydoc',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
-    'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
+    "numpydoc",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.viewcode",
+    "sphinx_automodapi.automodapi",
+    "sphinx_automodapi.smart_resolver",
 ]
 
-exclude_patterns = ['_build']
-source_suffix = '.rst'
-master_doc = 'index'
-default_role = 'obj'
+exclude_patterns = ["_build"]
+source_suffix = ".rst"
+master_doc = "index"
+default_role = "obj"
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -60,7 +60,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -72,24 +72,24 @@ html_static_path = []
 
 numpydoc_show_class_members = False
 autosummary_generate = True
-automodapi_toctreedirnm = 'api'
+automodapi_toctreedirnm = "api"
 autoclass_content = "both"
 
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-    'matplotlib': ('https://matplotlib.org/', None),
-    'astropy': ('http://docs.astropy.org/en/stable/', None),
-    'h5py': ('http://docs.h5py.org/en/stable/', None),
+    "python": ("https://docs.python.org/3/", None),
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "matplotlib": ("https://matplotlib.org/", None),
+    "astropy": ("http://docs.astropy.org/en/stable/", None),
+    "h5py": ("http://docs.h5py.org/en/stable/", None),
 }
 
 # Additional stuff for the LaTeX preamble.
 latex_elements = {}
-latex_elements['preamble'] = r"""
+latex_elements["preamble"] = r"""
 % Use a more modern-looking monospace font
 \usepackage{inconsolata}
 % The enumitem package provides unlimited nesting of lists and enums.

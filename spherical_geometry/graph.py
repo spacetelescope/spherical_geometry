@@ -14,10 +14,13 @@ import numpy as np
 # LOCAL
 from spherical_geometry import great_circle_arc as gca
 from spherical_geometry import vector
-from spherical_geometry.polygon import (SingleSphericalPolygon, SphericalPolygon,
-                                        MalformedPolygonError)
+from spherical_geometry.polygon import (
+    SingleSphericalPolygon,
+    SphericalPolygon,
+    MalformedPolygonError,
+)
 
-__all__ = ['Graph']
+__all__ = ["Graph"]
 
 # Set to True to enable some sanity checks
 DEBUG = True
@@ -26,6 +29,7 @@ DEBUG = True
 # The following two functions are called by sorted to provide a consistent
 # ordering of nodes and edges retrieved from the graph, since values are
 # retrieved from sets in an order that varies from run to run
+
 
 def node_order(node):
     return hash(tuple(node._point))
@@ -51,6 +55,7 @@ class Graph:
         A `~Graph.Node` represents a single point, connected by an arbitrary
         number of `~Graph.Edge` objects to other `~Graph.Node` objects.
         """
+
         def __init__(self, point, source_polygons=[]):
             """
             Parameters
@@ -67,7 +72,7 @@ class Graph:
         def __repr__(self):
             return "Node(%s %d)" % (str(self._point), len(self._edges))
 
-        def equals(self, other, thresh=1.e-9):
+        def equals(self, other, thresh=1.0e-9):
             """
             Returns `True` if the location of this and the *other*
             `~Graph.Node` are the same.
@@ -90,6 +95,7 @@ class Graph:
         An `~Graph.Edge` represents a connection between exactly two
         `~Graph.Node` objects.  This `~Graph.Edge` class has no direction.
         """
+
         def __init__(self, A, B, source_polygons=[]):
             """
             Parameters
@@ -139,11 +145,9 @@ class Graph:
             -------
             equals : bool
             """
-            if (self._nodes[0].equals(other._nodes[0]) and
-                    self._nodes[1].equals(other._nodes[1])):
+            if self._nodes[0].equals(other._nodes[0]) and self._nodes[1].equals(other._nodes[1]):
                 return True
-            if (self._nodes[1].equals(other._nodes[0]) and
-                    self._nodes[0].equals(other._nodes[1])):
+            if self._nodes[1].equals(other._nodes[0]) and self._nodes[0].equals(other._nodes[1]):
                 return True
             return False
 
@@ -235,7 +239,7 @@ class Graph:
             nodes = list(self._nodes)
             node_array = np.array([node._point for node in nodes])
 
-            diff = np.all(np.abs(point - node_array) < 2 ** -32, axis=-1)
+            diff = np.all(np.abs(point - node_array) < 2**-32, axis=-1)
 
             indices = np.nonzero(diff)[0]
             if len(indices):
@@ -295,10 +299,9 @@ class Graph:
         # one, otherwise the Edge will get hooked up to the nodes but
         # be orphaned.
         for edge in self._edges:
-            if ((A is edge._nodes[0] and
-                 B is edge._nodes[1]) or
-                (A is edge._nodes[1] and
-                 B is edge._nodes[0])):
+            if (A is edge._nodes[0] and B is edge._nodes[1]) or (
+                A is edge._nodes[1] and B is edge._nodes[0]
+            ):
                 edge._source_polygons.update(source_polygons)
                 return edge
 
@@ -420,7 +423,7 @@ class Graph:
             break
         else:
             inside_point = None
-        return SphericalPolygon((poly, ), inside=inside_point)
+        return SphericalPolygon((poly,), inside=inside_point)
 
     def intersection(self):
         """
@@ -517,8 +520,10 @@ class Graph:
         return changed
 
     def _get_edge_points(self, edges):
-        return (np.array([x._nodes[0]._point for x in edges]),
-                np.array([x._nodes[1]._point for x in edges]))
+        return (
+            np.array([x._nodes[0]._point for x in edges]),
+            np.array([x._nodes[1]._point for x in edges]),
+        )
 
     def _find_point_to_arc_intersections(self):
         # For speed, we want to vectorize all of the intersection
@@ -539,8 +544,7 @@ class Graph:
             AB = edges.pop(0)
             A, B = list(AB._nodes)
 
-            intersects = gca.intersects_point(
-                A._point, B._point, nodes_array)
+            intersects = gca.intersects_point(A._point, B._point, nodes_array)
             intersection_indices = np.nonzero(intersects)[0]
 
             for index in intersection_indices:
@@ -549,13 +553,10 @@ class Graph:
                     changed = True
                     newA, newB = self._split_edge(AB, node)
 
-                    new_edges = [
-                        edge for edge in (newA, newB)
-                        if edge not in edges]
+                    new_edges = [edge for edge in (newA, newB) if edge not in edges]
 
                     for end_point in AB._nodes:
-                        node._source_polygons.update(
-                            end_point._source_polygons)
+                        node._source_polygons.update(end_point._source_polygons)
                     edges = edges + new_edges
                     break
         return changed
@@ -579,13 +580,12 @@ class Graph:
             A = starts[0]
             starts = starts[1:]  # numpy equiv of "pop(0)"
             B = ends[0]
-            ends = ends[1:]      # numpy equiv of "pop(0)"
+            ends = ends[1:]  # numpy equiv of "pop(0)"
 
             # Calculate the intersection points between AB and all
             # other remaining edges
-            with np.errstate(invalid='ignore'):
-                intersections = gca.intersection(
-                    A, B, starts, ends)
+            with np.errstate(invalid="ignore"):
+                intersections = gca.intersection(A, B, starts, ends)
             # intersects is `True` everywhere intersections has an
             # actual intersection
             intersects = np.isfinite(intersections[..., 0])
@@ -612,24 +612,19 @@ class Graph:
                 #                |
                 #                B
 
-                E = self._add_node(
-                    E, AB._source_polygons | CD._source_polygons)
+                E = self._add_node(E, AB._source_polygons | CD._source_polygons)
                 newA, newB = self._split_edge(AB, E)
                 newC, newD = self._split_edge(CD, E)
 
-                new_edges = [
-                    edge for edge in (newA, newB, newC, newD)
-                    if edge not in edges]
+                new_edges = [edge for edge in (newA, newB, newC, newD) if edge not in edges]
 
                 # Delete CD, and push the new edges to the
                 # front so they will be tested for intersection
                 # against all remaining edges.
-                edges = edges[:j] + edges[j+1:] + new_edges
+                edges = edges[:j] + edges[j + 1 :] + new_edges
                 new_starts, new_ends = self._get_edge_points(new_edges)
-                starts = np.vstack(
-                    (starts[:j], starts[j+1:], new_starts))
-                ends = np.vstack(
-                    (ends[:j], ends[j+1:], new_ends))
+                starts = np.vstack((starts[:j], starts[j + 1 :], new_starts))
+                ends = np.vstack((ends[:j], ends[j + 1 :], new_ends))
                 break
         return changed
 
@@ -655,13 +650,14 @@ class Graph:
             edge._count = 0
             A, B = edge._nodes
             for polygon in polygons:
-                if (polygon not in edge._source_polygons and
-                    ((polygon in A._source_polygons or
-                      polygon.contains_point(A._point)) and
-                     (polygon in B._source_polygons or
-                      polygon.contains_point(B._point))) and
-                    polygon.contains_point(
-                        gca.midpoint(A._point, B._point))):
+                if (
+                    polygon not in edge._source_polygons
+                    and (
+                        (polygon in A._source_polygons or polygon.contains_point(A._point))
+                        and (polygon in B._source_polygons or polygon.contains_point(B._point))
+                    )
+                    and polygon.contains_point(gca.midpoint(A._point, B._point))
+                ):
                     edge._count += 1
 
         for edge in list(self._edges):
@@ -686,12 +682,11 @@ class Graph:
             for polygon in polygons:
                 if polygon in edge._source_polygons:
                     edge._count += 1
-                elif ((polygon in A._source_polygons or
-                       polygon.contains_point(A._point)) and
-                      (polygon in B._source_polygons or
-                       polygon.contains_point(B._point)) and
-                      polygon.contains_point(
-                          gca.midpoint(A._point, B._point))):
+                elif (
+                    (polygon in A._source_polygons or polygon.contains_point(A._point))
+                    and (polygon in B._source_polygons or polygon.contains_point(B._point))
+                    and polygon.contains_point(gca.midpoint(A._point, B._point))
+                ):
                     edge._count += 1
 
         for edge in list(self._edges):
@@ -728,8 +723,7 @@ class Graph:
         for edge in self._edges:
             nedges_a = len(edge._nodes[0]._edges)
             nedges_b = len(edge._nodes[1]._edges)
-            if (nedges_a % 2 == 1 and nedges_a >= 3 and
-                    nedges_b % 2 == 1 and nedges_b >= 3):
+            if nedges_a % 2 == 1 and nedges_a >= 3 and nedges_b % 2 == 1 and nedges_b >= 3:
                 removals.append(edge)
                 changed = True
 
@@ -777,8 +771,7 @@ class Graph:
 
         def edge_normal(edge, last_edge):
             # THe normal vector to the plane defining the arc
-            normal = gca._cross_and_normalize(edge._nodes[0]._point,
-                                              edge._nodes[1]._point)
+            normal = gca._cross_and_normalize(edge._nodes[0]._point, edge._nodes[1]._point)
             if last_edge is not None:
                 orientation = None
                 for i in (0, 1):

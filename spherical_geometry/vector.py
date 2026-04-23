@@ -10,13 +10,20 @@ import numpy as np
 
 try:
     from . import math_util
+
     HAS_C_UFUNCS = True
 except ImportError:
     HAS_C_UFUNCS = False
 
-__all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
-           'normalize_vector', 'radec_to_vector', 'vector_to_radec',
-           'rotate_around']
+__all__ = [
+    "two_d",
+    "lonlat_to_vector",
+    "vector_to_lonlat",
+    "normalize_vector",
+    "radec_to_vector",
+    "vector_to_radec",
+    "rotate_around",
+]
 
 
 def two_d(vec):
@@ -70,10 +77,7 @@ def lonlat_to_vector(lon, lat, degrees=True):
 
     cos_lat = np.cos(lat_rad)
 
-    return (
-        np.cos(lon_rad) * cos_lat,
-        np.sin(lon_rad) * cos_lat,
-        np.sin(lat_rad))
+    return (np.cos(lon_rad) * cos_lat, np.sin(lon_rad) * cos_lat, np.sin(lat_rad))
 
 
 # Alias for lonlat_to_vector
@@ -113,7 +117,7 @@ def vector_to_lonlat(x, y, z, degrees=True):
     lon = np.arctan2(y, x)
     lon = np.remainder(lon, 2.0 * np.pi)
 
-    lat = np.arctan2(z, np.sqrt(x ** 2 + y ** 2))
+    lat = np.arctan2(z, np.sqrt(x**2 + y**2))
     result = (lon, lat)
 
     if degrees:
@@ -193,10 +197,10 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     sintheta = np.sin(theta)
     icostheta = 1.0 - costheta
 
-    det = (-u*x - v*y - w*z)
-    X = (-u*det)*icostheta + x*costheta + (-w*y + v*z)*sintheta
-    Y = (-v*det)*icostheta + y*costheta + ( w*x - u*z)*sintheta
-    Z = (-w*det)*icostheta + z*costheta + (-v*x + u*y)*sintheta
+    det = -u * x - v * y - w * z
+    X = (-u * det) * icostheta + x * costheta + (-w * y + v * z) * sintheta
+    Y = (-v * det) * icostheta + y * costheta + (w * x - u * z) * sintheta
+    Z = (-w * det) * icostheta + z * costheta + (-v * x + u * y) * sintheta
 
     return X, Y, Z
 

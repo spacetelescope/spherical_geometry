@@ -6,7 +6,7 @@ from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_im
 
 
 def point_in_poly_lots():
-    image_name = resolve_imagename(ROOT_DIR, '1904-66_TAN.fits')
+    image_name = resolve_imagename(ROOT_DIR, "1904-66_TAN.fits")
 
     poly1 = SphericalPolygon.from_wcs(image_name, 64, crval=[0, 87])
     poly2 = SphericalPolygon.from_wcs(image_name, 64, crval=[20, 89])
@@ -16,8 +16,11 @@ def point_in_poly_lots():
 
     count = 0
     for point in points:
-        if (poly1.contains_point(point) or poly2.contains_point(point) or
-                poly3.contains_point(point)):
+        if (
+            poly1.contains_point(point)
+            or poly2.contains_point(point)
+            or poly3.contains_point(point)
+        ):
             count += 1
 
     assert count == 5
@@ -26,12 +29,12 @@ def point_in_poly_lots():
     assert not poly2.intersects_poly(poly3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     for benchmark in [point_in_poly_lots]:
         t = time.time()
         sys.stdout.write(benchmark.__name__)
-        sys.stdout.write('...')
+        sys.stdout.write("...")
         sys.stdout.flush()
         benchmark()
-        sys.stdout.write(' %.03fs\n' % (time.time() - t))
+        sys.stdout.write(" %.03fs\n" % (time.time() - t))
         sys.stdout.flush()

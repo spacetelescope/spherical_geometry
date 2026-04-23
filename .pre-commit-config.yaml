@@ -46,7 +46,7 @@ repos:
         args:
           - --fix
           - --show-fixes
-  #     - id: ruff-format
+      - id: ruff-format
   # # type checking
   # - repo: https://github.com/pre-commit/mirrors-mypy
   #   rev: v1.17.1
