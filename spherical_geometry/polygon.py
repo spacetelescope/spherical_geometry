@@ -497,7 +497,7 @@ class SingleSphericalPolygon(object):
         point_a = s2.S2Point_FromRaw(*a)
         point_b = s2.S2Point_FromRaw(*b)
         arc = s2.S2Polyline()
-        arc.InitFromS2Points(point_a, point_b)
+        arc.InitFromS2Points([point_a, point_b])
         return self._s2polygon.IntersectWithPolyline(arc)
 
     def contains_arc(self, a, b):
@@ -508,7 +508,7 @@ class SingleSphericalPolygon(object):
         point_a = s2.S2Point_FromRaw(*a)
         point_b = s2.S2Point_FromRaw(*b)
         arc = s2.S2Polyline()
-        arc.InitFromS2Points(point_a, point_b)
+        arc.InitFromS2Points([point_a, point_b])
         return self._s2polygon.Contains(arc)
 
     def area(self):
