@@ -48,15 +48,22 @@ class SingleSphericalPolygon(object):
             interior point will be calculated.  If the polygon is degenerate,
             the inside point will be set to `None`.
         """
-        boundary = s2.S2Loop()
         if len(points) > 0:
+            boundary = s2.S2Loop()
             boundary.Init(
                 [
-                    s2.S2Point_FromRaw(point[0], point[1], point[2])
+                    point
+                    if isinstance(point, s2.S2Point)
+                    else point.ToPoint()
+                    if isinstance(point, s2.S2LatLng)
+                    else s2.S2LatLng.FromDegrees(*point).ToPoint()
+                    if len(point) == 2
+                    else s2.S2Point_FromRaw(*point)
                     for point in points
-                    if not isinstance(point, s2.S2Point)
                 ]
             )
+        else:
+            boundary = None
         self._s2polygon = s2.S2Polygon(boundary)
 
         if boundary.num_vertices() == 0:
@@ -73,9 +80,9 @@ class SingleSphericalPolygon(object):
                 self._inside = np.asanyarray(inside)
 
     def __copy__(self):
-        return deepcopy(self)
-
-    copy = __copy__
+        clone = self.__class__(points=None, inside=self._inside)
+        clone._s2polygon = self._s2polygon.Clone()
+        return clone
 
     def __len__(self):
         return 1
@@ -97,13 +104,18 @@ class SingleSphericalPolygon(object):
         (*x*, *y*, *z*) vectors.  The polygon will be explicitly
         closed, i.e., the first and last points are the same.
         """
-        boundary = self._s2polygon.loop(0)
-        return np.stack(
-            [
-                (point.x(), point.y(), point.z())
-                for point in (boundary.vertex(index) for index in range(boundary.num_vertices()))
-            ]
-        )
+        if self._s2polygon.num_loops() > 0:
+            boundary = self._s2polygon.loop(0)
+            return np.stack(
+                [
+                    (point.x(), point.y(), point.z())
+                    for point in (
+                        boundary.vertex(index) for index in range(boundary.num_vertices())
+                    )
+                ]
+            )
+        else:
+            return np.empty((0, 3))
 
     def to_lonlat(self):
         """
@@ -115,9 +127,14 @@ class SingleSphericalPolygon(object):
             List of *lon* and *lat* in degrees corresponding
             to `points`.
         """
-        boundary = self._s2polygon.loop(0)
-        latlngs = [s2.S2LatLng(boundary.vertex(index)) for index in range(boundary.num_vertices())]
-        return [latlng.lng() for latlng in latlngs], [latlng.lat() for latlng in latlngs]
+        if self._s2polygon.num_loops() > 0:
+            boundary = self._s2polygon.loop(0)
+            latlngs = [
+                s2.S2LatLng(boundary.vertex(index)) for index in range(boundary.num_vertices())
+            ]
+            return [latlng.lng() for latlng in latlngs], [latlng.lat() for latlng in latlngs]
+        else:
+            return [], []
 
     # Alias for to_lonlat
     to_radec = to_lonlat
@@ -772,11 +789,14 @@ class SphericalPolygon(SingleSphericalPolygon):
         raise NotImplementedError()  # TODO
         polyline = s2.S2Polyline.InitFromS2Points(
             [
-                s2.S2LatLng.FromDegrees(*point).ToPoint()
+                point
+                if isinstance(point, s2.S2Point)
+                else point.ToPoint()
+                if isinstance(point, s2.S2LatLng)
+                else s2.S2LatLng.FromDegrees(*point).ToPoint()
                 if len(point) == 2
                 else s2.S2Point_FromRaw(*point)
                 for point in points
-                if not isinstance(point, s2.S2Point)
             ]
         )
         return s2.S2Polyline.Intersects()
