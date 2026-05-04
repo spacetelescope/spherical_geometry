@@ -132,7 +132,7 @@ class SingleSphericalPolygon(object):
             latlngs = [
                 s2.S2LatLng(boundary.vertex(index)) for index in range(boundary.num_vertices())
             ]
-            return [latlng.lng() for latlng in latlngs], [latlng.lat() for latlng in latlngs]
+            return [latlng.lng().degrees() for latlng in latlngs], [latlng.lat().degrees() for latlng in latlngs]
         else:
             return [], []
 

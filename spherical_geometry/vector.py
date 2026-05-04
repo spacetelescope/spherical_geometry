@@ -107,8 +107,8 @@ def vector_to_lonlat(x, y, z, degrees=True):
         s2.S2LatLng(s2.S2Point_FromRaw(x[index], y[index], z[index])) for index in range(len(x))
     ]
 
-    lons = [latlng.lng() for latlng in latlngs]
-    lats = [latlng.lat() for latlng in latlngs]
+    lons = [latlng.lng().degrees() for latlng in latlngs]
+    lats = [latlng.lat().degrees() for latlng in latlngs]
     if degrees:
         return lons, lats
     else:
