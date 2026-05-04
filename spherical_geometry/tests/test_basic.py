@@ -815,3 +815,63 @@ def test_polygon_contains_inside_point():
 
     assert p1.contains_point(p1._find_new_inside())
     assert not p1.contains_point(p1._find_new_outside())
+
+
+# TODO make this test pass
+@pytest.mark.parametrize(
+    "lonlats",
+    [
+        [(90.0, 0.0), (0.0, 45.0), (0.0, -45.0)],
+        [(90.0, 0.0), (0.0, 22.5), (0.0, -22.5)],
+        [(90.0, 0.0), (0.0, 11.25), (0.0, -11.25)],
+        [
+            (20.0, 5.0),
+            (25.0, 5.0),
+            (25.0, 10.0),
+            (20.0, 10.0),
+        ],
+        [
+            (5.0, 5.0),
+            (25.0, 5.0),
+            (25.0, 15.0),
+            (5.0, 15.0),
+        ],
+        [
+            (18.0, 6.0),
+            (20.0, 5.0),
+            (25.0, 5.0),
+            (25.0, 10.0),
+            (20.0, 10.0),
+            (18.0, 7.0),
+        ],
+        [
+            (18.0, 7.0),
+            (20.0, 10.0),
+            (25.0, 10.0),
+            (25.0, 5.0),
+            (20.0, 5.0),
+            (18.0, 6.0),
+        ],
+        [
+            (18.0, 6.0),
+            (20.0, 5.0),
+            (25.0, 5.0),
+            (25.0, 10.0),
+            (20.0, 10.0),
+            (19.0, 8.0),  # concave point
+            (18.0, 7.0),
+        ],
+    ],
+)
+def test_polygon_roundtrip(lonlats):
+    lonlats = np.asanyarray(lonlats)
+    xyzs = np.stack(vector.lonlat_to_vector(lonlats[:, 0], lonlats[:, 1]), axis=1)
+
+    p_from_lonlats = polygon.SingleSphericalPolygon.from_lonlat(lonlats[:, 0], lonlats[:, 1])
+    p_from_xyzs = polygon.SingleSphericalPolygon(xyzs)
+
+    np.testing.assert_allclose(np.stack(p_from_lonlats.to_lonlat(), axis=1), lonlats)
+    np.testing.assert_allclose(np.stack(p_from_xyzs.to_lonlat(), axis=1), lonlats)
+
+    np.testing.assert_allclose(p_from_lonlats.points, xyzs)
+    np.testing.assert_allclose(p_from_xyzs.points, xyzs)
