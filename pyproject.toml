@@ -24,7 +24,7 @@ keywords = [
   "spherical",
   "geometry",
 ]
-dependencies = ["numpy>=1.25"]
+dependencies = ["numpy>=1.25", "s2geometry>=0.14.0"]
 
 [project.optional-dependencies]
 test = ["astropy>=5.2.0", "pytest>=9.0", "pytest-astropy-header", "gwcs"]

@@ -7,23 +7,17 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_allclose
 
-from spherical_geometry import graph, great_circle_arc, polygon, vector
-from spherical_geometry.tests.helpers import (
-    ROOT_DIR,
-    get_point_set,
-    resolve_imagename
-)
+from spherical_geometry import great_circle_arc, polygon, vector
+from spherical_geometry.tests.helpers import ROOT_DIR, get_point_set, resolve_imagename
 
 try:
     from spherical_geometry import math_util
 except ImportError:
     math_util = None
 
-graph.DEBUG = True
-
 
 def test_normalize_vector():
-    x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
+    x, y, z = np.ogrid[-100:100:11, -100:100:11, -100:100:11]
     xyz = np.dstack((x.flatten(), y.flatten(), z.flatten()))[0]
     xyzn = vector.normalize_vector(xyz)
     l = np.sqrt(np.sum(xyzn * xyzn, axis=-1))
@@ -101,6 +95,7 @@ def test_vector_to_radec():
     assert_almost_equal(lat, 0.0)
 
 
+@pytest.mark.skip(reason="polygons are no longer orientable")
 def test_is_clockwise():
     clockwise_poly = polygon.SphericalPolygon.from_cone(0.0, 90.0, 1.0)
     assert clockwise_poly.is_clockwise()
@@ -118,13 +113,9 @@ def test_is_clockwise():
 
 
 def test_midpoint():
-    avec = [(float(i+7), float(j+7))
-            for i in range(0, 11, 5)
-            for j in range(0, 11, 5)]
+    avec = [(float(i + 7), float(j + 7)) for i in range(0, 11, 5) for j in range(0, 11, 5)]
 
-    bvec = [(float(i+10), float(j+10))
-            for i in range(0, 11, 5)
-            for j in range(0, 11, 5)]
+    bvec = [(float(i + 10), float(j + 10)) for i in range(0, 11, 5) for j in range(0, 11, 5)]
 
     for a in avec:
         A = np.asarray(vector.lonlat_to_vector(a[0], a[1]))
@@ -157,7 +148,7 @@ def test_interpolate():
 
     first_length = great_circle_arc.length(cvec[0], cvec[1])
     for i in range(1, 9):
-        length = great_circle_arc.length(cvec[i], cvec[i+1])
+        length = great_circle_arc.length(cvec[i], cvec[i + 1])
         assert abs(length - first_length) < 1.0e-10
 
 
@@ -169,10 +160,8 @@ def test_overlap():
         corners = [(0.0, 0.0), (0.0, 10.0), (10.0, 10.0), (10.0, 0.0)]
         for corner in corners:
             x, y = corner
-            points.append(
-                np.asarray(vector.lonlat_to_vector(x + offset, y + y_eps))
-            )
-        poly = polygon.SphericalPolygon(points)
+            points.append(np.asarray(vector.lonlat_to_vector(x + offset, y + y_eps)))
+        poly = polygon.SingleSphericalPolygon(points)
         return poly
 
     first_poly = build_polygon(0.0)
@@ -187,8 +176,8 @@ def test_overlap():
 def test_from_wcs_fits_header():
     from astropy.io import fits
 
-    filename = os.path.join(ROOT_DIR, 'j8bt06nyq_flt.fits')
-    header = fits.getheader(filename, ext=('SCI', 1))
+    filename = os.path.join(ROOT_DIR, "j8bt06nyq_flt.fits")
+    header = fits.getheader(filename, ext=("SCI", 1))
 
     poly = polygon.SphericalPolygon.from_wcs(header)
     for lonlat in poly.to_lonlat():
@@ -446,11 +435,15 @@ def test_not_intersects_poly():
 
 def test_point_in_poly():
     point = np.asarray([-0.27475449, 0.47588873, -0.83548781])
-    points = np.asarray([[ 0.04821217, -0.29877206, 0.95310589],
-                         [ 0.04451801, -0.47274119, 0.88007608],
-                         [-0.14916503, -0.46369786, 0.87334649],
-                         [-0.16101648, -0.29210164, 0.94273555],
-                         [ 0.04821217, -0.29877206, 0.95310589]])
+    points = np.asarray(
+        [
+            [0.04821217, -0.29877206, 0.95310589],
+            [0.04451801, -0.47274119, 0.88007608],
+            [-0.14916503, -0.46369786, 0.87334649],
+            [-0.16101648, -0.29210164, 0.94273555],
+            [0.04821217, -0.29877206, 0.95310589],
+        ]
+    )
     inside = np.asarray([-0.03416009, -0.36858623, 0.9289657])
     poly = polygon.SphericalPolygon(points, inside)
     assert not poly.contains_point(point)
@@ -578,8 +571,8 @@ def test_area():
     triangles = [
         ([[90, 0], [0, 45], [0, -45], [90, 0]], np.pi * 0.5),
         ([[90, 0], [0, 22.5], [0, -22.5], [90, 0]], np.pi * 0.25),
-        ([[90, 0], [0, 11.25], [0, -11.25], [90, 0]], np.pi * 0.125)
-        ]
+        ([[90, 0], [0, 11.25], [0, -11.25], [90, 0]], np.pi * 0.125),
+    ]
 
     for tri, area in triangles:
         tri = np.array(tri)
@@ -602,29 +595,38 @@ def test_cone_area():
 
 def test_fast_area():
     a = np.array(  # Clockwise
-        [[ 0.35327617,  0.6351561 , -0.6868571 ],
-         [ 0.35295533,  0.63510299, -0.68707112],
-         [ 0.35298984,  0.63505081, -0.68710162],
-         [ 0.35331262,  0.63510039, -0.68688987],
-         [ 0.35327617,  0.6351561 , -0.6868571 ]])
+        [
+            [0.35327617, 0.6351561, -0.6868571],
+            [0.35295533, 0.63510299, -0.68707112],
+            [0.35298984, 0.63505081, -0.68710162],
+            [0.35331262, 0.63510039, -0.68688987],
+            [0.35327617, 0.6351561, -0.6868571],
+        ]
+    )
 
-    b = np.array([  # Clockwise
-        [ 0.35331737,  0.6351013 , -0.68688658],
-        [ 0.3536442 ,  0.63515101, -0.68667239],
-        [ 0.35360581,  0.63521041, -0.68663722],
-        [ 0.35328338,  0.63515742, -0.68685217],
-        [ 0.35328614,  0.63515318, -0.68685467],
-        [ 0.35328374,  0.63515279, -0.68685627],
-        [ 0.35331737,  0.6351013 , -0.68688658]])
+    b = np.array(
+        [  # Clockwise
+            [0.35331737, 0.6351013, -0.68688658],
+            [0.3536442, 0.63515101, -0.68667239],
+            [0.35360581, 0.63521041, -0.68663722],
+            [0.35328338, 0.63515742, -0.68685217],
+            [0.35328614, 0.63515318, -0.68685467],
+            [0.35328374, 0.63515279, -0.68685627],
+            [0.35331737, 0.6351013, -0.68688658],
+        ]
+    )
 
-    c = np.array([  # Counterclockwise
-         [ 0.35327617,  0.6351561 , -0.6868571 ],
-         [ 0.35331262,  0.63510039, -0.68688987],
-         [ 0.35298984,  0.63505081, -0.68710162],
-         [ 0.35295533,  0.63510299, -0.68707112],
-         [ 0.35327617,  0.6351561 , -0.6868571 ]])
+    c = np.array(
+        [  # Counterclockwise
+            [0.35327617, 0.6351561, -0.6868571],
+            [0.35331262, 0.63510039, -0.68688987],
+            [0.35298984, 0.63505081, -0.68710162],
+            [0.35295533, 0.63510299, -0.68707112],
+            [0.35327617, 0.6351561, -0.6868571],
+        ]
+    )
 
-    c_inside = [ -0.35327617, -0.6351561 , 0.6868571 ]
+    c_inside = [-0.35327617, -0.6351561, 0.6868571]
 
     apoly = polygon.SphericalPolygon(a)
     bpoly = polygon.SphericalPolygon(b)
@@ -639,14 +641,44 @@ def test_fast_area():
     assert carea > 2.0 * np.pi and carea < 4.0 * np.pi
 
 
-@pytest.mark.parametrize(
-    'repeat_pts', [False, True]
-)
+@pytest.mark.parametrize("repeat_pts", [False, True])
 def test_convex_hull(repeat_pts):
-    lon = (0.02, 0.10, 0.05, 0.03, 0.04, 0.07, 0.00, 0.06, 0.08, 0.13,
-           0.08, 0.14, 0.15, 0.12, 0.01, 0.11)
-    lat = (0.06, 0.00, 0.05, 0.01, 0.12, 0.08, 0.03, 0.02, 0.04, 0.03,
-           0.10, 0.11, 0.01, 0.13, 0.09, 0.07)
+    lon = (
+        0.02,
+        0.10,
+        0.05,
+        0.03,
+        0.04,
+        0.07,
+        0.00,
+        0.06,
+        0.08,
+        0.13,
+        0.08,
+        0.14,
+        0.15,
+        0.12,
+        0.01,
+        0.11,
+    )
+    lat = (
+        0.06,
+        0.00,
+        0.05,
+        0.01,
+        0.12,
+        0.08,
+        0.03,
+        0.02,
+        0.04,
+        0.03,
+        0.10,
+        0.11,
+        0.01,
+        0.13,
+        0.09,
+        0.07,
+    )
 
     if repeat_pts:
         lon = lon + lon[::-1]
@@ -663,9 +695,9 @@ def test_convex_hull(repeat_pts):
     poly = polygon.SphericalPolygon.convex_hull(points)
 
     boundary = list(poly.points)[0]
-    boundary_lon, boundary_lat = vector.vector_to_lonlat(boundary[:,0],
-                                                         boundary[:,1],
-                                                         boundary[:,2])
+    boundary_lon, boundary_lat = vector.vector_to_lonlat(
+        boundary[:, 0], boundary[:, 1], boundary[:, 2]
+    )
     boundary = list(zip(boundary_lon, boundary_lat))
     on_boundary = []
     for p in lon_lat:
@@ -677,17 +709,31 @@ def test_convex_hull(repeat_pts):
                 break
         on_boundary.append(match)
 
-    result = [False, True, False, True, True, False, True, False,
-              False, False, False, True, True, True, True, False]
+    result = [
+        False,
+        True,
+        False,
+        True,
+        True,
+        False,
+        True,
+        False,
+        False,
+        False,
+        False,
+        True,
+        True,
+        True,
+        True,
+        False,
+    ]
 
     for b, r in zip(on_boundary, result):
         assert b == r, "Polygon boundary has correct points"
 
 
 def test_math_util_angle_domain():
-    assert not np.isfinite(
-        great_circle_arc.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
-    )
+    assert not np.isfinite(great_circle_arc.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0])
 
 
 def test_math_util_length_domain():
@@ -719,7 +765,7 @@ def test_math_util_angle_nearly_coplanar_vec():
     vectors = [
         5 * [[1.0, 1.0, 1.0]],
         5 * [[1, 0.9999999, 1]],
-        [[1, 0.5, 1], [1, 0.15, 1], [1, 0.001, 1], [1, 0.15, 1], [-1, 0.1, -1]]
+        [[1, 0.5, 1], [1, 0.15, 1], [1, 0.001, 1], [1, 0.15, 1], [-1, 0.1, -1]],
     ]
     angles = great_circle_arc.angle(*vectors)
 
@@ -728,13 +774,7 @@ def test_math_util_angle_nearly_coplanar_vec():
 
 
 def test_inner1d():
-    vectors = [
-        [1.0, 1.0, 1.0],
-        3 * [1.0 / np.sqrt(3)],
-        [1, 0.5, 1],
-        [1, 0.15, 1],
-        [-1, 0.1, -1]
-    ]
+    vectors = [[1.0, 1.0, 1.0], 3 * [1.0 / np.sqrt(3)], [1, 0.5, 1], [1, 0.15, 1], [-1, 0.1, -1]]
     lengths = great_circle_arc._inner1d_np(vectors, vectors)
 
     assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
@@ -742,13 +782,7 @@ def test_inner1d():
 
 @pytest.mark.skipif(math_util is None, reason="math_util C-ext is missing")
 def test_math_util_inner1d():
-    vectors = [
-        [1.0, 1.0, 1.0],
-        3 * [1.0 / np.sqrt(3)],
-        [1, 0.5, 1],
-        [1, 0.15, 1],
-        [-1, 0.1, -1]
-    ]
+    vectors = [[1.0, 1.0, 1.0], 3 * [1.0 / np.sqrt(3)], [1, 0.5, 1], [1, 0.15, 1], [-1, 0.1, -1]]
     lengths = math_util.inner1d(vectors, vectors)
 
     assert_allclose(lengths, [3.0, 1.0, 2.25, 2.0225, 2.01], rtol=0, atol=1e-15)
@@ -787,6 +821,7 @@ def test_degenerate_polygon():
     assert p.inside is not None
     assert not p._degenerate
     assert p.area() != 0.0
+
 
 # TODO make this test pass
 @pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/192")

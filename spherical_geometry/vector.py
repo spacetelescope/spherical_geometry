@@ -7,16 +7,17 @@ vectors and converting them to and from other representations.
 
 # THIRD-PARTY
 import numpy as np
+import s2geometry as s2
 
-try:
-    from . import math_util
-    HAS_C_UFUNCS = True
-except ImportError:
-    HAS_C_UFUNCS = False
-
-__all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
-           'normalize_vector', 'radec_to_vector', 'vector_to_radec',
-           'rotate_around']
+__all__ = [
+    "two_d",
+    "lonlat_to_vector",
+    "vector_to_lonlat",
+    "normalize_vector",
+    "radec_to_vector",
+    "vector_to_radec",
+    "rotate_around",
+]
 
 
 def two_d(vec):
@@ -58,22 +59,18 @@ def lonlat_to_vector(lon, lat, degrees=True):
 
         z = \sin b
     """
+
     lon = np.asanyarray(lon)
     lat = np.asanyarray(lat)
 
     if degrees:
-        lon_rad = np.deg2rad(lon)
-        lat_rad = np.deg2rad(lat)
+        latlngs = [s2.S2LatLng.FromDegrees(lat[index], lon[index]) for index in range(len(lon))]
     else:
-        lon_rad = lon
-        lat_rad = lat
+        latlngs = [s2.S2LatLng.FromRadians(lat[index], lon[index]) for index in range(len(lon))]
 
-    cos_lat = np.cos(lat_rad)
-
-    return (
-        np.cos(lon_rad) * cos_lat,
-        np.sin(lon_rad) * cos_lat,
-        np.sin(lat_rad))
+    return [
+        (point.x(), point.y(), point.z()) for point in (latlngs.ToPoint() for latlng in latlngs)
+    ]
 
 
 # Alias for lonlat_to_vector
@@ -106,20 +103,16 @@ def vector_to_lonlat(x, y, z, degrees=True):
 
         b = \arctan2(z, \sqrt{x^2 + y^2})
     """
-    x = np.asanyarray(x, dtype=np.float64)
-    y = np.asanyarray(y, dtype=np.float64)
-    z = np.asanyarray(z, dtype=np.float64)
+    latlngs = [
+        s2.S2LatLng(s2.S2Point_FromRaw(x[index], y[index], z[index])) for index in range(len(x))
+    ]
 
-    lon = np.arctan2(y, x)
-    lon = np.remainder(lon, 2.0 * np.pi)
-
-    lat = np.arctan2(z, np.sqrt(x ** 2 + y ** 2))
-    result = (lon, lat)
-
+    lons = [latlng.lng().degrees() for latlng in latlngs]
+    lats = [latlng.lat().degrees() for latlng in latlngs]
     if degrees:
-        return np.rad2deg(result[0]), np.rad2deg(result[1])
+        return lons, lats
     else:
-        return result
+        return np.deg2rad(lons), np.deg2rad(lats)
 
 
 # Alias for vector_to_lonlat
@@ -147,10 +140,6 @@ def normalize_vector(xyz, output=None):
 
     if output is None:
         output = np.empty(xyz.shape, dtype=np.float64)
-
-    if HAS_C_UFUNCS:
-        math_util.normalize(xyz, output)
-        return output
 
     l = np.sqrt(np.sum(xyz * xyz, axis=-1))
 
@@ -193,10 +182,10 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     sintheta = np.sin(theta)
     icostheta = 1.0 - costheta
 
-    det = (-u*x - v*y - w*z)
-    X = (-u*det)*icostheta + x*costheta + (-w*y + v*z)*sintheta
-    Y = (-v*det)*icostheta + y*costheta + ( w*x - u*z)*sintheta
-    Z = (-w*det)*icostheta + z*costheta + (-v*x + u*y)*sintheta
+    det = -u * x - v * y - w * z
+    X = (-u * det) * icostheta + x * costheta + (-w * y + v * z) * sintheta
+    Y = (-v * det) * icostheta + y * costheta + (w * x - u * z) * sintheta
+    Z = (-w * det) * icostheta + z * costheta + (-v * x + u * y) * sintheta
 
     return X, Y, Z
 
