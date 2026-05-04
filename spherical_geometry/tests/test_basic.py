@@ -870,8 +870,12 @@ def test_polygon_roundtrip(lonlats):
     p_from_lonlats = polygon.SingleSphericalPolygon.from_lonlat(lonlats[:, 0], lonlats[:, 1])
     p_from_xyzs = polygon.SingleSphericalPolygon(xyzs)
 
-    np.testing.assert_allclose(np.stack(p_from_lonlats.to_lonlat(), axis=1), lonlats)
-    np.testing.assert_allclose(np.stack(p_from_xyzs.to_lonlat(), axis=1), lonlats)
+    # flip input points around to match internal representation
+    oriented_lonlats = np.flip(np.concatenate([lonlats, [lonlats[0]]], axis=0), axis=0)
+    oriented_xyzs = np.flip(np.concatenate([xyzs, [xyzs[0]]], axis=0), axis=0)
 
-    np.testing.assert_allclose(p_from_lonlats.points, xyzs)
-    np.testing.assert_allclose(p_from_xyzs.points, xyzs)
+    np.testing.assert_allclose(np.stack(p_from_lonlats.to_lonlat(), axis=1), oriented_lonlats)
+    np.testing.assert_allclose(np.stack(p_from_xyzs.to_lonlat(), axis=1), oriented_lonlats)
+
+    np.testing.assert_allclose(p_from_lonlats.points, oriented_xyzs)
+    np.testing.assert_allclose(p_from_xyzs.points, oriented_xyzs)
