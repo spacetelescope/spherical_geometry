@@ -371,7 +371,7 @@ class Graph:
             return
 
         def malformed_polygon_error(message):
-            line_number = inspect.currentframe().f_back.f_lineno
+            line_number = inspect.currentframe().f_back.f_back.f_lineno
             raise MalformedPolygonError(f"{message} File: {__file__}, Line: {line_number}")
 
         unique_edges = set()
