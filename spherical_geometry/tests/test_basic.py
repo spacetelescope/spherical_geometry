@@ -22,6 +22,20 @@ except ImportError:
 graph.DEBUG = True
 
 
+def test_graph_sanity_check_malformed_error_message_is_formatted():
+    graph_obj = graph.Graph([])
+    node_a = graph_obj._add_node((1.0, 0.0, 0.0))
+    node_b = graph_obj._add_node((0.0, 1.0, 0.0))
+    edge = graph_obj._add_edge(node_a, node_b, [])
+    node_a._edges.remove(edge)
+
+    with pytest.raises(
+        polygon.MalformedPolygonError,
+        match=r"bad graph File: .*graph\.py, Line: \d+",
+    ):
+        graph_obj._sanity_check("bad graph")
+
+
 def test_normalize_vector():
     x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
     xyz = np.dstack((x.flatten(), y.flatten(), z.flatten()))[0]

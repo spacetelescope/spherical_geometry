@@ -6,6 +6,7 @@ This contains the code that does the actual unioning of regions.
 # TODO: Weak references for memory management problems?
 
 # STDLIB
+import inspect
 import weakref
 
 # THIRD-PARTY
@@ -369,11 +370,15 @@ class Graph:
         if not DEBUG:
             return
 
+        def malformed_polygon_error(message):
+            line_number = inspect.currentframe().f_back.f_lineno
+            raise MalformedPolygonError(f"{message} File: {__file__}, Line: {line_number}")
+
         unique_edges = set()
         for edge in self._edges:
             for node in edge._nodes:
                 if edge not in node._edges or node not in self._nodes:
-                    raise MalformedPolygonError(msg)
+                    malformed_polygon_error(msg)
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
@@ -383,14 +388,14 @@ class Graph:
         for node in self._nodes:
             if node_is_2:
                 if len(node._edges) % 2 != 0:
-                    raise MalformedPolygonError(msg)
+                    malformed_polygon_error(msg)
             else:
                 if not len(node._edges) >= 2:
-                    raise MalformedPolygonError(msg)
+                    malformed_polygon_error(msg)
 
             for edge in node._edges:
                 if node not in edge._nodes or edge not in self._edges:
-                    raise MalformedPolygonError(msg)
+                    malformed_polygon_error(msg)
 
     def union(self):
         """
