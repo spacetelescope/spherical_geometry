@@ -39,10 +39,13 @@ def edge_order(edge):
 
 def _malformed_polygon_error(msg):
     frame = inspect.currentframe()
-    if frame is not None and frame.f_back is not None:
-        line = frame.f_back.f_lineno
-    else:
-        line = "unknown"
+    try:
+        if frame is not None and frame.f_back is not None:
+            line = frame.f_back.f_lineno
+        else:
+            line = "unknown"
+    finally:
+        del frame
 
     raise MalformedPolygonError(
         f"{msg} in module: \"{__name__}\" at line: {line}"
