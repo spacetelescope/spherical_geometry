@@ -7,7 +7,6 @@ This contains the code that does the actual unioning of regions.
 
 # STDLIB
 import inspect
-import sys
 import weakref
 
 # THIRD-PARTY
