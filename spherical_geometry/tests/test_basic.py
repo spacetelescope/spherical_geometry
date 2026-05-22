@@ -22,6 +22,16 @@ except ImportError:
 graph.DEBUG = True
 
 
+def test_graph_sanity_check_error_includes_file_and_line():
+    g = graph.Graph([])
+    g._add_node(np.array([1.0, 0.0, 0.0]))
+    with pytest.raises(
+        polygon.MalformedPolygonError,
+        match=r"sanity check File: .*graph\.py, Line: \d+",
+    ):
+        g._sanity_check("sanity check")
+
+
 def test_normalize_vector():
     x, y, z = np.ogrid[-100:100:11,-100:100:11,-100:100:11]
     xyz = np.dstack((x.flatten(), y.flatten(), z.flatten()))[0]
