@@ -268,7 +268,15 @@ equals_qd(const qd *A, const qd *B)
 static NPY_INLINE int
 length_qd(const qd *A, const qd *B, qd *l)
 {
-    qd s;
+    qd s, t[3], u;
+    double norm[4];
+    int flag;
+
+    if ((A[0].x[0] == 0.0 && A[1].x[0] == 0.0 && A[2].x[0] == 0.0) ||
+        (B[0].x[0] == 0.0 && B[1].x[0] == 0.0 && B[2].x[0] == 0.0)) {
+        PyErr_SetString(PyExc_ValueError, "Null vector.");
+        return 1;
+    }
 
     /* Special case for "exactly equal" that avoids all of the calculation. */
     if (equals_qd(A, B)) {
@@ -280,13 +288,14 @@ length_qd(const qd *A, const qd *B, qd *l)
     }
 
     dot_qd(A, B, &s);
-
-    if (ISNAN_QD(s) || s.x[0] < -1.0 || s.x[0] > 1.0) {
-        PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
+    if (ISNAN_QD(s)) {
+        PyErr_SetString(PyExc_ValueError, "Out of domain for atan2");
         return 1;
     }
-
-    c_qd_acos(s.x, l->x);
+    cross_qd(A, B, t);
+    dot_qd(t, t, &u);
+    flag = c_qd_sqrt(u.x, norm);
+    c_qd_atan2(norm, s.x, l->x);
     return 0;
 }
 
@@ -670,12 +679,6 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
     load_point_qd(ip1, is1, A);
     load_point_qd(ip2, is2, B);
 
-    if (normalize_qd(A, A)) {
-        return;
-    }
-    if (normalize_qd(B, B)) {
-        return;
-    }
     if (length_qd(A, B, &s)) {
         return;
     }

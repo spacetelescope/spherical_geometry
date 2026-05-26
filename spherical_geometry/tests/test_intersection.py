@@ -381,7 +381,7 @@ def test_intersection_crash_similar_poly():
 
 
 # TODO make this test pass
-@pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/278")  
+@pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/278")
 def test_complement_regression():
     """https://github.com/spacetelescope/spherical_geometry/issues/278"""
 
@@ -456,3 +456,131 @@ def test_commutative_intersection(polygons):
     sorted_intersection_area = sorted_intersection.area()
 
     assert_allclose(unsorted_intersection_area, sorted_intersection_area)
+
+
+@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
+def test_intersection_order_independent_from_large_cones():
+    """
+    Intersections of several polygons should be independent of the order of the
+    intersections, e.g., (A^B)^C should give the same result as (A^C)^B.
+
+    Based on user report in https://github.com/spacetelescope/spherical_geometry/issues/292
+    Possibly related to https://github.com/spacetelescope/spherical_geometry/issues/278
+
+    """
+    #TODO: It would be useful to check that intersection polygons have the same
+    # number of vertices and same vertex coordinates, although this can be
+    # tricky as theoretically these vertices could be partially different,
+    # e.g., some polygons could have extra vertices lying on the arc connecting
+    # two adjacent vertices that are present in both orders of intersection.
+    # These polygons would be equivalent but we currently do not a way to
+    # detect this.
+
+    cone0 = {'lat': 40.5785, 'lon': -122.4005, 'radius': 126.08093425137112}
+    cone1 = {'lat': -33.5605, 'lon': -70.5815, 'radius': 90.64909777330483}
+    cone2 = {'lat': 38.9005, 'lon': -77.0505, 'radius': 92.53797630605003}
+    cone3 = {'lat': 45.0905, 'lon': 7.6575, 'radius': 108.34122674041656}
+    cone4 = {'lat': -25.7795, 'lon': -56.4515, 'radius': 73.960984449381}
+
+    p0 = polygon.SphericalPolygon.from_cone(**cone0, degrees=True, steps=22)
+    p1 = polygon.SphericalPolygon.from_cone(**cone1, degrees=True, steps=22)
+    p2 = polygon.SphericalPolygon.from_cone(**cone2, degrees=True, steps=22)
+    p3 = polygon.SphericalPolygon.from_cone(**cone3, degrees=True, steps=22)
+    p4 = polygon.SphericalPolygon.from_cone(**cone4, degrees=True, steps=22)
+
+    # case 1 (theoretical area: 3.925526452880896):
+    theor_area = 3.925526452880896
+    p01_2 = (p0.intersection(p1)).intersection(p2)
+    p02_1 = (p0.intersection(p2)).intersection(p1)
+    # The area of the intersection should be independent of the order of the
+    # intersections.
+    assert_allclose(p01_2.area(), p02_1.area(), rtol=0, atol=1e-10)
+    # 3.925526452880896 is exact result for cones. When discretized,
+    # using a finite number of steps/edges, the area is slightly different,
+    # but should be close to this value.
+    # TODO: reduce tolerance once the area calculation is more accurate.
+    assert_allclose(p02_1.area(), theor_area, rtol=0, atol=0.01)
+    assert_allclose(p01_2.area(), theor_area, rtol=0, atol=0.01)
+
+    # case 2 (theoretical area: 3.772239102140351):
+    theor_area = 3.772239102140351
+    p04_1 = (p0.intersection(p4)).intersection(p1)
+    p01_4 = (p0.intersection(p1)).intersection(p4)
+    assert_allclose(p04_1.area(), p01_4.area(), rtol=0, atol=1e-10)
+    assert_allclose(p04_1.area(), theor_area, rtol=0, atol=1e-10)
+    assert_allclose(p01_4.area(), theor_area, rtol=0, atol=1e-10)
+
+    # case 3 (theoretical area: 3.043038701225517):
+    theor_area = 3.043038701225517
+    p13_4 = (p1.intersection(p3)).intersection(p4)
+    p14_3 = (p1.intersection(p4)).intersection(p3)
+    assert_allclose(p13_4.area(), p14_3.area(), rtol=0, atol=1e-10)
+    assert_allclose(p13_4.area(), theor_area, rtol=0, atol=1e-10)
+    assert_allclose(p14_3.area(), theor_area, rtol=0, atol=1e-10)
+
+
+@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
+def test_intersection_order_with_repeats_from_small_cones():
+    """
+    Intersections of several polygons with some repeats, e.g., A^B^C^C^B should
+    give the same result as A^B^C and should be independent of the order of the
+    intersections, e.g., (A^B)^C should give the same result as (A^C)^B.
+
+    Inspired from https://github.com/spacetelescope/spherical_geometry/issues/292
+    """
+    #TODO: It would be useful to check that intersection polygons have the same
+    # number of vertices and same vertex coordinates, although this can be
+    # tricky as theoretically these vertices could be partially different,
+    # e.g., some polygons could have extra vertices lying on the arc connecting
+    # two adjacent vertices that are present in both orders of intersection.
+    # These polygons would be equivalent but we currently do not a way to
+    # detect this.
+
+    cone0 = {'lat': 40.5785, 'lon': -102.4005, 'radius': 46.08093425137112}
+    cone1 = {'lat': -33.5605, 'lon': -70.5815, 'radius': 79.64909777330483}
+    cone2 = {'lat': 38.9005, 'lon': -77.0505, 'radius': 62.53797630605003}
+    cone3 = {'lat': 45.0905, 'lon': 7.6575, 'radius': 58.34122674041656}
+    cone4 = {'lat': -25.7795, 'lon': -56.4515, 'radius': 73.960984449381}
+
+    p0 = polygon.SphericalPolygon.from_cone(**cone0, degrees=True, steps=24)
+    p1 = polygon.SphericalPolygon.from_cone(**cone1, degrees=True, steps=24)
+    p2 = polygon.SphericalPolygon.from_cone(**cone2, degrees=True, steps=24)
+    p3 = polygon.SphericalPolygon.from_cone(**cone3, degrees=True, steps=24)
+    p4 = polygon.SphericalPolygon.from_cone(**cone4, degrees=True, steps=24)
+    polygons = [p0, p1, p2, p3, p4]
+
+    # case 1 (theoretical area: 1.6677035846811172):
+    theor_area = 1.6677035846811172
+    u = (1, 2, 4, 4, 2)
+    p = polygons[u[0]]
+    for i in u[1::]:
+        p = p.intersection(polygons[i])
+    area1 = p.area()
+
+    u = (1, 2, 4)  # same as above but with repeats removed
+    pr = polygons[u[0]]
+    for i in u[1::]:
+        pr = pr.intersection(polygons[i])
+    area2 = pr.area()
+
+    assert_allclose(area1, area2, rtol=0, atol=1e-10)
+    assert_allclose(area2, theor_area, rtol=0.05, atol=0)
+    assert np.vstack(list(p.points)).shape == np.vstack(list(pr.points)).shape
+
+    # case 2 (theoretical area: 0.1394454760460098):
+    theor_area = 0.1394454760460098
+    u = (0, 1, 2, 2, 3)
+    p = polygons[u[0]]
+    for i in u[1::]:
+        p = p.intersection(polygons[i])
+    area1 = p.area()
+
+    u = (0, 1, 2, 3)  # same as above but with repeats removed
+    pr = polygons[u[0]]
+    for i in u[1::]:
+        pr = pr.intersection(polygons[i])
+    area2 = pr.area()
+
+    assert_allclose(area1, area2, rtol=0, atol=1e-10)
+    assert_allclose(area2, theor_area, rtol=0.05, atol=0)
+    assert np.vstack(list(p.points)).shape == np.vstack(list(pr.points)).shape

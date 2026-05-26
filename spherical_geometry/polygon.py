@@ -847,6 +847,20 @@ class SingleSphericalPolygon(object):
         x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
+    def _debug_write(self, filename, mode='w'):
+        """
+        Write the polygon to a file for debugging purposes.  The file is
+        a simple text file with one line per point, and three columns
+        corresponding to *x*, *y* and *z*.
+        """
+        with open(filename, mode) as f:
+            f.write("# SingleSphericalPolygon\n")
+            f.write("# Inside Point (x, y, z):\n")
+            f.write(f"{self._inside[0]:.15g}, {self._inside[1]:.15g}, {self._inside[2]:.15g}\n")
+            f.write("# Vertices (x, y, z):\n")
+            for point in self._points:
+                f.write(f"{point[0]:.15g}, {point[1]:.15g}, {point[2]:.15g}\n")
+
 
 class SphericalPolygon(SingleSphericalPolygon):
     r"""
@@ -1465,3 +1479,12 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         for polygon in self._polygons:
             polygon.draw(m, **plot_args)
+
+    def _debug_write(self, filename):
+        """
+        Write the polygon to a file for debugging purposes.  The file is
+        a simple text file with one line per point, and three columns
+        corresponding to *x*, *y* and *z*.
+        """
+        for i, polygon in enumerate(self):
+            polygon._debug_write(filename, mode='w' if i == 0 else 'a')

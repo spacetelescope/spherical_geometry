@@ -23,6 +23,7 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
+
 __all__ = ['angle', 'interpolate', 'intersection', 'intersects',
            'intersects_point', 'length', 'midpoint']
 
@@ -209,31 +210,27 @@ def length(A, B):
     if HAS_C_UFUNCS:
         result = math_util.length(A, B)
     else:
-        approx1 = 1 + 3 * np.finfo(float).eps
+        # Original code used arccos of the dot product (arccos(a·b)), but this
+        # can be inaccurate for very small angles due to floating point
+        # precision. The following is more accurate both for small and large
+        # angles, but is more expensive to compute:
+        # length = arctan2(|a×b|, a·b)
         A = np.asanyarray(A)
         B = np.asanyarray(B)
 
-        A2 = A ** 2.0
-        Al = np.sqrt(np.sum(A2, axis=-1))
-        B2 = B ** 2.0
-        Bl = np.sqrt(np.sum(B2, axis=-1))
+        if np.any(np.all(A == 0, axis=-1)) or np.any(np.all(B == 0, axis=-1)):
+            raise ValueError("Null vector")
 
         try:
             with np.errstate(invalid='raise'):
-                A = A / two_d(Al)
-                B = B / two_d(Bl)
+                dot = inner1d(A, B)
         except FloatingPointError:
             raise ValueError("Out of domain for acos")
 
-        dot = inner1d(A, B)
+        A, B = np.broadcast_arrays(A, B)
+        cross = np.linalg.norm(_fast_cross(A, B), axis=-1)
 
-        for d in np.atleast_1d(dot):
-            if np.isnan(d) or abs(d) > approx1:
-                raise ValueError("Out of domain for acos")
-
-        dot = np.clip(dot, -1.0, 1.0)  # needed due to accuracy loss
-        with np.errstate(invalid='ignore'):
-            result = np.arccos(dot)
+        result = np.arctan2(cross, dot)
 
     return result
 
