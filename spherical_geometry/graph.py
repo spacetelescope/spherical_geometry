@@ -6,6 +6,7 @@ This contains the code that does the actual unioning of regions.
 # TODO: Weak references for memory management problems?
 
 # STDLIB
+import inspect
 import weakref
 
 # THIRD-PARTY
@@ -35,6 +36,21 @@ def node_order(node):
 
 def edge_order(edge):
     return node_order(edge._nodes[0]) + node_order(edge._nodes[1])
+
+
+def _malformed_polygon_error(msg):
+    frame = inspect.currentframe()
+    try:
+        if frame is not None and frame.f_back is not None:
+            line = frame.f_back.f_lineno
+        else:
+            line = "unknown"
+    finally:
+        del frame
+
+    raise MalformedPolygonError(
+        f"{msg} in module: \"{__name__}\" at line: {line}"
+    )
 
 
 class Graph:
@@ -385,7 +401,7 @@ class Graph:
         for edge in self._edges:
             for node in edge._nodes:
                 if edge not in node._edges or node not in self._nodes:
-                    raise MalformedPolygonError(msg)
+                    _malformed_polygon_error(msg)
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
@@ -395,14 +411,15 @@ class Graph:
         for node in self._nodes:
             if node_is_2:
                 if len(node._edges) % 2 != 0:
-                    raise MalformedPolygonError(msg)
+                    _malformed_polygon_error(msg)
+
             else:
                 if not len(node._edges) >= 2:
-                    raise MalformedPolygonError(msg)
+                    _malformed_polygon_error(msg)
 
             for edge in node._edges:
                 if node not in edge._nodes or edge not in self._edges:
-                    raise MalformedPolygonError(msg)
+                    _malformed_polygon_error(msg)
 
     def union(self):
         """
