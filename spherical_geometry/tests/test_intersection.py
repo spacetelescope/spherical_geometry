@@ -4,6 +4,7 @@ import functools
 import itertools
 import math
 import os
+from os import path
 import random
 
 # THIRD-PARTY
@@ -584,3 +585,41 @@ def test_intersection_order_with_repeats_from_small_cones():
     assert_allclose(area1, area2, rtol=0, atol=1e-10)
     assert_allclose(area2, theor_area, rtol=0.05, atol=0)
     assert np.vstack(list(p.points)).shape == np.vstack(list(pr.points)).shape
+
+
+@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
+def test_near_identical_polygons():
+    from astropy.wcs import WCS
+    from astropy.io import fits
+
+    hdr = fits.Header.fromfile(
+        os.path.join(ROOT_DIR, "malformed.hdr"),
+        sep="\n",
+        endcard=False,
+        padding=False
+    )
+
+    w = WCS(header=hdr, fix=False)
+    w.naxes = [1200, 1200]
+
+    x = np.array([0, 1200, 1200.0, 0])
+    y = np.array([0, 0, 1200.0, 1200])
+
+    ra_a1, dec_a1 = w.pixel_to_world_values(x, y)
+    ra_a2, dec_a2 = w.pixel_to_world_values(x + 1000, y)
+    pa1 = polygon.SphericalPolygon.from_lonlat(ra_a1, dec_a1)
+    pa2 = polygon.SphericalPolygon.from_lonlat(ra_a2, dec_a2)
+    p_ref = pa1.union(pa2)
+
+    # Add a small amount of noise to the pixel coordinates to create
+    # a slightly different polygon:
+    np.random.seed(0)
+    sigma = 1e-10
+
+    rng = np.random.default_rng(42)
+    dxs = rng.normal(0.0, sigma, 4)
+    dys = rng.normal(0.0, sigma, 4)
+
+    r, d = w.pixel_to_world_values(x + dxs, y + dys)
+    pa = polygon.SphericalPolygon.from_lonlat(r, d)
+    p_ref.intersection(pa)
