@@ -25,7 +25,7 @@ jobs:
     # This ensures that a couple of targets work fine in pull requests
     permissions:
       contents: none
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v2
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v3
     if: github.event_name == 'pull_request'
     with:
       upload_to_pypi: false
@@ -41,7 +41,7 @@ jobs:
     permissions:
       contents: none
 
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v2
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@v3
 
     if: ((github.event_name == 'release') && (github.event.action == 'released')) || contains(github.event.pull_request.labels.*.name, 'Build wheels')
     with:
