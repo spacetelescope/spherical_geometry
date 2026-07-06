@@ -41,6 +41,11 @@ documentation = "http://spherical-geometry.readthedocs.io/"
 requires = ["setuptools>=61.2", "setuptools_scm[toml]>=3.6", "numpy>=2.0.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.cibuildwheel]
+build = "cp311-*"  # build for CPython 3.11 Stable API
+skip = ["cp3??t-*"]  # explicitly skip free-threaded builds
+test-command = "python -c 'import spherical_geometry'"
+
 [tool.setuptools]
 include-package-data = false
 license-files = ["licenses/*.rst"]
