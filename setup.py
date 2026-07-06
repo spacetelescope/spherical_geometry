@@ -86,7 +86,9 @@ ext_info = {
     'libraries': [],
     'extra_link_args': [],
     'extra_compile_args': [],
-    'define_macros': [],
+    'define_macros': [
+        ("Py_LIMITED_API", 0x030B0000),  # PY_VERSION_HEX for 3.11
+    ],
 }
 
 
@@ -116,4 +118,5 @@ setup(
     ext_modules=[
         Extension('spherical_geometry.math_util', sources, **ext_info)
     ],
+    options={'bdist_wheel': {'py_limited_api': 'cp311'}},
 )
