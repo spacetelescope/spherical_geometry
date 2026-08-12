@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.great_circle_arc` module contains functions for computing
@@ -8,6 +7,8 @@ Great circles are circles on the unit sphere whose center is
 coincident with the center of the sphere.  Great circle arcs are the
 section of those circles between two points on the unit sphere.
 """
+# STDLIB
+from fractions import Fraction
 
 # THIRD-PARTY
 import numpy as np
@@ -63,21 +64,38 @@ else:
 
 
 if HAS_C_UFUNCS:
-    def _cross_and_normalize(A, B):
+    def _cross_and_normalize(A, B, eps=1e-31):
         with np.errstate(invalid='ignore'):
+            # TODO: Figure out how to pass eps to C-ufunc
             return math_util.cross_and_norm(A, B)
 else:
-    def _cross_and_normalize(A, B):
-        T = _fast_cross(A, B)
-        # Normalization
-        l = np.sqrt(np.sum(T ** 2, axis=-1))
-        l = two_d(l)
-        # Might get some divide-by-zeros
-        with np.errstate(invalid='ignore'):
-            TN = T / l
-        # ... but set to zero, or we miss real NaNs elsewhere
-        TN = np.nan_to_num(TN)
-        return TN
+    def _cross_and_normalize(a, b, eps=1e-15):
+        a = np.asarray(a, dtype=float)
+        b = np.asarray(b, dtype=float)
+
+        # Cross product, shape (..., 3)
+        x = _fast_cross(a, b)
+
+        # Norm, shape (...)
+        n = np.linalg.norm(x, axis=-1)
+
+        # Scalar case
+        if np.isscalar(n):
+            if n < eps:
+                return np.full_like(x, np.nan, dtype=float)
+            return x / n
+
+        # Array case
+        mask_small = n <= eps  # shape (...)
+        denom = n.copy()
+        denom[mask_small] = np.nan
+
+        # Broadcast denom to (..., 3)
+        denom = denom[..., None]
+
+        with np.errstate(invalid="ignore", divide="ignore"):
+            out = x / denom
+        return out
 
 
 if HAS_C_UFUNCS:
@@ -87,7 +105,7 @@ else:
         return inner1d(C, _fast_cross(A, B))
 
 
-def intersection(A, B, C, D):
+def intersection_old(A, B, C, D):
     r"""
     Returns the point of intersection between two great circle arcs.
     The arcs are defined between the points *AB* and *CD*.  Either *A*
@@ -141,6 +159,8 @@ def intersection(A, B, C, D):
         by Roger Stafford.
 
     http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
+
+    Also see: http://www.boeing-727.com/Data/fly%20odds/distance.html
     """
     if HAS_C_UFUNCS:
         return math_util.intersection(A, B, C, D)
@@ -170,6 +190,9 @@ def intersection(A, B, C, D):
         s = two_d(s)
 
     cross = np.where(s == -4, -T, np.where(s == 4, T, np.nan))
+
+    # Q: Why do we check for strict equality below? Should we check for
+    # closeness instead? What about rounding errors?
 
     # If they share a common point, it's not an intersection.  This
     # gets around some rounding-error/numerical problems with the
@@ -280,6 +303,18 @@ def intersects_point(A, B, C):
     intersects : bool or array of bool
         If the point is on the line, returns `True`.
     """
+    # Q: How do we know how to get from A to B? Clockwise or counterclockwise?
+    # That is, do we always consider only minor arcs between two nodes?
+    #
+    # Depending on the direction, we might get different results. For example,
+    # if A is Atlanta and B is Los Angeles, do we travel from A to B moving
+    # westward or eastward?
+    #
+    # Also, if A and B are antipodes, then any point C would be along the great
+    # circle arc between A and B, but we don't want to return True for all
+    # points. So we need to determine the direction from A to B, and then check
+    # if C is along that direction.
+
     if HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
 
@@ -404,3 +439,143 @@ def interpolate(A, B, steps=50):
         offsets = np.sin(t * omega) / sin_omega
 
     return offsets[::-1] * A + offsets * B
+
+
+# TODO: Consider moving all this code (_det3_broadcast, robust_det_sign,
+# intersection, and possibly _exact_det3) to math_util.c.
+# _exact_det3 would require extra dependencies or, alternatively, we could
+# eliminate _exact_det3 altogether by usinbg quad precision and use small epsilon
+# to determine the sign of the determinant. Further
+
+def _det3_broadcast(a, b, c):
+    """
+    Determinant of 3x3 with rows a, b, c.
+    a, b, c: (..., 3) arrays, already broadcast to same shape.
+    Returns: (...) array of determinants.
+    """
+    return (
+        a[..., 0] * (b[..., 1] * c[..., 2] - b[..., 2] * c[..., 1]) -
+        a[..., 1] * (b[..., 0] * c[..., 2] - b[..., 2] * c[..., 0]) +
+        a[..., 2] * (b[..., 0] * c[..., 1] - b[..., 1] * c[..., 0])
+    )
+
+
+def _exact_det3(a, b, c):
+    """
+    Exact 3x3 determinant using Fractions for single 3-vectors.
+    a, b, c: shape (3,) arrays, assumed finite and non-NaN.
+    """
+    fa = [Fraction(x) for x in a]
+    fb = [Fraction(x) for x in b]
+    fc = [Fraction(x) for x in c]
+
+    return (
+        fa[0] * (fb[1] * fc[2] - fb[2] * fc[1]) -
+        fa[1] * (fb[0] * fc[2] - fb[2] * fc[0]) +
+        fa[2] * (fb[0] * fc[1] - fb[1] * fc[0])
+    )
+
+
+def robust_det_sign(a, b, c, eps=1e-15):
+    """
+    Shewchuk-style adaptive sign of det([a; b; c]) with broadcasting.
+
+    a, b, c: (..., 3) arrays (any broadcastable combination).
+    Returns: int array of shape (...) with values in {-1, 0, +1}.
+    """
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    c = np.asarray(c, dtype=float)
+
+    # Broadcast all three to a common shape (..., 3)
+    a, b, c = np.broadcast_arrays(a, b, c)
+
+    det = _det3_broadcast(a, b, c)
+    sign = np.zeros_like(det, dtype=int)
+
+    # fast path: |det| > eps → sign from float
+    mask_fast_pos = det > eps
+    mask_fast_neg = det < -eps
+    sign[mask_fast_pos] = 1
+    sign[mask_fast_neg] = -1
+
+    # slow path: |det| <= eps → exact Fraction per element
+    mask_slow = ~(mask_fast_pos | mask_fast_neg)
+
+    if np.any(mask_slow):
+        it = np.nditer(mask_slow, flags=['multi_index'])
+        while not it.finished:
+            if it[0]:
+                idx = it.multi_index
+                a_i = a[idx]  # shape (3,)
+                b_i = b[idx]
+                c_i = c[idx]
+
+                # If any NaN/inf is present, we cannot do exact arithmetic;
+                # treat as indeterminate sign → 0.
+                if (np.isnan(a_i).any() or np.isnan(b_i).any() or np.isnan(c_i).any() or
+                    np.isinf(a_i).any() or np.isinf(b_i).any() or np.isinf(c_i).any()):
+                    sign[idx] = 0
+                else:
+                    det_exact = _exact_det3(a_i, b_i, c_i)
+                    if det_exact > 0:
+                        sign[idx] = 1
+                    elif det_exact < 0:
+                        sign[idx] = -1
+                    else:
+                        sign[idx] = 0
+            it.iternext()
+
+    return sign
+
+
+def intersection(A, B, C, D, eps=1e-13):
+    r"""
+    Returns the point of intersection between two great circle arcs.
+    The arcs are defined between the points *AB* and *CD*.  Either *A*
+    and *B* or *C* and *D* may be arrays of points, but not both.
+    """
+
+    A = np.asanyarray(A, dtype=float)
+    B = np.asanyarray(B, dtype=float)
+    C = np.asanyarray(C, dtype=float)
+    D = np.asanyarray(D, dtype=float)
+
+    A, B = np.broadcast_arrays(A, B)
+    C, D = np.broadcast_arrays(C, D)
+
+    ABX = _fast_cross(A, B)
+    CDX = _fast_cross(C, D)
+    T = _cross_and_normalize(ABX, CDX, eps=eps)
+    T_ndim = T.ndim
+
+    if T_ndim > 1:
+        s = np.zeros(T.shape[0], dtype=int)
+    else:
+        s = np.zeros(1, dtype=int)
+
+    # ((A x B) x A) . T  == det([A x B; A; T])
+    s += robust_det_sign(ABX, A, T, eps=eps)
+    # (B x (A x B)) · T  == det([B; A x B; T])
+    s += robust_det_sign(B, ABX, T, eps=eps)
+    # ((C x D) x C) · T  == det([C x D; C; T])
+    s += robust_det_sign(CDX, C, T, eps=eps)
+    # (D x (C x D)) · T  == det([D; C x D; T])
+    s += robust_det_sign(D, CDX, T, eps=eps)
+
+    if T_ndim > 1:
+        s_col = two_d(s)
+    else:
+        s_col = s
+
+    cross = np.where(s_col == -4, -T,
+                     np.where(s_col == 4, T, np.nan))
+
+    equals = (np.all(A == C, axis=-1) |
+              np.all(A == D, axis=-1) |
+              np.all(B == C, axis=-1) |
+              np.all(B == D, axis=-1))
+
+    equals = two_d(equals)
+
+    return np.where(equals, np.nan, cross)

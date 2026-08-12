@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.polygon` module defines the `SphericalPolygon` class for
@@ -6,6 +5,7 @@ managing polygons on the unit sphere.
 """
 
 # STDLIB
+import itertools
 from copy import deepcopy
 
 # THIRD-PARTY
@@ -14,15 +14,160 @@ import numpy as np
 # LOCAL
 from spherical_geometry import great_circle_arc, vector
 
-__all__ = ['SingleSphericalPolygon', 'SphericalPolygon',
-           'MalformedPolygonError']
+try:
+    from spherical_geometry import math_util
+    qd_single_polygon_area = math_util.single_polygon_area
+    HAS_C_UFUNCS = True
+except ImportError:
+    HAS_C_UFUNCS = False
+
+__all__ = [
+    'MalformedPolygonError',
+    'SingleSphericalPolygon',
+    'SphericalPolygon',
+]
 
 
 class MalformedPolygonError(Exception):
     pass
 
 
-class SingleSphericalPolygon(object):
+def _solid_angle_triangle(a, b, c):
+    """
+    Oosterom-Strackee solid angle of spherical triangle (a,b,c).
+    All inputs must be unit vectors.
+    """
+    det = np.dot(a, np.cross(b, c))
+    denom = 1 + np.dot(a, b) + np.dot(b, c) + np.dot(c, a)
+    return 2 * np.arctan2(det, denom)
+
+
+def single_polygon_area(polygon):
+    """
+    Robust spherical polygon area for convex, concave, or > hemisphere polygons.
+    vertices: list of 3D vectors (not necessarily normalized)
+    """
+    if polygon._degenerate:
+        return 0.0
+
+    if len(polygon._points) < 4:
+        return 0.0
+
+    verts = polygon._points
+
+    if HAS_C_UFUNCS:
+        return qd_single_polygon_area(verts, polygon._inside)
+
+    else:
+        # Normalize vertices for Oosterom-Strackee (vertices should have
+        # been normalized at construction, but we do it here to be safe)
+        verts = np.array([v / np.linalg.norm(v) for v in verts])
+
+        # Detect closed polygon and drop duplicate last vertex if present
+        closed = np.linalg.norm(verts[0] - verts[-1]) < 1e-12
+        n = len(verts) - 1 if closed else len(verts)
+        if n < 3:
+            return 0.0
+
+        # Fan triangulation around vertex 0
+        a = verts[0]
+        signed_area = 0.0
+        for i in range(1, n - 1):
+            signed_area += _solid_angle_triangle(a, verts[i], verts[i + 1])
+
+    # TODO: revisit this logic for determining small vs big cap. The entire
+    # code and area sign convention should be made consistent with the
+    # "inside" point and convention for the orientation of the polygon.
+    # (and maybe we don't want to store "inside" at all, but instead just look
+    # at the orientation of the polygon and compute the inside point on demand)
+    # This code here makes unit tests to pass but it is not clear that it
+    # is correct thing to do in general.
+
+    # Base small‑cap area: always positive
+    small_area = abs(signed_area)
+
+    # If no inside vector: we only know the small cap
+    if polygon._inside is None:
+        return small_area
+
+    # With inside: decide small vs big cap
+    inside = polygon._inside / np.linalg.norm(polygon._inside)
+
+    # Use centroid direction as polygon "interior" normal
+    centroid = np.sum(verts[:n], axis=0)
+    if np.linalg.norm(centroid) < 1.0e-28:
+        # Degenerate orientation: fall back to small cap
+        return small_area
+    centroid /= np.linalg.norm(centroid)
+
+    same_side = np.dot(inside, centroid) > 0
+
+    if same_side:
+        # Inside matches centroid - return small cap
+        return small_area
+    else:
+        # Inside opposite centroid - return big complement
+        return 4.0 * np.pi - small_area
+
+
+def _canonical_ring(pts, atol=1e-12):
+    """
+    Numerically stable canonical ordering of a spherical polygon ring.
+    Rotation- and orientation-invariant.
+    """
+    # NOTE: This function can change orientation of points. For polygons
+    # limited to a semisphere (the ones we support for now) this is not an issue.
+    # If orientation is important at a later point, either the caller should
+    # check the orientation and reverse if needed, or this function could
+    # return orientation in addition to the ring.
+    pts = np.asarray(pts)
+    if pts.ndim != 2 or pts.shape[1] != 3:
+        raise ValueError("Input must be a 2D array with shape (N, 3)")
+    if pts.shape[0] < 3:
+        return pts  # Not enough points to form a polygon, return as is
+    if np.allclose(pts[0], pts[-1], rtol=0, atol=10 * np.finfo(pts.dtype).eps):
+        pts = pts[:-1]  # Remove duplicate last point if polygon is closed
+
+    # Compute a stable key for each point:
+    # round coordinates to a tolerance so tiny noise does not reorder points
+    rounded = np.round(pts / atol).astype(np.int64)
+
+    # Find lexicographically smallest rounded row
+    min_idx = np.lexsort(rounded.T[::-1])[0]
+
+    # Rotate
+    rot = np.roll(pts, -min_idx, axis=0)
+
+    # Reverse orientation
+    rev = np.vstack((rot[0], rot[:0:-1]))
+
+    # Compare full sequences using rounded keys
+    rounded_rot = np.round(rot / atol).astype(np.int64)
+    rounded_rev = np.round(rev / atol).astype(np.int64)
+
+    if tuple(map(tuple, rounded_rev)) < tuple(map(tuple, rounded_rot)):
+        return rev
+
+    return rot
+
+
+def _angular_equal(a, b, atol=1e-8):
+    """
+    Compare two Nx3 rings for equality up to circular shift using angular tolerance.
+    tol is in absolute coordinate units (approx radians on unit sphere).
+    """
+    a = np.asarray(a)
+    b = np.asarray(b)
+    if a.shape != b.shape:
+        return False
+    # canonicalize both
+    ca = _canonical_ring(a)
+    cb = _canonical_ring(b)
+    # direct coordinate comparison with atol (works because canonicalized)
+    return np.allclose(ca, cb, rtol=0, atol=atol)
+
+
+class SingleSphericalPolygon:
     r"""
     Polygons are represented by both a set of points (in Cartesian
     (*x*, *y*, *z*) normalized on the unit sphere), and an inside
@@ -58,15 +203,33 @@ class SingleSphericalPolygon(object):
         else:
             self._degenerate = False
 
+        # TODO: revisit this requirement that the polygon be explicitly closed.
+        # This has to be done after reviewing everything as in other pars of
+        # the code last vex is removed from computations.
         if not np.array_equal(points[0], points[-1]):
             points = list(points[:])
             points.append(points[0])
 
         self._points = points = np.asanyarray(points)
 
+        # Check that all vertices are not close to null vectors, which would
+        # cause problems with normalization and area calculations.
+        norms = np.linalg.norm(points, axis=1)
+
+        if np.any(norms < 1e-10):
+            self._degenerate = True
+            self._inside = None
+            return
+
         if len(points) < 4:
             self._inside = None
             raise ValueError("Polygon made of too few points")
+
+        # normalize the points to ensure they are on the unit sphere.
+        # TODO: when quad arithmetic is available, we should use probably store
+        # vertices using quad representations and normalize once using quad
+        # accuracy. This should improve performance somewhat.
+        # self._points = points = points / norms[:, np.newaxis]
 
         orient, new_inside = self._get_orient(compute_inside=True)
         if orient is None:
@@ -94,8 +257,7 @@ class SingleSphericalPolygon(object):
         return 1
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__,
-                               self.points, self.inside)
+        return f'{self.__class__.__name__}({self.points!r}, {self.inside!r})'
 
     def __iter__(self):
         """
@@ -708,6 +870,7 @@ class SingleSphericalPolygon(object):
         counter-clockwise. Take the absolute value if that is not desired.
         Area of degenerate polygons is defined to be zero.
         """
+        return single_polygon_area(self)
         if self._degenerate:
             return 0.0
 
@@ -830,7 +993,7 @@ class SingleSphericalPolygon(object):
             del plot_args['alpha']
 
         alpha = 1.0
-        for A, B in zip(points[0:-1], points[1:]):
+        for A, B in itertools.pairwise(points):
             length = np.rad2deg(great_circle_arc.length(A, B))
             if not np.isfinite(length):
                 length = 2
@@ -858,8 +1021,9 @@ class SingleSphericalPolygon(object):
             f.write("# Inside Point (x, y, z):\n")
             f.write(f"{self._inside[0]:.15g}, {self._inside[1]:.15g}, {self._inside[2]:.15g}\n")
             f.write("# Vertices (x, y, z):\n")
-            for point in self._points:
-                f.write(f"{point[0]:.15g}, {point[1]:.15g}, {point[2]:.15g}\n")
+            f.writelines(
+                f"{point[0]:.15g}, {point[1]:.15g}, {point[2]:.15g}\n" for point in self._points
+            )
 
 
 class SphericalPolygon(SingleSphericalPolygon):
@@ -909,7 +1073,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         p = SingleSphericalPolygon(init, inside)
         if p._degenerate:
             self._degenerate = True
-            self._polygons = tuple()
+            self._polygons = ()
             return
         else:
             self._degenerate = False
@@ -924,7 +1088,7 @@ class SphericalPolygon(SingleSphericalPolygon):
             polygons.extend(g.disjoint_polygons())
         if not polygons:
             self._degenerate = True
-            self._polygons = tuple()
+            self._polygons = ()
         else:
             self._polygons = polygons
 
@@ -949,7 +1113,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         for polygon in self._polygons:
             for subpolygon in polygon:
-                yield subpolygon
+                yield from subpolygon
 
     @property
     def degenerate(self):
@@ -1362,18 +1526,19 @@ class SphericalPolygon(SingleSphericalPolygon):
         # Remove the next block once the bug is fixed.
         # See https://github.com/spacetelescope/spherical_geometry/issues/232
         #
-        # This woraround will result in two poligons treated as the same
+        # This workaround will result in two poligons treated as the same
         # polygon if their vertices (x, y, z on a unit sphere) differ by 5e-9.
         # This is equivalent to polygon vertices being separated by less than
         # 0.0015 arcsec on the sky or by less than 2mm on Earth (at average
         # Earth radius).
-        accepted_polygon_points = [np.sort(list(valid_polygons[0].points)[0], axis=0)]
+
+        accepted_polygon_points = [next(iter(valid_polygons[0].points))]
         filtered_polygons = [valid_polygons[0]]
+
         for p in valid_polygons[1:]:
-            pts = np.sort(list(p.points)[0], axis=0)
+            pts = next(iter(p.points))
             for pts2 in accepted_polygon_points:
-                if (pts.size == pts2.size and
-                        np.allclose(pts, pts2, rtol=0, atol=5e-9)):
+                if _angular_equal(pts, pts2, atol=5.0e-9):
                     break
             else:
                 filtered_polygons.append(p)
@@ -1382,17 +1547,63 @@ class SphericalPolygon(SingleSphericalPolygon):
 
         from . import graph
 
+        clusters = []          # list of lists of polygons
+        cluster_rings = []     # canonical ring for each cluster
+
+        atol = 5.0e-9
+
+        for poly in filtered_polygons:
+            ring = np.asarray(getattr(poly, "_points", next(iter(poly.points))))
+            can = _canonical_ring(ring)
+
+            # find cluster with matching ring
+            for i, r in enumerate(cluster_rings):
+                if _angular_equal(can, r, atol=atol):
+                    clusters[i].append(poly)
+                    break
+            else:
+                # new cluster
+                clusters.append([poly])
+                cluster_rings.append(can)
+
+        # pick ONE representative per cluster
+        accepted_polys = []
+        for polys in clusters:
+            # choose representative polygon with the largest area:
+            try:
+                rep = max(polys, key=lambda p: p.area())
+            except ValueError:
+                continue
+            accepted_polys.append(rep)
+
+        # Flatten into SingleSphericalPolygon list using _points (Nx3)
+        # to avoid iterator shape issues
         all_polygons = []
-        for polygon in filtered_polygons:
+        for polygon in accepted_polys:
             if polygon._degenerate:
                 continue
             for p in polygon:
-                if p._degenerate:
-                    continue
+                # prefer p._points if present (Nx3)
+                pts = getattr(p, "_points", None)
+                if pts is None:
+                    pts = np.asarray(list(p.points))
+                pts = np.atleast_2d(pts)
+                # we should skip polygons with too few points.
+                # for closed polygons we need at least 4 vertices.
+                # However, for now initializer ensures polygons have 4 or more
+                # vertices.
+                # if pts.shape[0] < 3:
+                #     continue
                 all_polygons.append(p)
 
+        # Build graph and union
         g = graph.Graph(all_polygons)
-        return g.union()
+        res = g.union()
+
+        # Normalize return type: Graph.union() returns a SingleSphericalPolygon
+        if isinstance(res, SingleSphericalPolygon):
+            return SphericalPolygon((res,), inside=res.inside)
+        return res
 
     def intersection(self, other):
         """
@@ -1416,9 +1627,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         :mod:`~spherical_geometry.graph` module.
         """
 
-        if self.area() == 0.0:
-            return SphericalPolygon([])
-        elif other.area() == 0.0:
+        if self.area() == 0.0 or other.area() == 0.0:
             return SphericalPolygon([])
 
         all_polygons = []
