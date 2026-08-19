@@ -323,10 +323,19 @@ class Graph:
         # one, otherwise the Edge will get hooked up to the nodes but
         # be orphaned.
         for edge in self._edges:
+            # Q: what happens when A and B are the same node?
+            # Should we allow self-pointing edges?
+            # if A is B and A.equals(B):
+            #     # TODO: clarify what to do with self-pointing edges.
+            #     # For now, don't add self-pointing edges.
+            #     return edge
             if ((A is edge._nodes[0] and
                  B is edge._nodes[1]) or
                 (A is edge._nodes[1] and
                  B is edge._nodes[0])):
+                # Q: is it possible for an edge to be between the same two
+                # nodes but not be the same edge?
+                #if source_polygons is not None:
                 edge._source_polygons.update(source_polygons)
                 return edge
 

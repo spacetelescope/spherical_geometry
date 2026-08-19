@@ -280,16 +280,31 @@ def intersects_point(A, B, C):
     intersects : bool or array of bool
         If the point is on the line, returns `True`.
     """
-    if HAS_C_UFUNCS:
+    if not HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
 
-    total_length = length(A, B)
-    left_length = length(A, C)
-    right_length = length(C, B)
+    epsilon = 1e-12  # Tolerance for coplanarity and degenerate check
 
-    length_diff = np.abs((left_length + right_length) - total_length)
+    A = np.asanyarray(A) / np.linalg.norm(A, keepdims=True)
+    B = np.asanyarray(B) / np.linalg.norm(B, keepdims=True)
+    C = np.asanyarray(C) / np.linalg.norm(C, axis=-1, keepdims=True)
 
-    return length_diff < 3e-11
+    normal = np.cross(A, B)
+    norm = np.linalg.norm(normal)
+
+    # Antipodal or nearly parallel: no unique great circle
+    if norm < epsilon:
+        return np.zeros(C.shape[:-1], dtype=bool)
+
+    coplanar = (np.abs(C @ normal) / norm) < epsilon
+
+    ab = np.dot(A, B)
+    ac = np.dot(C, A)
+    bc = np.dot(C, B)
+
+    not_antipodal = ab > -1.0 + epsilon
+    interior_of_minor_arc = (ac >= ab) & (bc >= ab)
+    return coplanar & interior_of_minor_arc & not_antipodal
 
 
 def angle(A, B, C):
