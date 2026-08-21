@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.vector` module contains the basic operations for handling
@@ -14,9 +13,15 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
-__all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
-           'normalize_vector', 'radec_to_vector', 'vector_to_radec',
-           'rotate_around']
+__all__ = [
+    "lonlat_to_vector",
+    "normalize_vector",
+    "radec_to_vector",
+    "rotate_around",
+    "two_d",
+    "vector_to_lonlat",
+    "vector_to_radec",
+]
 
 
 def two_d(vec):
@@ -189,14 +194,19 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     if degrees:
         theta = np.deg2rad(theta)
 
+    # Consider https://doi.org/10.1016/j.mechmachtheory.2015.03.004 for an
+    # alternative formula that may be more accurate. However,
+    # current implementation below is adequate for our current needs.
+
     costheta = np.cos(theta)
     sintheta = np.sin(theta)
     icostheta = 1.0 - costheta
 
-    det = (-u*x - v*y - w*z)
-    X = (-u*det)*icostheta + x*costheta + (-w*y + v*z)*sintheta
-    Y = (-v*det)*icostheta + y*costheta + ( w*x - u*z)*sintheta
-    Z = (-w*det)*icostheta + z*costheta + (-v*x + u*y)*sintheta
+    # Rodrigues' rotation formula:
+    dotp = u * x + v * y + w * z
+    X = x * costheta + (v * z - w * y) * sintheta + u * dotp * icostheta
+    Y = y * costheta + (-u * z + w * x) * sintheta + v * dotp * icostheta
+    Z = z * costheta + (u * y - v * x) * sintheta + w * dotp * icostheta
 
     return X, Y, Z
 

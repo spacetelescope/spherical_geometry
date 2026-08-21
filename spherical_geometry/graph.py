@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 This contains the code that does the actual unioning of regions.
@@ -7,18 +6,20 @@ This contains the code that does the actual unioning of regions.
 
 # STDLIB
 import inspect
+import math
 import weakref
 
 # THIRD-PARTY
 import numpy as np
 
-from . import math_util
-
 # LOCAL
 from spherical_geometry import great_circle_arc as gca
 from spherical_geometry import vector
-from spherical_geometry.polygon import (SingleSphericalPolygon, SphericalPolygon,
-                                        MalformedPolygonError)
+from spherical_geometry.polygon import (
+    MalformedPolygonError,
+    SingleSphericalPolygon,
+    SphericalPolygon,
+)
 
 __all__ = ['Graph']
 
@@ -69,7 +70,7 @@ class Graph:
         A `~Graph.Node` represents a single point, connected by an arbitrary
         number of `~Graph.Edge` objects to other `~Graph.Node` objects.
         """
-        def __init__(self, point, source_polygons=[]):
+        def __init__(self, point, source_polygons=None):
             """
             Parameters
             ----------
@@ -79,7 +80,7 @@ class Graph:
                 The polygon(s) this node came from.  Used for bookkeeping.
             """
             self._point = np.asanyarray(point)
-            self._source_polygons = set(source_polygons)
+            self._source_polygons = set() if source_polygons is None else set(source_polygons)
             self._edges = weakref.WeakSet()
 
         def __repr__(self):
@@ -101,7 +102,6 @@ class Graph:
                 empirical test cases. Relative threshold based on
                 the actual sizes of polygons is not implemented.
             """
-            # return np.array_equal(self._point, other._point)
             return np.linalg.norm(self._point - other._point) < thresh
             # Possibly more accurate but much slower.
             # TODO: do more testing once the main stability issues are dealt with.
@@ -112,7 +112,7 @@ class Graph:
         An `~Graph.Edge` represents a connection between exactly two
         `~Graph.Node` objects.  This `~Graph.Edge` class has no direction.
         """
-        def __init__(self, A, B, source_polygons=[]):
+        def __init__(self, A, B, source_polygons=None):
             """
             Parameters
             ----------
@@ -124,7 +124,7 @@ class Graph:
             self._nodes = [A, B]
             for node in self._nodes:
                 node._edges.add(self)
-            self._source_polygons = set(source_polygons)
+            self._source_polygons = set() if source_polygons is None else set(source_polygons)
 
         def __repr__(self):
             nodes = self._nodes
@@ -226,7 +226,7 @@ class Graph:
         # Close the polygon
         self._add_edge(nodeA, start_node, [polygon])
 
-    def _add_node(self, point, source_polygons=[]):
+    def _add_node(self, point, source_polygons=None):
         """
         Add a node to the graph.  It will be disconnected until used
         in a call to `_add_edge`.
@@ -268,9 +268,12 @@ class Graph:
             indices = np.nonzero(diff)[0]
             if len(indices):
                 node = nodes[indices[0]]
-                node._source_polygons.update(source_polygons)
+                if source_polygons is not None:
+                    node._source_polygons.update(source_polygons)
                 return node
 
+        if source_polygons is not None:
+            source_polygons = set(source_polygons)
         new_node = self.Node(point, source_polygons)
         self._nodes.add(new_node)
         return new_node
@@ -295,7 +298,7 @@ class Graph:
         if node in self._nodes:
             self._nodes.remove(node)
 
-    def _add_edge(self, A, B, source_polygons=[]):
+    def _add_edge(self, A, B, source_polygons=None):
         """
         Add an edge between two nodes.
 
@@ -327,7 +330,12 @@ class Graph:
                  B is edge._nodes[1]) or
                 (A is edge._nodes[1] and
                  B is edge._nodes[0])):
-                edge._source_polygons.update(source_polygons)
+                # Q: is it possible for an edge to be between the same two
+                # nodes but not be the same edge?
+                # Q: what happens when A and B are the same node?
+                # Should we allow self-pointing edges?
+                if source_polygons is not None:
+                    edge._source_polygons.update(source_polygons)
                 return edge
 
         new_edge = self.Edge(A, B, source_polygons)
@@ -384,6 +392,9 @@ class Graph:
         A, B = edge._nodes
         edgeA = self._add_edge(A, node, edge._source_polygons)
         edgeB = self._add_edge(node, B, edge._source_polygons)
+        # Q: When can edge be edgeA or edgeB? is it when node is either A or B?
+        # If so, wouldn't it be better not to add edgeA or edgeB and just keep edge?
+        # If edge is edgeA, then edgeB must be degenerate.
         if edge not in (edgeA, edgeB):
             self._remove_edge(edge)
         return [edgeA, edgeB]
@@ -583,6 +594,8 @@ class Graph:
                         if edge not in edges]
 
                     for end_point in AB._nodes:
+                        # Q: doesn't 'node' already have its own source polygons?
+                        # Why do we need to update it with the end point's source polygons?
                         node._source_polygons.update(
                             end_point._source_polygons)
                     edges = edges + new_edges
@@ -715,6 +728,10 @@ class Graph:
             for polygon in polygons:
                 if polygon in edge._source_polygons:
                     edge._count += 1
+
+                # TODO: This seems unreliable, especially the midpoint check:
+                #       it may fail for concave polygons and also for large
+                #       polygons spanning a significant portion of the sphere.
                 elif ((polygon in A._source_polygons or
                        polygon.contains_point(A._point)) and
                       (polygon in B._source_polygons or
@@ -757,6 +774,10 @@ class Graph:
         for edge in self._edges:
             nedges_a = len(edge._nodes[0]._edges)
             nedges_b = len(edge._nodes[1]._edges)
+
+            # Q: Why 3? Why not >= 2 ? When can two nodes be connected by more
+            # than one edge? I thought this code no longer uses cut lines,
+            # so how can this happen or when 2 lines are allowed?
             if (nedges_a % 2 == 1 and nedges_a >= 3 and
                     nedges_b % 2 == 1 and nedges_b >= 3):
                 removals.append(edge)
@@ -797,15 +818,18 @@ class Graph:
                     return False
         return True
 
-    def _trace_polygons(self):
+    def _trace_polygons_orig(self):
         """
         Given a graph that has had cutlines removed and all
         intersections found, traces it to find a list of
-        disjoint polygons
+        disjoint polygons.
         """
+        # TODO: This function should be removed in a future release. For now
+        # we keep it around for testing purposes, but it is not used
+        # in the main code path.
 
         def edge_normal(edge, last_edge):
-            # THe normal vector to the plane defining the arc
+            # The normal vector to the plane defining the arc
             normal = gca._cross_and_normalize(edge._nodes[0]._point,
                                               edge._nodes[1]._point)
             if last_edge is not None:
@@ -851,7 +875,8 @@ class Graph:
             schwartz = zip(dot, candidates)
             schwartz = sorted(schwartz, key=lambda x: x[0])
 
-            middle = len(candidates) // 2
+            middle = len(candidates) // 2  # NOTE: this was "heuristic" part
+                                           # in the original code.
             return schwartz[middle][1]
 
         polygons = []
@@ -883,6 +908,136 @@ class Graph:
             polygons.append(polygon)
 
         return polygons
+
+    def _trace_polygons(self):
+        """
+        Given a graph that has had cutlines removed and all
+        intersections found, traces it to find a list of
+        disjoint polygons.
+
+        Assumes:
+        - graph represents simple (non-self-intersecting) spherical polygons
+        - edges are great-circle arcs between unit 3D points
+        - polygons are not larger than a hemisphere (recommended)
+        """
+        EPS = 1e-12          # for projection normalization
+        ANG_EPS = 1e-8       # skip near-zero angles to avoid backtracking
+
+        def edge_dir(node, edge):
+            """
+            Direction of edge when leaving `node`, projected to the tangent
+            plane at `node._point` and normalized.
+            """
+            p = node._point
+            q = edge.follow(node)._point  # other endpoint
+
+            # project q onto tangent plane at p
+            v = q - np.dot(q, p) * p
+            nrm = np.linalg.norm(v)
+            if nrm < EPS:
+                return v
+            return v / nrm
+
+        def signed_turn_angle(node, last_edge, next_edge):
+            """
+            Signed angle from last_edge to next_edge around the normal `node._point`.
+            Positive = left turn when looking along node._point.
+            """
+            p = node._point
+            d0 = edge_dir(node, last_edge)
+            d1 = edge_dir(node, next_edge)
+
+            # atan2( (d0 x d1)·p , d0·d1 )
+            cross = np.cross(d0, d1)
+            sin_theta = np.dot(cross, p)
+            cos_theta = np.dot(d0, d1)
+            angle = math.atan2(sin_theta, cos_theta)
+
+            # normalize to [0, 2π)
+            if angle < 0.0:
+                angle += 2.0 * math.pi
+
+            return angle
+
+        def pick_next_edge(node, last_edge):
+            """
+            Pick the next edge when arriving at `node` from `last_edge`.
+
+            Strategy:
+            - If only one unused edge, take it.
+            - Otherwise, choose the unused edge that gives the smallest
+                positive turn angle from `last_edge` around the node's normal.
+            - Skip angles < ANG_EPS to avoid backtracking or nearly-collinear edges.
+            """
+            candidates = [e for e in node._edges if not e._followed]
+
+            if not candidates:
+                raise ValueError("No more edges to follow at node")
+
+            if last_edge is None or len(candidates) == 1:
+                return candidates[0]
+
+            best_edge = None
+            best_angle = None
+
+            for e in candidates:
+                ang = signed_turn_angle(node, last_edge, e)
+
+                # Skip near-zero angles (backtracking / straight-through)
+                if ang < ANG_EPS:
+                    continue
+
+                if best_angle is None or ang < best_angle:
+                    best_angle = ang
+                    best_edge = e
+
+            # If all angles were < ANG_EPS, fall back to smallest angle
+            if best_edge is None:
+                for e in candidates:
+                    ang = signed_turn_angle(node, last_edge, e)
+                    if best_angle is None or ang < best_angle:
+                        best_angle = ang
+                        best_edge = e
+
+            return best_edge
+
+        polygons = []
+        edges = set(self._edges)  # copy
+        for edge in self._edges:
+            edge._followed = False
+
+        while edges:
+            points = []
+
+            # start from an arbitrary unused edge
+            edge = edges.pop()
+            edge._followed = True
+            start_node = node = edge._nodes[0]
+
+            points.append(node._point)
+            node = edge._nodes[1]
+            points.append(node._point)
+
+            while True:
+                if not np.array_equal(points[-1], node._point):
+                    points.append(node._point)
+
+                next_edge = pick_next_edge(node, edge)
+                next_edge._followed = True
+                edges.discard(next_edge)
+
+                edge = next_edge
+                node = edge.follow(node)
+
+                if node is start_node:
+                    points.append(node._point)
+                    break
+
+            polygon = SingleSphericalPolygon(points)
+            polygons.append(polygon)
+
+        return polygons
+
 
     def _trace(self):
         """

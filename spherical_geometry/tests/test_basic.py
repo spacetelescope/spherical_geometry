@@ -628,7 +628,7 @@ def test_fast_area():
 
     apoly = polygon.SphericalPolygon(a)
     bpoly = polygon.SphericalPolygon(b)
-    cpoly = polygon.SphericalPolygon(c, inside=c_inside)
+    cpoly = polygon.SphericalPolygon(c[:-1, :], inside=c_inside)
 
     aarea = apoly.area()
     barea = bpoly.area()

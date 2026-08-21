@@ -21,6 +21,15 @@ Release Notes
 - Aded two unit tests based on #292 (and possibly #278)that are marked
   with ``xfail`` for now. [#322]
 
+- Implemented a more robust polygon area computation using Oosterom-Strackee
+  which replaces previous computation that used Girard's theorem. [#333]
+
+- Implemented a more robust algorithm for detecting nearly identical polygons. [#333]
+
+- Improved computation of arc-to-arc intersections in the ``great_circle_arc``
+  module. This fixed the two new added tests previously marked as xfailing
+  (in #322). [#333]
+
 
 1.4.0 (2026-03-11)
 ==================

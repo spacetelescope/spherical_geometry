@@ -434,6 +434,9 @@ def test_complement_regression():
 )
 def test_commutative_intersection(polygons):
     """https://github.com/spacetelescope/spherical_geometry/issues/292"""
+    # NOTE: my (mcara) suspicion is that this is caused by either interior point
+    # calculation or the graph tracing algorithm itself (or both), when
+    # polygons span more than a hemisphere.
 
     # pair polygons with their areas for later sorting
     polygons = [(polygon, polygon.area()) for polygon in polygons]
@@ -476,6 +479,10 @@ def test_intersection_order_independent_from_large_cones():
     # two adjacent vertices that are present in both orders of intersection.
     # These polygons would be equivalent but we currently do not a way to
     # detect this.
+
+    # NOTE: my (mcara) suspicion is that this is caused by either interior point
+    # calculation or the graph tracing algorithm itself (or both), when
+    # polygons span more than a hemisphere.
 
     cone0 = {'lat': 40.5785, 'lon': -122.4005, 'radius': 126.08093425137112}
     cone1 = {'lat': -33.5605, 'lon': -70.5815, 'radius': 90.64909777330483}
@@ -520,7 +527,6 @@ def test_intersection_order_independent_from_large_cones():
     assert_allclose(p14_3.area(), theor_area, rtol=0, atol=1e-10)
 
 
-@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
 def test_intersection_order_with_repeats_from_small_cones():
     """
     Intersections of several polygons with some repeats, e.g., A^B^C^C^B should

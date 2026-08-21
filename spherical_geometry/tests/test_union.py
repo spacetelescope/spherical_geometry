@@ -354,7 +354,8 @@ def test_almost_identical_polygons_multi_union():
         )
 
     # FIXME: https://github.com/spacetelescope/spherical_geometry/issues/245
-    area_tol = 5.8e-14  # Used to be 5.0e-14 before we started testing different archs
+    area_tol = 1.0e-7
+    ref_area = 2.6672663785041255e-8
 
     # FIXME: https://github.com/spacetelescope/spherical_geometry/issues/244
     if sys.platform == "win32":
@@ -365,4 +366,4 @@ def test_almost_identical_polygons_multi_union():
     p = polygon.SphericalPolygon.multi_union(polygons)
 
     assert np.shape(list(p.points)[0]) in p_shapes
-    assert abs(p.area() - 2.6672666e-8) < area_tol
+    assert abs(p.area() - ref_area) <= area_tol * ref_area
