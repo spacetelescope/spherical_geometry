@@ -725,7 +725,7 @@ char *intersects_point_signature = "(i),(i),(i)->()";
  */
 static void
 DOUBLE_intersects_point(
-    char **args, const npy_intp *dimensions, const npy_intp *steps, void *NPY_UNUSED(func))
+    char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
     qd A[3], B[3], C[3];
     qd normal[3];
@@ -738,7 +738,7 @@ DOUBLE_intersects_point(
     const double epsilon = 1e-16; // Tolerance for coplanarity and degenerate check
 
     INIT_OUTER_LOOP_4
-    npy_intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
+    intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
