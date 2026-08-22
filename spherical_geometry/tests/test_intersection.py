@@ -628,7 +628,7 @@ def test_near_identical_polygons():
     # a slightly different polygon:
     for k in range(10):
         np.random.seed(k)
-        sigma = 1.0e-10 * k
+        sigma = 1.0e-10 * (k + 1)
 
         rng = np.random.default_rng(42)
         dxs = rng.normal(0.0, sigma, 4)

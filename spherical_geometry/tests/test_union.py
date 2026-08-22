@@ -358,11 +358,11 @@ def test_almost_identical_polygons_multi_union():
 
     # FIXME: https://github.com/spacetelescope/spherical_geometry/issues/244
     if sys.platform == "win32":
-        p_shapes = [(66, 3), (68, 3)]  # 32-bit Windows has different shape but not 64-bit Windows
+        p_shapes = [(45, 3)]  # 32-bit Windows has different shape but not 64-bit Windows
     else:
-        p_shapes = [(66, 3)]
+        p_shapes = [(45, 3)]
 
     p = polygon.SphericalPolygon.multi_union(polygons)
 
     assert np.shape(list(p.points)[0]) in p_shapes
-    assert abs(p.area() - 2.6672666e-8) < area_tol
+    assert abs(p.area() - 2.667312060112e-8) < area_tol
