@@ -280,7 +280,7 @@ def intersects_point(A, B, C):
     intersects : bool or array of bool
         If the point is on the line, returns `True`.
     """
-    if not HAS_C_UFUNCS:
+    if HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
 
     epsilon = 1e-12  # Tolerance for coplanarity and degenerate check
