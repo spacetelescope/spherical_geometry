@@ -199,7 +199,7 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     # current implementation below is adequate for our current needs.
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
-    i_cos_theta = 2.0 * np.sin(theta/2.0)**2  # = 1.0 - cos_theta
+    i_cos_theta = 2.0 * np.sin(theta / 2.0)**2  # = 1.0 - cos_theta
 
     # Rodrigues' rotation formula:
     dotp = u * x + v * y + w * z
