@@ -188,22 +188,28 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
 
     Returns
     -------
-    X, Y, Z : doubles
-        The rotated vector
+    xp, yp, zp : doubles
+        The rotated vector.
     """
     if degrees:
         theta = np.deg2rad(theta)
 
-    costheta = np.cos(theta)
-    sintheta = np.sin(theta)
-    icostheta = 1.0 - costheta
+    # Consider https://doi.org/10.1016/j.mechmachtheory.2015.03.004 for an
+    # alternative formula that may be more accurate. However,
+    # current implementation below is adequate for our current needs.
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    i_cos_theta = 2.0 * np.sin(theta / 2.0)**2  # = 1.0 - cos_theta
 
-    det = (-u*x - v*y - w*z)
-    X = (-u*det)*icostheta + x*costheta + (-w*y + v*z)*sintheta
-    Y = (-v*det)*icostheta + y*costheta + ( w*x - u*z)*sintheta
-    Z = (-w*det)*icostheta + z*costheta + (-v*x + u*y)*sintheta
+    # Rodrigues' rotation formula:
+    dotp = u * x + v * y + w * z
+    xp = x * cos_theta + (v * z - w * y) * sin_theta + u * dotp * i_cos_theta
+    yp = y * cos_theta + (-u * z + w * x) * sin_theta + v * dotp * i_cos_theta
+    zp = z * cos_theta + (u * y - v * x) * sin_theta + w * dotp * i_cos_theta
 
-    return X, Y, Z
+    xp, yp, zp = normalize_vector(np.array([xp, yp, zp]).T).T
+
+    return xp, yp, zp
 
 
 def equal_area_proj(points):
