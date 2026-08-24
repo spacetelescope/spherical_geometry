@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.polygon` module defines the `SphericalPolygon` class for
@@ -6,6 +5,7 @@ managing polygons on the unit sphere.
 """
 
 # STDLIB
+import itertools
 from copy import deepcopy
 
 # THIRD-PARTY
@@ -14,8 +14,11 @@ import numpy as np
 # LOCAL
 from spherical_geometry import great_circle_arc, vector
 
-__all__ = ['SingleSphericalPolygon', 'SphericalPolygon',
-           'MalformedPolygonError']
+__all__ = [
+    "MalformedPolygonError",
+    "SingleSphericalPolygon",
+    "SphericalPolygon",
+]
 
 
 if hasattr(np, 'float128'):
@@ -28,7 +31,7 @@ class MalformedPolygonError(Exception):
     pass
 
 
-class SingleSphericalPolygon(object):
+class SingleSphericalPolygon:
     r"""
     Polygons are represented by both a set of points (in Cartesian
     (*x*, *y*, *z*) normalized on the unit sphere), and an inside
@@ -100,8 +103,7 @@ class SingleSphericalPolygon(object):
         return 1
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__,
-                               self.points, self.inside)
+        return f"{self.__class__.__name__}({self.points!r}, {self.inside!r})"
 
     def __iter__(self):
         """
@@ -830,13 +832,13 @@ class SingleSphericalPolygon(object):
         if not len(self._points):
             return
         if not len(plot_args):
-            plot_args = {'color': 'blue'}
+            plot_args = {"color": "blue"}
         points = self._points
-        if 'alpha' in plot_args:
-            del plot_args['alpha']
+        if "alpha" in plot_args:
+            del plot_args["alpha"]
 
         alpha = 1.0
-        for A, B in zip(points[0:-1], points[1:]):
+        for A, B in itertools.pairwise(points):
             length = np.rad2deg(great_circle_arc.length(A, B))
             if not np.isfinite(length):
                 length = 2
@@ -853,7 +855,7 @@ class SingleSphericalPolygon(object):
         x, y = m(lon, lat)
         m.scatter(x, y, 1, **plot_args)
 
-    def _debug_write(self, filename, mode='w'):
+    def _debug_write(self, filename, mode="w"):
         """
         Write the polygon to a file for debugging purposes.  The file is
         a simple text file with one line per point, and three columns
@@ -864,8 +866,7 @@ class SingleSphericalPolygon(object):
             f.write("# Inside Point (x, y, z):\n")
             f.write(f"{self._inside[0]:.15g}, {self._inside[1]:.15g}, {self._inside[2]:.15g}\n")
             f.write("# Vertices (x, y, z):\n")
-            for point in self._points:
-                f.write(f"{point[0]:.15g}, {point[1]:.15g}, {point[2]:.15g}\n")
+            f.writelines(f"{point[0]:.15g}, {point[1]:.15g}, {point[2]:.15g}\n" for point in self._points)
 
 
 class SphericalPolygon(SingleSphericalPolygon):
@@ -915,7 +916,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         p = SingleSphericalPolygon(init, inside)
         if p._degenerate:
             self._degenerate = True
-            self._polygons = tuple()
+            self._polygons = ()
             return
         else:
             self._degenerate = False
@@ -930,7 +931,7 @@ class SphericalPolygon(SingleSphericalPolygon):
             polygons.extend(g.disjoint_polygons())
         if not polygons:
             self._degenerate = True
-            self._polygons = tuple()
+            self._polygons = ()
         else:
             self._polygons = polygons
 
@@ -946,7 +947,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         buffer = []
         for polygon in self._polygons:
             buffer.append(repr(polygon))
-        return '[' + ',\n'.join(buffer) + ']'
+        return "[" + ",\n".join(buffer) + "]"
 
     def __iter__(self):
         """
@@ -955,7 +956,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         """
         for polygon in self._polygons:
             for subpolygon in polygon:
-                yield subpolygon
+                yield from subpolygon
 
     @property
     def degenerate(self):
@@ -1422,9 +1423,7 @@ class SphericalPolygon(SingleSphericalPolygon):
         :mod:`~spherical_geometry.graph` module.
         """
 
-        if self.area() == 0.0:
-            return SphericalPolygon([])
-        elif other.area() == 0.0:
+        if self.area() == 0.0 or other.area() == 0.0:
             return SphericalPolygon([])
 
         all_polygons = []
@@ -1493,4 +1492,4 @@ class SphericalPolygon(SingleSphericalPolygon):
         corresponding to *x*, *y* and *z*.
         """
         for i, polygon in enumerate(self):
-            polygon._debug_write(filename, mode='w' if i == 0 else 'a')
+            polygon._debug_write(filename, mode="w" if i == 0 else "a")

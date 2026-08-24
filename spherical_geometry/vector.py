@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.vector` module contains the basic operations for handling
@@ -14,9 +13,15 @@ try:
 except ImportError:
     HAS_C_UFUNCS = False
 
-__all__ = ['two_d', 'lonlat_to_vector', 'vector_to_lonlat',
-           'normalize_vector', 'radec_to_vector', 'vector_to_radec',
-           'rotate_around']
+__all__ = [
+    "lonlat_to_vector",
+    "normalize_vector",
+    "radec_to_vector",
+    "rotate_around",
+    "two_d",
+    "vector_to_lonlat",
+    "vector_to_radec",
+]
 
 
 def two_d(vec):
