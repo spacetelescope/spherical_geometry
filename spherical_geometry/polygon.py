@@ -21,6 +21,12 @@ __all__ = [
 ]
 
 
+if hasattr(np, 'float128'):
+    EXTENDED_FLT_TYPE = np.float128
+else:
+    EXTENDED_FLT_TYPE = np.longdouble
+
+
 class MalformedPolygonError(Exception):
     pass
 
@@ -719,7 +725,7 @@ class SingleSphericalPolygon:
         points = np.vstack((self._points, self._points[1]))
         angles = great_circle_arc.angle(points[:-2], points[1:-1], points[2:])
 
-        return np.sum(angles) - (len(angles) - 2) * np.pi
+        return float(np.sum(angles, dtype=EXTENDED_FLT_TYPE) - (len(angles) - 2) * np.pi)
 
     def union(self, other):
         """

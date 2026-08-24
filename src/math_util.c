@@ -77,6 +77,12 @@ double QD_ZERO[4] = {0.0, 0.0, 0.0, 0.0};
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
 
 static NPY_INLINE void
+qd_set_zero(qd *v)
+{
+    v->x[0] = v->x[1] = v->x[2] = v->x[3] = 0.0;
+}
+
+static NPY_INLINE void
 load_point(const char *in, const intp s, double *out)
 {
     out[0] = (*(double *) in);
@@ -172,6 +178,22 @@ normalize_qd(const qd *A, qd *B)
 
     for (i = 0; i < 3; ++i) {
         c_qd_div(A[i].x, l, B[i].x);
+    }
+
+    return 0;
+}
+
+static NPY_INLINE int
+norm_qd(const qd *a, qd *l)
+{
+    size_t i;
+    double t[4];
+
+    qd_set_zero(l);
+
+    for (i = 0; i < 3; ++i) {
+        c_qd_sqr(a[i].x, t);
+        c_qd_add(l->x, t, l->x);
     }
 
     return 0;
@@ -703,56 +725,119 @@ static void
 DOUBLE_intersects_point(
     char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
-    qd A[3];
-    qd B[3];
-    qd C[3];
-
-    qd total;
-    qd left;
-    qd right;
-    double t1[4], t2[4];
-    int result;
-
+    qd A[3], B[3], C[3];
+    qd normal[3];
+    qd nrm;
+    qd dot_ab, dot_ac, dot_bc;
+    qd tmp;
+    int cmp;
     unsigned int old_cw;
+
+    const double epsilon = 1e-16; // Tolerance for coplanarity and degenerate check
 
     INIT_OUTER_LOOP_4
     intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
+    /* A and B are constant across the outer loop, i.e. s0 == 0 && s1 == 0.
+     * When that holds, do all A/B-only work once instead of once per point in C. */
+    int ab_invariant = (s0 == 0 && s1 == 0);
+    int degenerate = 0;
+
+    if (ab_invariant) {
+        // A and B are constant across the outer loop, load them once
+        char *ip1 = args[0], *ip2 = args[1];
+
+        load_point_qd(ip1, is1, A);
+        load_point_qd(ip2, is2, B);
+
+        if (normalize_qd(A, A) || normalize_qd(B, B)) {
+            BEGIN_OUTER_LOOP_4
+            *((npy_bool *) args[3]) = 0;
+            END_OUTER_LOOP
+            fpu_fix_end(&old_cw);
+            return;
+        }
+
+        cross_qd(A, B, normal);
+        norm_qd(normal, &nrm);
+
+        // degenerate check
+        c_qd_comp_qd_d(nrm.x, epsilon, &cmp);
+        degenerate = (cmp == -1);
+
+        if (!degenerate) {
+            dot_qd(A, B, &dot_ab);
+        }
+    }
+
     BEGIN_OUTER_LOOP_4
     char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op = args[3];
 
-    load_point_qd(ip1, is1, A);
-    load_point_qd(ip2, is2, B);
+    if (!ab_invariant) {
+        /* General case: A/B may vary per point, redo everything. */
+        load_point_qd(ip1, is1, A);
+        load_point_qd(ip2, is2, B);
+
+        if (normalize_qd(A, A) || normalize_qd(B, B)) {
+            *((npy_bool *) op) = 0;
+            continue;
+        }
+
+        cross_qd(A, B, normal);
+        norm_qd(normal, &nrm);
+
+        // degenerate check for nearly parallel or antipodal A and B
+        c_qd_comp_qd_d(nrm.x, epsilon, &cmp);
+        if (cmp == -1) {
+            *((npy_bool *) op) = 0;
+            continue;
+        }
+
+        dot_qd(A, B, &dot_ab);
+    } else if (degenerate) {
+        *((npy_bool *) op) = 0;
+        continue;
+    }
+
     load_point_qd(ip3, is3, C);
-
-    if (normalize_qd(A, A)) {
-        return;
-    }
-    if (normalize_qd(B, B)) {
-        return;
-    }
     if (normalize_qd(C, C)) {
-        return;
+        *((npy_bool *) op) = 0;
+        continue;
     }
 
-    if (length_qd(A, B, &total)) {
-        return;
-    }
-    if (length_qd(A, C, &left)) {
-        return;
-    }
-    if (length_qd(C, B, &right)) {
-        return;
+    /* coplanar = |C·normal| / norm < epsilon */
+    dot_qd(C, normal, &tmp);
+    c_qd_abs(tmp.x, tmp.x);
+    c_qd_div(tmp.x, nrm.x, tmp.x);
+    c_qd_comp_qd_d(tmp.x, epsilon, &cmp);
+    if (cmp != -1) {
+        /* not coplanar -> can't be on the arc; skip the dot products below */
+        *((npy_bool *) op) = 0;
+        continue;
     }
 
-    c_qd_add(left.x, right.x, t1);
-    c_qd_sub(t1, total.x, t2);
-    c_qd_abs(t2, t1);
+    /* not untipodal: AB > -1 */
+    c_qd_comp_qd_d(dot_ab.x, -1.0 + epsilon, &cmp);
+    int not_antipodal = (cmp == 1);
 
-    c_qd_comp_qd_d(t1, 1e-10, &result);
-    *((npy_bool *) op) = (result == -1);
+    if (!not_antipodal) {
+        *((npy_bool *) op) = 0;
+        continue;
+    }
+
+    dot_qd(C, A, &dot_ac);
+    dot_qd(C, B, &dot_bc);
+
+    int ac_gt_ab, bc_gt_ab;
+    c_qd_comp(dot_ac.x, dot_ab.x, &ac_gt_ab);
+    c_qd_comp(dot_bc.x, dot_ab.x, &bc_gt_ab);
+
+    int interior_of_minor_arc = (ac_gt_ab >= 0) && (bc_gt_ab >= 0);
+
+    *((npy_bool *) op) = interior_of_minor_arc;
+
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
