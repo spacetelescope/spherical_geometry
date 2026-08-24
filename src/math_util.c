@@ -73,6 +73,7 @@ typedef struct {
 
 #define ISNAN_QD(q) ((q.x[0]) != (q.x[0]))
 
+double QD_ZERO[4] = {0.0, 0.0, 0.0, 0.0};
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
 
 static NPY_INLINE void
@@ -270,7 +271,6 @@ length_qd(const qd *A, const qd *B, qd *l)
 {
     qd s, t[3], u;
     double norm[4];
-    int flag;
 
     if ((A[0].x[0] == 0.0 && A[1].x[0] == 0.0 && A[2].x[0] == 0.0) ||
         (B[0].x[0] == 0.0 && B[1].x[0] == 0.0 && B[2].x[0] == 0.0)) {
@@ -280,10 +280,7 @@ length_qd(const qd *A, const qd *B, qd *l)
 
     /* Special case for "exactly equal" that avoids all of the calculation. */
     if (equals_qd(A, B)) {
-        l->x[0] = 0.0;
-        l->x[1] = 0.0;
-        l->x[2] = 0.0;
-        l->x[3] = 0.0;
+        c_qd_copy(QD_ZERO, l->x);
         return 0;
     }
 
@@ -294,7 +291,8 @@ length_qd(const qd *A, const qd *B, qd *l)
     }
     cross_qd(A, B, t);
     dot_qd(t, t, &u);
-    flag = c_qd_sqrt(u.x, norm);
+
+    c_qd_sqrt(u.x, norm);
     c_qd_atan2(norm, s.x, l->x);
     return 0;
 }
