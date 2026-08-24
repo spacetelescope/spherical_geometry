@@ -199,13 +199,15 @@ def rotate_around(x, y, z, u, v, w, theta, degrees=True):
     # current implementation below is adequate for our current needs.
     cos_theta = np.cos(theta)
     sin_theta = np.sin(theta)
-    i_cos_theta = 1.0 - cos_theta
+    i_cos_theta = 2.0 * np.sin(theta/2.0)**2  # = 1.0 - cos_theta
 
     # Rodrigues' rotation formula:
     dotp = u * x + v * y + w * z
     xp = x * cos_theta + (v * z - w * y) * sin_theta + u * dotp * i_cos_theta
     yp = y * cos_theta + (-u * z + w * x) * sin_theta + v * dotp * i_cos_theta
     zp = z * cos_theta + (u * y - v * x) * sin_theta + w * dotp * i_cos_theta
+
+    xp, yp, zp = normalize_vector(np.array([xp, yp, zp]).T).T
 
     return xp, yp, zp
 

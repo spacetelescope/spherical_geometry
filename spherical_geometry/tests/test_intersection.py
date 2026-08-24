@@ -520,7 +520,6 @@ def test_intersection_order_independent_from_large_cones():
     assert_allclose(p14_3.area(), theor_area, rtol=0, atol=1e-10)
 
 
-@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
 def test_intersection_order_with_repeats_from_small_cones():
     """
     Intersections of several polygons with some repeats, e.g., A^B^C^C^B should
@@ -529,13 +528,22 @@ def test_intersection_order_with_repeats_from_small_cones():
 
     Inspired from https://github.com/spacetelescope/spherical_geometry/issues/292
     """
+    # NOTE: This test used to fail before
+    #       https://github.com/spacetelescope/spherical_geometry/pull/337.
+    #       Probably the the issue was in rotated vectors to not be normalized.
+
+    # TODO: Consider adding more test cases with different orders and repeats
+    #       of intersections to ensure robustness. Also consider testing with
+    #       different numbers of steps in the cone generation, as well as
+    #       cone aperture sizes, to check for numerical stability.
+
     #TODO: It would be useful to check that intersection polygons have the same
-    # number of vertices and same vertex coordinates, although this can be
-    # tricky as theoretically these vertices could be partially different,
-    # e.g., some polygons could have extra vertices lying on the arc connecting
-    # two adjacent vertices that are present in both orders of intersection.
-    # These polygons would be equivalent but we currently do not a way to
-    # detect this.
+    #      number of vertices and same vertex coordinates, although this can be
+    #      tricky as theoretically these vertices could be partially different,
+    #      e.g., some polygons could have extra vertices lying on the arc
+    #      connecting two adjacent vertices that are present in both orders of
+    #      intersection. These polygons would be equivalent but we currently
+    #      do not have a way to detect this.
 
     cone0 = {'lat': 40.5785, 'lon': -102.4005, 'radius': 46.08093425137112}
     cone1 = {'lat': -33.5605, 'lon': -70.5815, 'radius': 79.64909777330483}
