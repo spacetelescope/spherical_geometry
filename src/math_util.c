@@ -1148,12 +1148,14 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
     PyObject *inside_obj = NULL;
     PyObject *points_obj = NULL;
     PyArrayObject *points;
-    int has_inside = 0;
     double area[4] = {0.0, 0.0, 0.0, 0.0};
     double small_area = 0.0;
-    qd *a, *b, *c, *e, inside[3], centroid[3], angle;
+    qd *a, *b, *c, *e;
     qd *norm_points; // pointer to the normalized points
-    int i, j, n, closed = 0;
+    qd inside[3], centroid[3];
+    qd angle;
+    npy_intp i, n;
+    int j, closed = 0, has_inside = 0;
 
     if (!PyArg_ParseTuple(args, "O|O", &points_obj, &inside_obj)) {
         return NULL;
@@ -1176,15 +1178,23 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
         PyArrayObject *inside_arr =
             (PyArrayObject *) PyArray_FROM_OTF(inside_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
 
-        if (inside_arr == NULL || PyArray_NDIM(inside_arr) != 1 ||
-            PyArray_DIM(inside_arr, 0) != 3) {
-            PyErr_SetString(PyExc_ValueError, "Inside vector must be a length-3 array or None");
-            Py_XDECREF(inside_arr);
+        if (inside_arr == NULL) {
             Py_DECREF(points);
             return NULL;
         }
+        if (PyArray_NDIM(inside_arr) != 1 || PyArray_DIM(inside_arr, 0) != 3) {
+            PyErr_SetString(PyExc_ValueError, "Inside vector must be a length-3 array or None");
+            Py_DECREF(inside_arr);
+            Py_DECREF(points);
+            return NULL;
+        }
+
         load_np_vector_qd(inside_arr, inside);
-        normalize_qd(inside, inside, 0.0);
+        if (normalize_qd(inside, inside, 0.0)) {
+            PyErr_SetString(PyExc_ValueError, "Failed to normalize inside vector");
+            Py_DECREF(points);
+            return NULL;
+        }
         has_inside = 1;
         Py_DECREF(inside_arr);
     }
@@ -1200,7 +1210,14 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
 
     for (i = 0; i < n; ++i) {
         load_np_vector_array_qd(points, i, norm_points + 3 * i);
-        normalize_qd(norm_points + 3 * i, norm_points + 3 * i, 0.0);
+        if (normalize_qd(norm_points + 3 * i, norm_points + 3 * i, 0.0)) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError, "Failed to normalize polygon vertex");
+            }
+            free(norm_points);
+            Py_DECREF(points);
+            return NULL;
+        }
     }
     Py_DECREF(points);
 
@@ -1208,20 +1225,19 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
     b = norm_points + 3;
     e = norm_points + 3 * (n - 1);
 
-    if (is_vertex_close((qd *) a, (qd *) e, 1e-14)) {
+    if (is_vertex_close(a, e, 1e-14)) {
         n -= 1;
         closed = 1;
     }
 
     if (n < 3) {
         free(norm_points);
-        PyErr_SetString(PyExc_ValueError, "Polygon must have at least 3 vertices");
         return Py_BuildValue("d", 0.0);
     }
 
     for (i = 2; i < n; ++i) {
         c = norm_points + 3 * i;
-        t_os_solid_angle_qd((qd *) a, (qd *) b, (qd *) c, &angle);
+        t_os_solid_angle_qd(a, b, c, &angle);
         c_qd_add(area, angle.x, area);
         b = c;
         c += 3;
@@ -1251,9 +1267,15 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
     free(norm_points);
-    normalize_qd(centroid, centroid, 1.0e-28);
+    if (normalize_qd(centroid, centroid, 1.0e-28) == 2) {
+        return NULL;
+    }
 
     if (QD_ISNAN(centroid->x)) {
+        // This is a reasonable fallback but it may not be accurate
+        // in all cases. We can't be sure if the correct area is small_area
+        // or 4*pi - small_area. Possible improvement: try to determine
+        // the correct orientation using another method.
         return Py_BuildValue("d", small_area);
     }
 
