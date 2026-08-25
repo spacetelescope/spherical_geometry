@@ -25,6 +25,12 @@ Release Notes
   aparently fixes ``test_intersection_order_with_repeats_from_small_cones()``
   test previously marked as failing. [#337]
 
+- Implemented a more robust polygon area computation using Oosterom-Strackee
+  which replaces previous computation that used Girard's theorem. [#338]
+
+- Added tolerance parameter for normalizing vectors in the ``math_util``
+  module. Fixed bugs related to vector normalization in edge cases. [#338]
+
 
 1.4.0 (2026-03-11)
 ==================
