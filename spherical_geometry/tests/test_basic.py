@@ -819,3 +819,43 @@ def test_polygon_contains_inside_point():
 
     assert p1.contains_point(p1._find_new_inside())
     assert not p1.contains_point(p1._find_new_outside())
+
+
+def test_concave_polygon_area():
+    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt3p1 = math.sqrt(3) + 1
+    sqrt3m1 = math.sqrt(3) - 1
+    sin25 = math.sin(math.radians(25))
+    cos25 = math.cos(math.radians(25))
+
+    # define points for a concave polygon
+    #
+    #       p7----p6
+    #       |    |
+    #       |    |
+    #       p8----p5------------p4
+    #       |    |              |
+    #       |    |              |
+    #       p1----p2------------p3
+    #
+    p1 = np.array([1.0, 0.0, 0.0])
+    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
+    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p7 = np.array([cos25, 0.0, sin25])
+    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+
+    area_t = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p6, p7, p8]).area()
+
+    # a split of the total polygon into two parts
+    area_1a = polygon.SingleSphericalPolygon([p5, p6, p7, p8]).area()
+    area_2a = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p8]).area()
+
+    # a different split of the total polygon
+    area_1b = polygon.SingleSphericalPolygon([p5, p6, p7, p8]).area()
+    area_2b = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p8]).area()
+
+    assert np.allclose(area_t, area_1a + area_2a)
+    assert np.allclose(area_t, area_1b + area_2b)
