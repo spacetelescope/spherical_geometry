@@ -831,11 +831,11 @@ def test_concave_polygon_area():
     # define points for a concave polygon
     #
     #       p7----p6
-    #       |    |
-    #       |    |
+    #       |     |
+    #       |     |
     #       p8----p5------------p4
-    #       |    |              |
-    #       |    |              |
+    #       |     |             |
+    #       |     |             |
     #       p1----p2------------p3
     #
     p1 = np.array([1.0, 0.0, 0.0])
@@ -849,13 +849,83 @@ def test_concave_polygon_area():
 
     area_t = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p6, p7, p8]).area()
 
+    # independently computed area from Mathematica for verification
+    area_t_mathematica = 0.40782629738149049
+    assert np.allclose(area_t, area_t_mathematica, rtol=1e-15, atol=0.0)
+
     # a split of the total polygon into two parts
     area_1a = polygon.SingleSphericalPolygon([p5, p6, p7, p8]).area()
     area_2a = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p8]).area()
 
     # a different split of the total polygon
-    area_1b = polygon.SingleSphericalPolygon([p5, p6, p7, p8]).area()
-    area_2b = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p8]).area()
+    area_1b = polygon.SingleSphericalPolygon([p1, p2, p5, p6, p7, p8]).area()
+    area_2b = polygon.SingleSphericalPolygon([p2, p3, p4, p5]).area()
 
-    assert np.allclose(area_t, area_1a + area_2a)
-    assert np.allclose(area_t, area_1b + area_2b)
+    # a different split of the total polygon
+    area_1c = polygon.SingleSphericalPolygon([p5, p6, p7, p8]).area()
+    area_2c = polygon.SingleSphericalPolygon([p2, p3, p4, p5]).area()
+    area_3c = polygon.SingleSphericalPolygon([p1, p2, p5, p8]).area()
+
+    assert np.allclose(area_t, area_1a + area_2a, rtol=1e-15, atol=0.0)
+    assert np.allclose(area_t, area_1b + area_2b, rtol=1e-15, atol=0.0)
+    assert np.allclose(area_t, area_1c + area_2c + area_3c, rtol=1e-15, atol=0.0)
+
+
+@pytest.mark.xfail(reason="Currently failing due to issues with graph")
+def test_concave_polygon_area_with_multi_union():
+    # This is a similar test to test_concave_polygon_area, but it uses
+    # multi_union to combine the sub-polygons. The area of the union polygon
+    # should match the area of the original concave polygon. However,
+    # multi_union raises the following exception:
+    #
+    #    spherical_geometry.polygon.MalformedPolygonError: union: remove orphan
+    #    nodes in module: "spherical_geometry.graph" at line: 426
+    #
+    # This test is expected to fail due to the above exception. Hopefully
+    # this will be resolved in future versions of the library.
+    #
+    # Once it passes, it can be merged with test_concave_polygon_area().
+
+    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt3p1 = math.sqrt(3) + 1
+    sqrt3m1 = math.sqrt(3) - 1
+    sin25 = math.sin(math.radians(25))
+    cos25 = math.cos(math.radians(25))
+
+    # define points for a concave polygon
+    #
+    #       p7----p6
+    #       |     |
+    #       |     |
+    #       p8----p5------------p4
+    #       |     |             |
+    #       |     |             |
+    #       p1----p2------------p3
+    #
+    p1 = np.array([1.0, 0.0, 0.0])
+    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
+    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p7 = np.array([cos25, 0.0, sin25])
+    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+
+    area_t = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p6, p7, p8]).area()
+
+    # independently computed area from Mathematica for verification
+    area_t_mathematica = 0.40782629738149049
+    assert np.allclose(area_t, area_t_mathematica, rtol=1e-15, atol=0.0)
+
+    # a possible split of the total polygon
+    poly1 = polygon.SphericalPolygon([p5, p6, p7, p8])
+    poly2 = polygon.SphericalPolygon([p2, p3, p4, p5])
+    poly3 = polygon.SphericalPolygon([p1, p2, p5, p8])
+    area_1c = poly1.area()
+    area_2c = poly2.area()
+    area_3c = poly3.area()
+
+    poly_all = polygon.SphericalPolygon.multi_union([poly1, poly2, poly3])
+
+    assert np.allclose(area_t, area_1c + area_2c + area_3c, rtol=1e-15, atol=0.0)
+    assert np.allclose(area_t, poly_all.area(), rtol=1e-15, atol=0.0)
