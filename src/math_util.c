@@ -1142,6 +1142,28 @@ addUfuncs(PyObject *dictionary)
     Py_DECREF(f);
 }
 
+/*
+ * Compute the area of a single spherical polygon from an array of vertices.
+ *
+ * Parameters
+ * ----------
+ * points : array-like, shape (N, 3)
+ *     Polygon vertices as 3D Cartesian vectors on the unit sphere.
+ * inside : array-like, shape (3,), optional
+ *     Interior reference vector used to disambiguate polygons spanning more
+ *     than half the sphere. If omitted, the centroid of the vertices is used.
+ *
+ * Returns
+ * -------
+ * float
+ *     The polygon area in steradians.
+ *
+ * References
+ * ----------
+ * Van Oosterom, A. and Strackee, J., "The Solid Angle of a Plane Triangle,"
+ * IEEE Transactions on Biomedical Engineering, vol. BME-30, no. 2,
+ * pp. 125-126, Feb. 1983. doi:10.1109/TBME.1983.325207.
+ */
 static PyObject *
 single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
 {

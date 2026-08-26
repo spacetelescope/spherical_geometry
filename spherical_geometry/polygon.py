@@ -32,6 +32,14 @@ def _solid_angle_triangle(a, b, c):
     """
     Oosterom-Strackee solid angle of spherical triangle (a,b,c).
     All inputs must be unit vectors.
+
+    References
+    ----------
+    .. [Oosterom-Strackee1983] A. Van Oosterom and J. Strackee,
+       "The Solid Angle of a Plane Triangle," in IEEE Transactions on
+       Biomedical Engineering, vol. BME-30, no. 2, pp. 125-126, Feb. 1983,
+       doi: 10.1109/TBME.1983.325207.
+
     """
     det = np.dot(a, np.cross(b, c))
     denom = 1 + np.dot(a, b) + np.dot(b, c) + np.dot(c, a)
@@ -40,8 +48,30 @@ def _solid_angle_triangle(a, b, c):
 
 def single_polygon_area(polygon):
     """
-    Robust spherical polygon area for convex, concave, or > hemisphere polygons.
-    vertices: list of 3D vectors (not necessarily normalized)
+    Compute the spherical area of a single polygon.
+
+    This implementation is robust for convex polygons and concave polygons.
+
+    Parameters
+    ----------
+    polygon : `~spherical_geometry.polygon.SphericalPolygon`
+        Polygon whose area will be computed. Vertices are expected to be
+        three-dimensional Cartesian vectors on the unit sphere. Non-unit
+        vertices are normalized internally when needed.
+
+    Returns
+    -------
+    float
+        The polygon area in steradians. Degenerate polygons, or polygons with
+        fewer than three distinct vertices, return ``0.0``.
+
+    References
+    ----------
+    .. [Oosterom-Strackee1983] A. Van Oosterom and J. Strackee,
+       "The Solid Angle of a Plane Triangle," in IEEE Transactions on
+       Biomedical Engineering, vol. BME-30, no. 2, pp. 125-126, Feb. 1983,
+       doi: 10.1109/TBME.1983.325207.
+
     """
     if polygon._degenerate:
         return 0.0
