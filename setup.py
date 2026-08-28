@@ -2,11 +2,14 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-import sys
 import shutil
+import sys
+import sysconfig
 from glob import glob
-from setuptools import setup
-from setuptools import Extension
+
+from setuptools import Extension, setup
+
+FREE_THREADED_PYTHON = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
 
 use_system_qd = os.environ.get('USE_SYSTEM_QD', '')
 have_windows = bool(sys.platform.startswith('win'))
@@ -89,6 +92,10 @@ ext_info = {
     'define_macros': [],
 }
 
+if not FREE_THREADED_PYTHON:
+    ext_info["define_macros"].append(("Py_LIMITED_API", 0x030B0000))  # PY_VERSION_HEX for 3.11
+    ext_info["py_limited_api"] = True
+
 
 if not use_system_qd:
     sources += qd_sources
@@ -112,8 +119,11 @@ elif have_darwin:
     ext_info['language'] = 'c++'
 
 
+SETUPTOOLS_OPTIONS = {}
+if not FREE_THREADED_PYTHON:
+    SETUPTOOLS_OPTIONS["bdist_wheel"] = {"py_limited_api": "cp311"}
+
 setup(
-    ext_modules=[
-        Extension('spherical_geometry.math_util', sources, **ext_info)
-    ],
+    ext_modules=[Extension("spherical_geometry.math_util", sources, **ext_info)],
+    options=SETUPTOOLS_OPTIONS,
 )
