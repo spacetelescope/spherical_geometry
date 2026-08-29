@@ -182,6 +182,15 @@ class SingleSphericalPolygon:
 
         self._points = points = np.asanyarray(points)
 
+        # Check that all vertices are not close to null vectors, which would
+        # cause problems with normalization and area calculations.
+        norms = np.linalg.norm(points, axis=1)
+
+        if np.any(norms < 1e-12):
+            self._degenerate = True
+            self._inside = None
+            return
+
         if len(points) < 4:
             self._inside = None
             raise ValueError("Polygon made of too few points")

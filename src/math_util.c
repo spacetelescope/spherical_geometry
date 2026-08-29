@@ -520,7 +520,8 @@ DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *N
     load_point_qd(ip1, is1, IN);
 
     if (normalize_qd(IN, OUT, 0.0)) {
-        return;
+        *((double *) op) = NPY_NAN;
+        continue;
     }
 
     save_point_qd(OUT, op, is2);
@@ -601,9 +602,7 @@ DOUBLE_cross_and_norm(
     load_point_qd(ip2, is2, B);
 
     cross_qd(A, B, C);
-    if (normalize_qd(C, C, 1e-31)) { // return nan if norm < 1e-31
-        return;
-    }
+    normalize_qd(C, C, 1e-31); // if norm < 1e-31, C is NaN. set op to C
 
     save_point_qd(C, op, is3);
     END_OUTER_LOOP
@@ -803,7 +802,8 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
     load_point_qd(ip2, is2, B);
 
     if (length_qd(A, B, &s)) {
-        return;
+        *((double *) op) = NPY_NAN;
+        continue;
     }
     *((double *) op) = s.x[0];
     END_OUTER_LOOP
@@ -906,14 +906,6 @@ DOUBLE_intersects_point(
 
     load_point_qd(ip3, is3, C);
 
-    if (normalize_qd(A, A, 0.0)) {
-        *((npy_bool *) op) = 0;
-        continue;
-    }
-    if (normalize_qd(B, B, 0.0)) {
-        *((npy_bool *) op) = 0;
-        continue;
-    }
     if (normalize_qd(C, C, 0.0)) {
         *((npy_bool *) op) = 0;
         continue;
@@ -1005,24 +997,17 @@ DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_U
     cross_qd(C, B, BCX);
     cross_qd(ABX, BCX, X);
     dot_qd(B, X, &diff);
-    ret = normalized_dot_qd(ABX, BCX, &inner);
-    if (ret == 1) {
-        return;
-    } else if (ret == 2) {
+    if (normalized_dot_qd(ABX, BCX, &inner)) {
         PyErr_Clear();
-#if defined(NAN)
-        *((double *) op) = NAN;
-#else
-        *((double *) op) = strtod("NaN", NULL);
-#endif
+        *((double *) op) = NPY_NAN;
         continue;
     }
 
     c_qd_abs(inner.x, abs_inner);
     c_qd_comp(abs_inner, QD_ONE, &comp);
     if (inner.x[0] != inner.x[0] || comp == 1) {
-        PyErr_SetString(PyExc_ValueError, "Out of domain for acos");
-        return;
+        *((double *) op) = NPY_NAN;
+        continue;
     }
 
     c_qd_acos(inner.x, angle);
