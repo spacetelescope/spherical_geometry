@@ -200,7 +200,6 @@ normalize_qd(const qd *A, qd *B, double eps)
         for (i = 0; i < 3; ++i) {
             c_qd_copy_d(NPY_NAN, B[i].x);
         }
-        PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
         return 2;
     }
     if (T[3][0] <= eps) {
@@ -519,10 +518,7 @@ DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *N
 
     load_point_qd(ip1, is1, IN);
 
-    if (normalize_qd(IN, OUT, 0.0)) {
-        *((double *) op) = NPY_NAN;
-        continue;
-    }
+    normalize_qd(IN, OUT, 0.0);
 
     save_point_qd(OUT, op, is2);
     END_OUTER_LOOP
