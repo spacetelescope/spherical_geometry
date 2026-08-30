@@ -190,7 +190,7 @@ class SingleSphericalPolygon:
         # cause problems with normalization and area calculations.
         norms = np.linalg.norm(points, axis=1)
 
-        if np.any(norms < 1e-12):
+        if np.any(~np.isfinite(norms)) or np.any(norms < 2 ** -32):
             self._degenerate = True
             self._inside = None
             return

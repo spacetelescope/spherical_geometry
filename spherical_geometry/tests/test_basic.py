@@ -778,19 +778,19 @@ def test_degenerate_polygon():
     # Test that a polygon with a null vector is degenerate
     # See test_concave_polygon_area() for details on the polygon points and
     # their arrangement.
-    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt2x2 = 2.0 * math.sqrt(2)
     sqrt3p1 = math.sqrt(3) + 1
     sqrt3m1 = math.sqrt(3) - 1
     sin25 = math.sin(math.radians(25))
     cos25 = math.cos(math.radians(25))
     p1 = np.array([1.0, 0.0, 0.0])
-    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
-    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
-    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
+    p2 = np.array([sqrt3p1 / sqrt2x2, sqrt3m1 / sqrt2x2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2x2, sqrt3p1 / sqrt2x2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2x2])
     p5 = np.array([0.0, 0.0, 0.0])
-    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2x2, (sqrt3m1 * cos25) / sqrt2x2, sin25])
     p7 = np.array([cos25, 0.0, sin25])
-    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+    p8 = np.array([sqrt3p1 / sqrt2x2, 0, sqrt3m1 / sqrt2x2])
 
     points = np.array([p1, p2, p3, p4, p5, p6, p7, p8])
 
@@ -847,7 +847,7 @@ def test_polygon_contains_inside_point():
 
 
 def test_concave_polygon_area():
-    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt2x2 = 2.0 * math.sqrt(2)
     sqrt3p1 = math.sqrt(3) + 1
     sqrt3m1 = math.sqrt(3) - 1
     sin25 = math.sin(math.radians(25))
@@ -864,13 +864,13 @@ def test_concave_polygon_area():
     #       p1----p2------------p3
     #
     p1 = np.array([1.0, 0.0, 0.0])
-    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
-    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
-    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
-    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2])
-    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p2 = np.array([sqrt3p1 / sqrt2x2, sqrt3m1 / sqrt2x2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2x2, sqrt3p1 / sqrt2x2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2x2])
+    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2x2])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2x2, (sqrt3m1 * cos25) / sqrt2x2, sin25])
     p7 = np.array([cos25, 0.0, sin25])
-    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+    p8 = np.array([sqrt3p1 / sqrt2x2, 0, sqrt3m1 / sqrt2x2])
 
     area_t = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p6, p7, p8]).area()
 
@@ -911,7 +911,7 @@ def test_concave_polygon_area_with_multi_union():
     #
     # Once it passes, it can be merged with test_concave_polygon_area().
 
-    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt2x2 = 2.0 * math.sqrt(2)
     sqrt3p1 = math.sqrt(3) + 1
     sqrt3m1 = math.sqrt(3) - 1
     sin25 = math.sin(math.radians(25))
@@ -928,13 +928,13 @@ def test_concave_polygon_area_with_multi_union():
     #       p1----p2------------p3
     #
     p1 = np.array([1.0, 0.0, 0.0])
-    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
-    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
-    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
-    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2])
-    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p2 = np.array([sqrt3p1 / sqrt2x2, sqrt3m1 / sqrt2x2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2x2, sqrt3p1 / sqrt2x2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2x2])
+    p5 = np.array([(sqrt3p1**2) / 8.0, (sqrt3m1 * sqrt3p1) / 8.0, sqrt3m1 / sqrt2x2])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2x2, (sqrt3m1 * cos25) / sqrt2x2, sin25])
     p7 = np.array([cos25, 0.0, sin25])
-    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+    p8 = np.array([sqrt3p1 / sqrt2x2, 0, sqrt3m1 / sqrt2x2])
 
     area_t = polygon.SingleSphericalPolygon([p1, p2, p3, p4, p5, p6, p7, p8]).area()
 
