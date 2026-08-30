@@ -699,6 +699,7 @@ def test_math_util_length_domain():
         [0, 0, 0],
         [0, 0, np.nan],
         [0, 0, 0],
+        [1, 0, 0]
     ]
     b = [
         [0, 0, np.inf],
@@ -708,14 +709,19 @@ def test_math_util_length_domain():
         [0, 0, np.inf],
         [0, 0, 0],
         [0, 0, 0],
+        [0, 1, 0]
     ]
 
-    for b_i in b:
+    for b_i in b[:-1]:
         c = great_circle_arc.length(a, b_i)
-        assert np.all(~np.isfinite(c))
+        assert np.all(~np.isfinite(c[:-1]))
+
+    c = great_circle_arc.length(a, b[-1])
+    assert np.isfinite(c[-1])
 
     c = great_circle_arc.length(a, b)
-    assert np.all(~np.isfinite(c))
+    assert np.all(~np.isfinite(c[:-1]))
+    assert np.isclose(c[-1], np.pi / 2, rtol=0, atol=1e-15)
 
 
 def test_math_util_angle_nearly_coplanar_vec():
