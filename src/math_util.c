@@ -265,16 +265,6 @@ dot_qd(const qd *A, const qd *B, qd *C)
 
     c_qd_add(tmp[0], tmp[1], tmp[3]);
     c_qd_add(tmp[3], tmp[2], C->x);
-
-    // In Python 3.13 it seems that the code above sets a floating point error
-    // flag (when input vectors contain nan/inf values) and this raises a
-    // warning/error "RuntimeWarning: invalid value encountered in length"
-    // and which results in a SystemError once
-    // PyErr_SetString(PyExc_ValueError, "Out of domain for acos") is called
-    // in length_qd. This clears FP error flags before raising the above
-    // exception.
-    // Also See https://github.com/spacetelescope/spherical_geometry/pull/288
-    PyUFunc_clearfperr();
 }
 
 /*
@@ -296,17 +286,16 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val)
     c_qd_mul(aa.x, bb.x, aabb);
 
     if (aabb[0] < -0.0) {
-        PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
-        return 1;
+        c_qd_copy_d(NPY_NAN, dot_val->x);
+        return 2;
     }
 
     c_qd_sqrt(aabb, norm);
 
     if (norm[0] == 0.0) {
         /* return non-normalized value: */
-        PyErr_SetString(PyExc_ValueError, "Null vector.");
         c_qd_copy(ab.x, dot_val->x);
-        return 2;
+        return 1;
     } else {
         c_qd_div(ab.x, norm, dot_val->x);
     }
@@ -314,7 +303,6 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val)
     if ((*v0 == 1.0 && *v1 > 0.0 && *v1 < eps) || (*v0 == -1.0 && *v1 < 0.0 && *v1 > -eps)) {
         c_qd_copy_d(dot_val->x[0], dot_val->x);
     }
-
     return 0;
 }
 
@@ -398,7 +386,6 @@ length_qd(const qd *A, const qd *B, qd *l)
 
     if ((A[0].x[0] == 0.0 && A[1].x[0] == 0.0 && A[2].x[0] == 0.0) ||
         (B[0].x[0] == 0.0 && B[1].x[0] == 0.0 && B[2].x[0] == 0.0)) {
-        PyErr_SetString(PyExc_ValueError, "Null vector.");
         return 1;
     }
 
@@ -410,7 +397,6 @@ length_qd(const qd *A, const qd *B, qd *l)
 
     dot_qd(A, B, &s);
     if (ISNAN_QD(s)) {
-        PyErr_SetString(PyExc_ValueError, "Out of domain for atan2");
         return 1;
     }
     cross_qd(A, B, t);
@@ -801,6 +787,7 @@ DOUBLE_length(char **args, const intp *dimensions, const intp *steps, void *NPY_
         *((double *) op) = NPY_NAN;
         continue;
     }
+
     *((double *) op) = s.x[0];
     END_OUTER_LOOP
 
@@ -959,7 +946,7 @@ char *angle_signature = "(i),(i),(i)->()";
 static void
 DOUBLE_angle(char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
-    int comp, ret;
+    int comp;
     qd A[3];
     qd B[3];
     qd C[3];
@@ -1214,9 +1201,7 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
     for (i = 0; i < n; ++i) {
         load_np_vector_array_qd(points, i, norm_points + 3 * i);
         if (normalize_qd(norm_points + 3 * i, norm_points + 3 * i, 0.0)) {
-            if (!PyErr_Occurred()) {
-                PyErr_SetString(PyExc_ValueError, "Failed to normalize polygon vertex");
-            }
+            PyErr_SetString(PyExc_ValueError, "Failed to normalize polygon vertex");
             free(norm_points);
             Py_DECREF(points);
             return NULL;
@@ -1270,7 +1255,8 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
         }
     }
     free(norm_points);
-    if (normalize_qd(centroid, centroid, 1.0e-28) == 2) {
+    if (normalize_qd(centroid, centroid, 1.0e-28)) {
+        PyErr_SetString(PyExc_ValueError, "Failed to normalize centroid");
         return NULL;
     }
 

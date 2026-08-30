@@ -711,11 +711,13 @@ def test_math_util_length_domain():
     ]
 
     for b_i in b:
-        with pytest.raises(ValueError):
-            great_circle_arc.length(a, b_i)
+        with pytest.warns(RuntimeWarning):
+            c = great_circle_arc.length(a, b_i)
+        assert np.all(~np.isfinite(c))
 
-    with pytest.raises(ValueError):
-        great_circle_arc.length(a, b)
+    with pytest.warns(RuntimeWarning):
+        c = great_circle_arc.length(a, b)
+    assert np.all(~np.isfinite(c))
 
 
 def test_math_util_angle_nearly_coplanar_vec():
