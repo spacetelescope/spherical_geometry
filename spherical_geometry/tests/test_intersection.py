@@ -519,8 +519,7 @@ def test_intersection_order_independent_from_large_cones():
     assert_allclose(p13_4.area(), theor_area, rtol=0, atol=1e-10)
     assert_allclose(p14_3.area(), theor_area, rtol=0, atol=1e-10)
 
-
-@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
+@pytest.mark.xfail(reason="there is a known issue with intersection order when repeats are involved")
 def test_intersection_order_with_repeats_from_small_cones():
     """
     Intersections of several polygons with some repeats, e.g., A^B^C^C^B should
@@ -529,13 +528,22 @@ def test_intersection_order_with_repeats_from_small_cones():
 
     Inspired from https://github.com/spacetelescope/spherical_geometry/issues/292
     """
+    # NOTE: This test used to fail before
+    #       https://github.com/spacetelescope/spherical_geometry/pull/337.
+    #       Probably the the issue was in rotated vectors to not be normalized.
+
+    # TODO: Consider adding more test cases with different orders and repeats
+    #       of intersections to ensure robustness. Also consider testing with
+    #       different numbers of steps in the cone generation, as well as
+    #       cone aperture sizes, to check for numerical stability.
+
     #TODO: It would be useful to check that intersection polygons have the same
-    # number of vertices and same vertex coordinates, although this can be
-    # tricky as theoretically these vertices could be partially different,
-    # e.g., some polygons could have extra vertices lying on the arc connecting
-    # two adjacent vertices that are present in both orders of intersection.
-    # These polygons would be equivalent but we currently do not a way to
-    # detect this.
+    #      number of vertices and same vertex coordinates, although this can be
+    #      tricky as theoretically these vertices could be partially different,
+    #      e.g., some polygons could have extra vertices lying on the arc
+    #      connecting two adjacent vertices that are present in both orders of
+    #      intersection. These polygons would be equivalent but we currently
+    #      do not have a way to detect this.
 
     cone0 = {'lat': 40.5785, 'lon': -102.4005, 'radius': 46.08093425137112}
     cone1 = {'lat': -33.5605, 'lon': -70.5815, 'radius': 79.64909777330483}
@@ -587,10 +595,13 @@ def test_intersection_order_with_repeats_from_small_cones():
     assert np.vstack(list(p.points)).shape == np.vstack(list(pr.points)).shape
 
 
-@pytest.mark.xfail(reason="currently there is no solution to get this to pass")
 def test_near_identical_polygons():
     from astropy.wcs import WCS
     from astropy.io import fits
+
+    def sort_vertices(pts):
+        idx = np.lexsort((pts[:,2], pts[:,1], pts[:,0]))
+        return pts[idx]
 
     hdr = fits.Header.fromfile(
         os.path.join(ROOT_DIR, "malformed.hdr"),
@@ -602,24 +613,41 @@ def test_near_identical_polygons():
     w = WCS(header=hdr, fix=False)
     w.naxes = [1200, 1200]
 
-    x = np.array([0, 1200, 1200.0, 0])
-    y = np.array([0, 0, 1200.0, 1200])
+    x = np.array([0.0, w.naxes[0], w.naxes[0], 0.0])
+    y = np.array([0.0, 0.0, w.naxes[1], w.naxes[1]])
 
-    ra_a1, dec_a1 = w.pixel_to_world_values(x, y)
-    ra_a2, dec_a2 = w.pixel_to_world_values(x + 1000, y)
-    pa1 = polygon.SphericalPolygon.from_lonlat(ra_a1, dec_a1)
-    pa2 = polygon.SphericalPolygon.from_lonlat(ra_a2, dec_a2)
-    p_ref = pa1.union(pa2)
+    ra, dec = w.pixel_to_world_values(x, y)
+    pa0 = polygon.SphericalPolygon.from_lonlat(ra, dec)
+    ra1, dec1 = w.pixel_to_world_values(x + 1200.0, y)
+    pa1 = polygon.SphericalPolygon.from_lonlat(ra1, dec1)
+    p_ref = polygon.SphericalPolygon.from_lonlat(ra, dec)
+    p_ref = p_ref.multi_union([pa0, pa1])
+
+    # # Create a reference polygon by taking the union of pa1 with slightly
+    # # shifted versions of itself.
+    delta = 1.0e-12
+    for i in [-1, 1]:
+        for j in [-1, 1]:
+            ra, dec = w.pixel_to_world_values(x + delta * i, y + delta * j)
+            pa = polygon.SphericalPolygon.from_lonlat(ra, dec)
+            p_ref = p_ref.union(pa)
 
     # Add a small amount of noise to the pixel coordinates to create
     # a slightly different polygon:
-    np.random.seed(0)
-    sigma = 1e-10
+    for k in range(10):
+        np.random.seed(k)
+        sigma = 1.0e-10 * (k + 1)
 
-    rng = np.random.default_rng(42)
-    dxs = rng.normal(0.0, sigma, 4)
-    dys = rng.normal(0.0, sigma, 4)
+        rng = np.random.default_rng(42)
+        dxs = rng.normal(0.0, sigma, 4)
+        dys = rng.normal(0.0, sigma, 4)
 
-    r, d = w.pixel_to_world_values(x + dxs, y + dys)
-    pa = polygon.SphericalPolygon.from_lonlat(r, d)
-    p_ref.intersection(pa)
+        x2, y2 = x + dxs, y + dys
+        r, d = w.pixel_to_world_values(x2, y2)
+        pa = polygon.SphericalPolygon.from_lonlat(r, d)
+        pa_i = p_ref.intersection(pa)
+
+        pts_pa = sort_vertices(np.vstack(list(pa.points))[:-1, :])
+        pts_pa_i = sort_vertices(np.vstack(list(pa_i.points))[:-1, :])
+        assert pts_pa_i.shape == pts_pa.shape
+        assert np.allclose(pts_pa, pts_pa_i, rtol=0, atol=1e-10)

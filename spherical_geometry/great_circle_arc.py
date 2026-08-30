@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 The `spherical_geometry.great_circle_arc` module contains functions for computing
@@ -24,8 +23,15 @@ except ImportError:
     HAS_C_UFUNCS = False
 
 
-__all__ = ['angle', 'interpolate', 'intersection', 'intersects',
-           'intersects_point', 'length', 'midpoint']
+__all__ = [
+    "angle",
+    "interpolate",
+    "intersection",
+    "intersects",
+    "intersects_point",
+    "length",
+    "midpoint",
+]
 
 
 def _inner1d_np(x, y):
@@ -64,7 +70,7 @@ else:
 
 if HAS_C_UFUNCS:
     def _cross_and_normalize(A, B):
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             return math_util.cross_and_norm(A, B)
 else:
     def _cross_and_normalize(A, B):
@@ -73,7 +79,7 @@ else:
         l = np.sqrt(np.sum(T ** 2, axis=-1))
         l = two_d(l)
         # Might get some divide-by-zeros
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             TN = T / l
         # ... but set to zero, or we miss real NaNs elsewhere
         TN = np.nan_to_num(TN)
@@ -141,6 +147,8 @@ def intersection(A, B, C, D):
         by Roger Stafford.
 
     http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
+
+    Also see: http://www.boeing-727.com/Data/fly%20odds/distance.html
     """
     if HAS_C_UFUNCS:
         return math_util.intersection(A, B, C, D)
@@ -222,7 +230,7 @@ def length(A, B):
             raise ValueError("Null vector")
 
         try:
-            with np.errstate(invalid='raise'):
+            with np.errstate(invalid="raise"):
                 dot = inner1d(A, B)
         except FloatingPointError:
             raise ValueError("Out of domain for acos")
@@ -258,7 +266,7 @@ def intersects(A, B, C, D):
     if HAS_C_UFUNCS:
         return math_util.intersects(A, B, C, D)
 
-    with np.errstate(invalid='ignore'):
+    with np.errstate(invalid="ignore"):
         intersections = intersection(A, B, C, D)
 
     return np.isfinite(intersections[..., 0])
@@ -283,13 +291,28 @@ def intersects_point(A, B, C):
     if HAS_C_UFUNCS:
         return math_util.intersects_point(A, B, C)
 
-    total_length = length(A, B)
-    left_length = length(A, C)
-    right_length = length(C, B)
+    epsilon = 1e-12  # Tolerance for coplanarity and degenerate check
 
-    length_diff = np.abs((left_length + right_length) - total_length)
+    A = np.asanyarray(A) / np.linalg.norm(A, keepdims=True)
+    B = np.asanyarray(B) / np.linalg.norm(B, keepdims=True)
+    C = np.asanyarray(C) / np.linalg.norm(C, axis=-1, keepdims=True)
 
-    return length_diff < 3e-11
+    normal = np.cross(A, B)
+    norm = np.linalg.norm(normal)
+
+    # Antipodal or nearly parallel: no unique great circle
+    if norm < epsilon:
+        return np.zeros(C.shape[:-1], dtype=bool)
+
+    coplanar = (np.abs(C @ normal) / norm) < epsilon
+
+    ab = np.dot(A, B)
+    ac = np.dot(C, A)
+    bc = np.dot(C, B)
+
+    not_antipodal = ab > -1.0 + epsilon
+    interior_of_minor_arc = (ac >= ab) & (bc >= ab)
+    return coplanar & interior_of_minor_arc & not_antipodal
 
 
 def angle(A, B, C):
@@ -331,7 +354,7 @@ def angle(A, B, C):
 
         diff = inner1d(B, X)
         inner = inner1d(ABX, BCX)
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             inner = np.clip(inner, -1.0, 1.0)  # needed due to accuracy loss
             angle = np.arccos(inner)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
 This contains the code that does the actual unioning of regions.
@@ -12,15 +11,16 @@ import weakref
 # THIRD-PARTY
 import numpy as np
 
-from . import math_util
-
 # LOCAL
 from spherical_geometry import great_circle_arc as gca
 from spherical_geometry import vector
-from spherical_geometry.polygon import (SingleSphericalPolygon, SphericalPolygon,
-                                        MalformedPolygonError)
+from spherical_geometry.polygon import (
+    MalformedPolygonError,
+    SingleSphericalPolygon,
+    SphericalPolygon,
+)
 
-__all__ = ['Graph']
+__all__ = ["Graph"]
 
 # Set to True to enable some sanity checks
 DEBUG = True
@@ -69,7 +69,7 @@ class Graph:
         A `~Graph.Node` represents a single point, connected by an arbitrary
         number of `~Graph.Edge` objects to other `~Graph.Node` objects.
         """
-        def __init__(self, point, source_polygons=[]):
+        def __init__(self, point, source_polygons=None):
             """
             Parameters
             ----------
@@ -79,11 +79,11 @@ class Graph:
                 The polygon(s) this node came from.  Used for bookkeeping.
             """
             self._point = np.asanyarray(point)
-            self._source_polygons = set(source_polygons)
+            self._source_polygons = set() if source_polygons is None else set(source_polygons)
             self._edges = weakref.WeakSet()
 
         def __repr__(self):
-            return "Node(%s %d)" % (str(self._point), len(self._edges))
+            return f"Node({self._point!s} {len(self._edges)})"
 
         def equals(self, other, thresh=1.0e-10):
             """
@@ -112,23 +112,23 @@ class Graph:
         An `~Graph.Edge` represents a connection between exactly two
         `~Graph.Node` objects.  This `~Graph.Edge` class has no direction.
         """
-        def __init__(self, A, B, source_polygons=[]):
+        def __init__(self, A, B, source_polygons=None):
             """
             Parameters
             ----------
             A, B : `~Graph.Node` instances
 
-            source_polygon : `~spherical_geometry.polygon.SphericalPolygon` instance, optional
-                The polygon this edge came from.  Used for bookkeeping.
+            source_polygons : sequence of `~spherical_geometry.polygon.SphericalPolygon` instances, optional
+                The polygons this edge came from.  Used for bookkeeping.
             """
             self._nodes = [A, B]
             for node in self._nodes:
                 node._edges.add(self)
-            self._source_polygons = set(source_polygons)
+            self._source_polygons = set() if source_polygons is None else set(source_polygons)
 
         def __repr__(self):
             nodes = self._nodes
-            return "Edge(%s -> %s)" % (nodes[0]._point, nodes[1]._point)
+            return f"Edge({nodes[0]._point} -> {nodes[1]._point})"
 
         def follow(self, node):
             """
@@ -226,7 +226,7 @@ class Graph:
         # Close the polygon
         self._add_edge(nodeA, start_node, [polygon])
 
-    def _add_node(self, point, source_polygons=[]):
+    def _add_node(self, point, source_polygons=None):
         """
         Add a node to the graph.  It will be disconnected until used
         in a call to `_add_edge`.
@@ -268,9 +268,12 @@ class Graph:
             indices = np.nonzero(diff)[0]
             if len(indices):
                 node = nodes[indices[0]]
-                node._source_polygons.update(source_polygons)
+                if source_polygons is not None:
+                    node._source_polygons.update(source_polygons)
                 return node
 
+        if source_polygons is not None:
+            source_polygons = set(source_polygons)
         new_node = self.Node(point, source_polygons)
         self._nodes.add(new_node)
         return new_node
@@ -295,7 +298,7 @@ class Graph:
         if node in self._nodes:
             self._nodes.remove(node)
 
-    def _add_edge(self, A, B, source_polygons=[]):
+    def _add_edge(self, A, B, source_polygons=None):
         """
         Add an edge between two nodes.
 
@@ -306,8 +309,8 @@ class Graph:
         ----------
         A, B : `~Graph.Node` instances
 
-        source_polygons : `~spherical_geometry.polygon.SphericalPolygon` instance, optional
-            The polygon(s) this edge came from.  Used for bookkeeping.
+        source_polygons : sequence of `~spherical_geometry.polygon.SphericalPolygon` instances, optional
+            The polygons this edge came from.  Used for bookkeeping.
 
         Returns
         -------
@@ -323,10 +326,19 @@ class Graph:
         # one, otherwise the Edge will get hooked up to the nodes but
         # be orphaned.
         for edge in self._edges:
+            # Q: what happens when A and B are the same node?
+            # Should we allow self-pointing edges?
+            # if A is B and A.equals(B):
+            #     # TODO: clarify what to do with self-pointing edges.
+            #     # For now, don't add self-pointing edges.
+            #     return edge
             if ((A is edge._nodes[0] and
                  B is edge._nodes[1]) or
                 (A is edge._nodes[1] and
                  B is edge._nodes[0])):
+                # Q: is it possible for an edge to be between the same two
+                # nodes but not be the same edge?
+                #if source_polygons is not None:
                 edge._source_polygons.update(source_polygons)
                 return edge
 
@@ -557,7 +569,7 @@ class Graph:
         # fast, vectorized operation.
 
         edges = sorted(self._edges, key=edge_order)
-        starts, ends = self._get_edge_points(edges)
+        _starts, _ends = self._get_edge_points(edges)
 
         nodes = sorted(self._nodes, key=node_order)
         nodes_array = np.array([x._point for x in nodes])
@@ -612,7 +624,7 @@ class Graph:
 
             # Calculate the intersection points between AB and all
             # other remaining edges
-            with np.errstate(invalid='ignore'):
+            with np.errstate(invalid="ignore"):
                 intersections = gca.intersection(
                     A, B, starts, ends)
             # intersects is `True` everywhere intersections has an

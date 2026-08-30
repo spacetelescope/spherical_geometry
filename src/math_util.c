@@ -1,6 +1,7 @@
 #include "Python.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define _USE_MATH_DEFINES
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/ufuncobject.h"
@@ -73,7 +74,15 @@ typedef struct {
 
 #define ISNAN_QD(q) ((q.x[0]) != (q.x[0]))
 
+double QD_ZERO[4] = {0.0, 0.0, 0.0, 0.0};
 double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
+double QD_TWO[4] = {2.0, 0.0, 0.0, 0.0};
+
+static NPY_INLINE void
+qd_set_zero(qd *v)
+{
+    v->x[0] = v->x[1] = v->x[2] = v->x[3] = 0.0;
+}
 
 static NPY_INLINE void
 load_point(const char *in, const intp s, double *out)
@@ -124,6 +133,30 @@ save_point_qd(const qd *in, char *out, const intp s)
     *(double *) out = in[2].x[0];
 }
 
+void
+load_np_vector_array_qd(PyArrayObject *points, int i, qd *a)
+{
+    int j;
+    for (j = 0; j < 3; ++j) {
+        a[j].x[0] = *(double *) PyArray_GETPTR2(points, i, j);
+        a[j].x[1] = 0.0;
+        a[j].x[2] = 0.0;
+        a[j].x[3] = 0.0;
+    }
+}
+
+void
+load_np_vector_qd(PyArrayObject *point, qd *a)
+{
+    int j;
+    for (j = 0; j < 3; ++j) {
+        a[j].x[0] = *(double *) PyArray_GETPTR1(point, j);
+        a[j].x[1] = 0.0;
+        a[j].x[2] = 0.0;
+        a[j].x[3] = 0.0;
+    }
+}
+
 static NPY_INLINE void
 cross_qd(const qd *A, const qd *B, qd *C)
 {
@@ -144,12 +177,17 @@ cross_qd(const qd *A, const qd *B, qd *C)
 }
 
 static NPY_INLINE int
-normalize_qd(const qd *A, qd *B)
+normalize_qd(const qd *A, qd *B, double eps)
 {
     size_t i;
 
     double T[4][4];
     double l[4];
+
+    if (eps < 0.0) {
+        eps = 10.0 * c_qd_epsilon();
+    }
+    eps *= eps;
 
     for (i = 0; i < 3; ++i) {
         c_qd_sqr(A[i].x, T[i]);
@@ -159,11 +197,16 @@ normalize_qd(const qd *A, qd *B)
     c_qd_add(T[3], T[2], T[3]);
 
     if (T[3][0] < -0.0) {
+        for (i = 0; i < 3; ++i) {
+            c_qd_copy_d(NPY_NAN, B[i].x);
+        }
         PyErr_SetString(PyExc_ValueError, "Domain error in sqrt");
-        return 1;
+        return 2;
     }
-    if (T[3][0] == 0.0) {
-        c_qd_copy_d(NPY_NAN, B->x);
+    if (T[3][0] <= eps) {
+        for (i = 0; i < 3; ++i) {
+            c_qd_copy_d(NPY_NAN, B[i].x);
+        }
         return 1;
     }
 
@@ -174,6 +217,41 @@ normalize_qd(const qd *A, qd *B)
     }
 
     return 0;
+}
+
+static NPY_INLINE void
+norm_qd(const qd *a, qd *l)
+{
+    size_t i;
+    double t[4];
+
+    qd_set_zero(l);
+
+    for (i = 0; i < 3; ++i) {
+        c_qd_sqr(a[i].x, t);
+        c_qd_add(l->x, t, l->x);
+    }
+
+    return;
+}
+
+/// @brief Tests whether the vertices `A` and `B` are within a specified tolerance.
+/// @param A Pointer to the first set of vertices.
+/// @param B Pointer to the second set of vertices.
+/// @param tol Tolerance value.
+/// @return int Integer boolean-style result indicating whether the vertices are close.
+static NPY_INLINE int
+is_vertex_close(const qd *A, const qd *B, double tol)
+{
+    size_t i;
+    double s[4] = {0.0, 0.0, 0.0, 0.0}, t[4];
+
+    for (i = 0; i < 3; ++i) {
+        c_qd_sub(A[i].x, B[i].x, t);
+        c_qd_sqr(t, t);
+        c_qd_add(s, t, s);
+    }
+    return (s[0] < tol * tol) ? 1 : 0;
 }
 
 static NPY_INLINE void
@@ -241,6 +319,54 @@ normalized_dot_qd(const qd *A, const qd *B, qd *dot_val)
     return 0;
 }
 
+/*
+ * Finds the solid angle of a spherical triangle at *B* between *A*, *B*,
+ * and *C* using Oosterom-Strackee's formula.
+ */
+static void
+t_os_solid_angle_qd(qd *a, qd *b, qd *c, qd *angle)
+{
+    qd bcx[3];
+    qd prod;
+    qd det, dots[3];
+    double denom[4] = {1.0, 0.0, 0.0, 0.0};
+    int r;
+
+    cross_qd(b, c, bcx);
+    // check for degenerate triangle:
+    dot_qd(bcx, bcx, &prod);
+    c_qd_comp_qd_d(prod.x, 1e-56, &r);
+    if (r < 0) {
+        qd_set_zero(angle);
+        return;
+    }
+
+    dot_qd(a, bcx, &det);
+    dot_qd(a, b, &dots[0]);
+    dot_qd(b, c, &dots[1]);
+    dot_qd(c, a, &dots[2]);
+
+    for (int i = 0; i < 3; ++i) {
+        c_qd_add(denom, dots[i].x, denom);
+    }
+
+    // check for great-circle degeneracy:
+    if (fabs(denom[0]) < 1e-28 && fabs(det.x[0]) < 1e-28) {
+        qd_set_zero(angle);
+        return;
+    }
+
+    // check for near antipodal degeneracy:
+    c_qd_comp_qd_d(dots[1].x, -1.0 + 1.0e-28, &r);
+    if (r < 0) {
+        qd_set_zero(angle);
+        return;
+    }
+
+    c_qd_atan2(det.x, denom, angle->x);
+    c_qd_mul(angle->x, QD_TWO, angle->x);
+}
+
 static NPY_INLINE double
 sign(const double A)
 {
@@ -270,7 +396,6 @@ length_qd(const qd *A, const qd *B, qd *l)
 {
     qd s, t[3], u;
     double norm[4];
-    int flag;
 
     if ((A[0].x[0] == 0.0 && A[1].x[0] == 0.0 && A[2].x[0] == 0.0) ||
         (B[0].x[0] == 0.0 && B[1].x[0] == 0.0 && B[2].x[0] == 0.0)) {
@@ -280,10 +405,7 @@ length_qd(const qd *A, const qd *B, qd *l)
 
     /* Special case for "exactly equal" that avoids all of the calculation. */
     if (equals_qd(A, B)) {
-        l->x[0] = 0.0;
-        l->x[1] = 0.0;
-        l->x[2] = 0.0;
-        l->x[3] = 0.0;
+        qd_set_zero(l);
         return 0;
     }
 
@@ -294,7 +416,8 @@ length_qd(const qd *A, const qd *B, qd *l)
     }
     cross_qd(A, B, t);
     dot_qd(t, t, &u);
-    flag = c_qd_sqrt(u.x, norm);
+
+    c_qd_sqrt(u.x, norm);
     c_qd_atan2(norm, s.x, l->x);
     return 0;
 }
@@ -313,7 +436,7 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D, qd *T, doubl
         cross_qd(A, B, ABX);
         cross_qd(C, D, CDX);
         cross_qd(ABX, CDX, T);
-        if (normalize_qd(T, T)) {
+        if (normalize_qd(T, T, 0.0)) {
             *match = 0;
             return;
         }
@@ -396,7 +519,7 @@ DOUBLE_normalize(char **args, const intp *dimensions, const intp *steps, void *N
 
     load_point_qd(ip1, is1, IN);
 
-    if (normalize_qd(IN, OUT)) {
+    if (normalize_qd(IN, OUT, 0.0)) {
         return;
     }
 
@@ -478,7 +601,7 @@ DOUBLE_cross_and_norm(
     load_point_qd(ip2, is2, B);
 
     cross_qd(A, B, C);
-    if (normalize_qd(C, C)) {
+    if (normalize_qd(C, C, 1e-31)) { // return nan if norm < 1e-31
         return;
     }
 
@@ -705,56 +828,128 @@ static void
 DOUBLE_intersects_point(
     char **args, const intp *dimensions, const intp *steps, void *NPY_UNUSED(func))
 {
-    qd A[3];
-    qd B[3];
-    qd C[3];
-
-    qd total;
-    qd left;
-    qd right;
-    double t1[4], t2[4];
-    int result;
-
+    qd A[3], B[3], C[3];
+    qd normal[3];
+    qd nrm;
+    qd dot_ab, dot_ac, dot_bc;
+    qd tmp;
+    int cmp;
     unsigned int old_cw;
+
+    const double epsilon = 1e-16; // Tolerance for coplanarity and degenerate check
 
     INIT_OUTER_LOOP_4
     intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
 
     fpu_fix_start(&old_cw);
 
+    /* A and B are constant across the outer loop, i.e. s0 == 0 && s1 == 0.
+     * When that holds, do all A/B-only work once instead of once per point in C. */
+    int ab_invariant = (s0 == 0 && s1 == 0);
+    int degenerate = 0;
+
+    if (ab_invariant) {
+        // A and B are constant across the outer loop, load them once
+        char *ip1 = args[0], *ip2 = args[1];
+
+        load_point_qd(ip1, is1, A);
+        load_point_qd(ip2, is2, B);
+
+        if (normalize_qd(A, A, 0.0) || normalize_qd(B, B, 0.0)) {
+            BEGIN_OUTER_LOOP_4
+            *((npy_bool *) args[3]) = 0;
+            END_OUTER_LOOP
+            fpu_fix_end(&old_cw);
+            return;
+        }
+
+        cross_qd(A, B, normal);
+        norm_qd(normal, &nrm);
+
+        // degenerate check
+        c_qd_comp_qd_d(nrm.x, epsilon, &cmp);
+        degenerate = (cmp == -1);
+
+        if (!degenerate) {
+            dot_qd(A, B, &dot_ab);
+        }
+    }
+
     BEGIN_OUTER_LOOP_4
     char *ip1 = args[0], *ip2 = args[1], *ip3 = args[2], *op = args[3];
 
-    load_point_qd(ip1, is1, A);
-    load_point_qd(ip2, is2, B);
+    if (!ab_invariant) {
+        /* General case: A/B may vary per point, redo everything. */
+        load_point_qd(ip1, is1, A);
+        load_point_qd(ip2, is2, B);
+
+        if (normalize_qd(A, A, 0.0) || normalize_qd(B, B, 0.0)) {
+            *((npy_bool *) op) = 0;
+            continue;
+        }
+
+        cross_qd(A, B, normal);
+        norm_qd(normal, &nrm);
+
+        // degenerate check for nearly parallel or antipodal A and B
+        c_qd_comp_qd_d(nrm.x, epsilon, &cmp);
+        if (cmp == -1) {
+            *((npy_bool *) op) = 0;
+            continue;
+        }
+
+        dot_qd(A, B, &dot_ab);
+    } else if (degenerate) {
+        *((npy_bool *) op) = 0;
+        continue;
+    }
+
     load_point_qd(ip3, is3, C);
 
-    if (normalize_qd(A, A)) {
-        return;
+    if (normalize_qd(A, A, 0.0)) {
+        *((npy_bool *) op) = 0;
+        continue;
     }
-    if (normalize_qd(B, B)) {
-        return;
+    if (normalize_qd(B, B, 0.0)) {
+        *((npy_bool *) op) = 0;
+        continue;
     }
-    if (normalize_qd(C, C)) {
-        return;
-    }
-
-    if (length_qd(A, B, &total)) {
-        return;
-    }
-    if (length_qd(A, C, &left)) {
-        return;
-    }
-    if (length_qd(C, B, &right)) {
-        return;
+    if (normalize_qd(C, C, 0.0)) {
+        *((npy_bool *) op) = 0;
+        continue;
     }
 
-    c_qd_add(left.x, right.x, t1);
-    c_qd_sub(t1, total.x, t2);
-    c_qd_abs(t2, t1);
+    /* coplanar = |C·normal| / norm < epsilon */
+    dot_qd(C, normal, &tmp);
+    c_qd_abs(tmp.x, tmp.x);
+    c_qd_div(tmp.x, nrm.x, tmp.x);
+    c_qd_comp_qd_d(tmp.x, epsilon, &cmp);
+    if (cmp != -1) {
+        /* not coplanar -> can't be on the arc; skip the dot products below */
+        *((npy_bool *) op) = 0;
+        continue;
+    }
 
-    c_qd_comp_qd_d(t1, 1e-10, &result);
-    *((npy_bool *) op) = (result == -1);
+    /* not untipodal: AB > -1 */
+    c_qd_comp_qd_d(dot_ab.x, -1.0 + epsilon, &cmp);
+    int not_antipodal = (cmp == 1);
+
+    if (!not_antipodal) {
+        *((npy_bool *) op) = 0;
+        continue;
+    }
+
+    dot_qd(C, A, &dot_ac);
+    dot_qd(C, B, &dot_bc);
+
+    int ac_gt_ab, bc_gt_ab;
+    c_qd_comp(dot_ac.x, dot_ab.x, &ac_gt_ab);
+    c_qd_comp(dot_bc.x, dot_ab.x, &bc_gt_ab);
+
+    int interior_of_minor_arc = (ac_gt_ab >= 0) && (bc_gt_ab >= 0);
+
+    *((npy_bool *) op) = interior_of_minor_arc;
+
     END_OUTER_LOOP
 
     fpu_fix_end(&old_cw);
@@ -947,8 +1142,194 @@ addUfuncs(PyObject *dictionary)
     Py_DECREF(f);
 }
 
+/*
+ * Compute the area of a single spherical polygon from an array of vertices.
+ *
+ * Parameters
+ * ----------
+ * points : array-like, shape (N, 3)
+ *     Polygon vertices as 3D Cartesian vectors on the unit sphere.
+ * inside : array-like, shape (3,), optional
+ *     Interior reference vector used to disambiguate polygons spanning more
+ *     than half the sphere. If omitted, the centroid of the vertices is used.
+ *
+ * Returns
+ * -------
+ * float
+ *     The polygon area in steradians.
+ *
+ * References
+ * ----------
+ * Van Oosterom, A. and Strackee, J., "The Solid Angle of a Plane Triangle,"
+ * IEEE Transactions on Biomedical Engineering, vol. BME-30, no. 2,
+ * pp. 125-126, Feb. 1983. doi:10.1109/TBME.1983.325207.
+ */
+static PyObject *
+single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    PyObject *inside_obj = NULL;
+    PyObject *points_obj = NULL;
+    PyArrayObject *points;
+    double area[4] = {0.0, 0.0, 0.0, 0.0};
+    double small_area = 0.0;
+    qd *a, *b, *c, *e;
+    qd *norm_points; // pointer to the normalized points
+    qd inside[3], centroid[3];
+    qd angle;
+    npy_intp i, n;
+    int j, closed = 0, has_inside = 0;
+
+    if (!PyArg_ParseTuple(args, "O|O", &points_obj, &inside_obj)) {
+        return NULL;
+    }
+
+    points = (PyArrayObject *) PyArray_FROM_OTF(points_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+    if (points == NULL) {
+        PyErr_SetString(
+            PyExc_TypeError, "Failed to convert points to a NumPy array of type float64");
+        return NULL;
+    }
+
+    if (PyArray_NDIM(points) != 2 || PyArray_DIM(points, 1) != 3) {
+        PyErr_SetString(PyExc_ValueError, "Polygon vertices must be a 2D array of shape (N, 3)");
+        Py_DECREF(points);
+        return NULL;
+    }
+
+    if (inside_obj != NULL && inside_obj != Py_None) {
+        PyArrayObject *inside_arr =
+            (PyArrayObject *) PyArray_FROM_OTF(inside_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+
+        if (inside_arr == NULL) {
+            Py_DECREF(points);
+            return NULL;
+        }
+        if (PyArray_NDIM(inside_arr) != 1 || PyArray_DIM(inside_arr, 0) != 3) {
+            PyErr_SetString(PyExc_ValueError, "Inside vector must be a length-3 array or None");
+            Py_DECREF(inside_arr);
+            Py_DECREF(points);
+            return NULL;
+        }
+
+        load_np_vector_qd(inside_arr, inside);
+        if (normalize_qd(inside, inside, 0.0)) {
+            PyErr_SetString(PyExc_ValueError, "Failed to normalize inside vector");
+            Py_DECREF(points);
+            return NULL;
+        }
+        has_inside = 1;
+        Py_DECREF(inside_arr);
+    }
+    n = PyArray_DIM(points, 0);
+
+    // allocate memory for normalized points:
+    norm_points = (qd *) malloc(3 * n * sizeof(qd));
+    if (norm_points == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for normalized points");
+        Py_DECREF(points);
+        return NULL;
+    }
+
+    for (i = 0; i < n; ++i) {
+        load_np_vector_array_qd(points, i, norm_points + 3 * i);
+        if (normalize_qd(norm_points + 3 * i, norm_points + 3 * i, 0.0)) {
+            if (!PyErr_Occurred()) {
+                PyErr_SetString(PyExc_ValueError, "Failed to normalize polygon vertex");
+            }
+            free(norm_points);
+            Py_DECREF(points);
+            return NULL;
+        }
+    }
+    Py_DECREF(points);
+
+    a = norm_points;
+    b = norm_points + 3;
+    e = norm_points + 3 * (n - 1);
+
+    if (is_vertex_close(a, e, 1e-14)) {
+        n -= 1;
+        closed = 1;
+    }
+
+    if (n < 3) {
+        free(norm_points);
+        return Py_BuildValue("d", 0.0);
+    }
+
+    for (i = 2; i < n; ++i) {
+        c = norm_points + 3 * i;
+        t_os_solid_angle_qd(a, b, c, &angle);
+        c_qd_add(area, angle.x, area);
+        b = c;
+        c += 3;
+    }
+
+    if (!closed) {
+        // last vertex already in e
+        t_os_solid_angle_qd(a, b, e, &angle);
+        c_qd_add(area, angle.x, area);
+    }
+
+    small_area = fabs(area[0]);
+
+    if (!has_inside) {
+        free(norm_points);
+        return Py_BuildValue("d", small_area);
+    }
+
+    // compute centroid of the polygon to determine if the inside vector
+    // is pointing inwards or outwards:
+    for (i = 0; i < 3; ++i) {
+        qd_set_zero(centroid + i);
+    }
+    for (i = 0; i < n; ++i) {
+        for (j = 0; j < 3; ++j) {
+            c_qd_add(centroid[j].x, (norm_points + 3 * i + j)->x, centroid[j].x);
+        }
+    }
+    free(norm_points);
+    if (normalize_qd(centroid, centroid, 1.0e-28) == 2) {
+        return NULL;
+    }
+
+    if (QD_ISNAN(centroid->x)) {
+        // This is a reasonable fallback but it may not be accurate
+        // in all cases. We can't be sure if the correct area is small_area
+        // or 4*pi - small_area. Possible improvement: try to determine
+        // the correct orientation using another method.
+        return Py_BuildValue("d", small_area);
+    }
+
+    dot_qd((qd *) inside, (qd *) centroid, &angle);
+    if (angle.x[0] > 0.0) {
+        return Py_BuildValue("d", small_area);
+    } else {
+        return Py_BuildValue("d", 4.0 * M_PI - small_area);
+    }
+}
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-function-type-mismatch"
+#endif
+
+static struct PyMethodDef math_util_methods[] = {
+    {"single_polygon_area", (PyCFunction) (void (*)(void)) single_polygon_area, METH_VARARGS,
+     "single_polygon_area(points, inside=None)\n"},
+    {NULL, NULL} /* sentinel */
+};
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT, "math_util", NULL, -1, NULL, NULL, NULL, NULL, NULL};
+    PyModuleDef_HEAD_INIT, "math_util", NULL, -1, math_util_methods, NULL, NULL, NULL, NULL};
 
 PyObject *
 PyInit_math_util(void)

@@ -21,6 +21,20 @@ Release Notes
 - Aded two unit tests based on #292 (and possibly #278)that are marked
   with ``xfail`` for now. [#322]
 
+- Improved ``vector.rotate_around()`` to return normalized vectors. This
+  aparently fixes ``test_intersection_order_with_repeats_from_small_cones()``
+  test previously marked as failing. [#337]
+
+- Implemented a more robust polygon area computation using Oosterom-Strackee
+  which replaces previous computation that used Girard's theorem. [#338]
+
+- Added tolerance parameter for normalizing vectors in the ``math_util``
+  module. Fixed bugs related to vector normalization in edge cases. [#338]
+
+- Added a check for degenerate polygons in the ``SingleSphericalPolygon``
+  class. Orientation of a degenerate polygon is now reported as ``None``.
+  [#338]
+
 
 1.4.0 (2026-03-11)
 ==================
