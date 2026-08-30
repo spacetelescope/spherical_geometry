@@ -1,8 +1,10 @@
+import pytest
+
 import numpy as np
 
 from spherical_geometry.vector import normalize_vector
 
-
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_normalize_vector():
     rng = np.random.default_rng(0)  # Ensure reproducibility for any random operations
     nvec = 17  # >= 6

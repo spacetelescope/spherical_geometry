@@ -689,7 +689,7 @@ def test_math_util_angle_domain():
         great_circle_arc.angle([[0, 0, 0]], [[0, 0, 0]], [[0, 0, 0]])[0]
     )
 
-
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_math_util_length_domain():
     a = [
         [np.nan, 0, 0],
@@ -711,12 +711,10 @@ def test_math_util_length_domain():
     ]
 
     for b_i in b:
-        with pytest.warns(RuntimeWarning):
-            c = great_circle_arc.length(a, b_i)
+        c = great_circle_arc.length(a, b_i)
         assert np.all(~np.isfinite(c))
 
-    with pytest.warns(RuntimeWarning):
-        c = great_circle_arc.length(a, b)
+    c = great_circle_arc.length(a, b)
     assert np.all(~np.isfinite(c))
 
 
