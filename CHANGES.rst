@@ -31,6 +31,10 @@ Release Notes
 - Added tolerance parameter for normalizing vectors in the ``math_util``
   module. Fixed bugs related to vector normalization in edge cases. [#338]
 
+- Added a check for degenerate polygons in the ``SingleSphericalPolygon``
+  class. Orientation of a degenerate polygon is now reported as ``None``.
+  [#338]
+
 
 1.4.0 (2026-03-11)
 ==================

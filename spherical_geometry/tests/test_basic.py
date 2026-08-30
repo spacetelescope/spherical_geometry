@@ -775,6 +775,31 @@ def test_degenerate_polygon():
     assert p._degenerate
     assert p.area() == 0.0
 
+    # Test that a polygon with a null vector is degenerate
+    # See test_concave_polygon_area() for details on the polygon points and
+    # their arrangement.
+    sqrt2 = 2.0 * math.sqrt(2)
+    sqrt3p1 = math.sqrt(3) + 1
+    sqrt3m1 = math.sqrt(3) - 1
+    sin25 = math.sin(math.radians(25))
+    cos25 = math.cos(math.radians(25))
+    p1 = np.array([1.0, 0.0, 0.0])
+    p2 = np.array([sqrt3p1 / sqrt2, sqrt3m1 / sqrt2, 0.0])
+    p3 = np.array([sqrt3m1 / sqrt2, sqrt3p1 / sqrt2, 0.0])
+    p4 = np.array([sqrt3m1*sqrt3p1 / 8.0, sqrt3p1**2 / 8.0, sqrt3m1 / sqrt2])
+    p5 = np.array([0.0, 0.0, 0.0])
+    p6 = np.array([(sqrt3p1 * cos25) / sqrt2, (sqrt3m1 * cos25) / sqrt2, sin25])
+    p7 = np.array([cos25, 0.0, sin25])
+    p8 = np.array([sqrt3p1 / sqrt2, 0, sqrt3m1 / sqrt2])
+
+    points = np.array([p1, p2, p3, p4, p5, p6, p7, p8])
+
+    p = polygon.SingleSphericalPolygon(points)
+    assert p.is_clockwise() is None
+    assert p.inside is None
+    assert p._degenerate
+    assert p.area() == 0.0
+
     # Test that a polygon on a great circle is degenerate:
     p = polygon.SphericalPolygon.from_lonlat(90 * np.arange(5), 5 * [0])
     assert p._degenerate
