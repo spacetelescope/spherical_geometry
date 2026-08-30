@@ -186,6 +186,15 @@ class SingleSphericalPolygon:
             self._inside = None
             raise ValueError("Polygon made of too few points")
 
+        # Check that all vertices are not close to null vectors, which would
+        # cause problems with normalization and area calculations.
+        norms = np.linalg.norm(points, axis=1)
+
+        if np.any(~np.isfinite(norms)) or np.any(norms < 2 ** -32):
+            self._degenerate = True
+            self._inside = None
+            return
+
         orient, new_inside = self._get_orient(compute_inside=True)
         if orient is None:
             self._degenerate = True
@@ -280,7 +289,7 @@ class SingleSphericalPolygon:
 
     def _get_orient(self, compute_inside=False):
         npoints = len(self._points)
-        if npoints < 4:
+        if npoints < 4 or self._degenerate:
             return None, None
 
         points = np.vstack((self._points, self._points[1]))
