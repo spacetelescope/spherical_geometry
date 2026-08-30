@@ -33,7 +33,13 @@ Release Notes
 
 - Added a check for degenerate polygons in the ``SingleSphericalPolygon``
   class. Orientation of a degenerate polygon is now reported as ``None``.
-  [#338]
+  [#340]
+
+- Fixed a couple of bugs in the quad-precision versions of ``length``,
+  ``angle``, ``cross_and_norm``, and ``normalize`` functions in the
+  ``math_util`` module due to which vectorized operations could stop at
+  the first error encountered leaving the rest of returned results
+  undetermined. [#339]
 
 
 1.4.0 (2026-03-11)
