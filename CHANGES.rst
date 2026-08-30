@@ -31,15 +31,21 @@ Release Notes
 - Added tolerance parameter for normalizing vectors in the ``math_util``
   module. Fixed bugs related to vector normalization in edge cases. [#338]
 
-- Added a check for degenerate polygons in the ``SingleSphericalPolygon``
-  class. Orientation of a degenerate polygon is now reported as ``None``.
-  [#340]
-
 - Fixed a couple of bugs in the quad-precision versions of ``length``,
   ``angle``, ``cross_and_norm``, and ``normalize`` functions in the
   ``math_util`` module due to which vectorized operations could stop at
   the first error encountered leaving the rest of returned results
   undetermined. [#339]
+
+- Added a check for degenerate polygons in the ``SingleSphericalPolygon``
+  class. Orientation of a degenerate polygon is now reported as ``None``.
+  [#340]
+
+- Fixed sign and multiplication of quad-precision numbers in the
+  ``math_util.intersection()`` function. Added tolerance to detect very close
+  vertices and lines. Significantly improved robustness of intersection
+  detection in the Python version of the function by using Shewchuk-style
+  adaptive precision arithmetic. [#341]
 
 
 1.4.0 (2026-03-11)
