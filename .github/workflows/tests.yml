@@ -63,3 +63,8 @@ jobs:
         - name: Python 3 with dev version of dependencies
           linux: py3-test-devdeps
           posargs: -v
+
+        - name: Python 3.15 with dev version of dependencies
+          linux: py315-test-devdeps
+          python-version: 3.15
+          posargs: -v
