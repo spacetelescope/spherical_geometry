@@ -84,6 +84,33 @@ qd_set_zero(qd *v)
     v->x[0] = v->x[1] = v->x[2] = v->x[3] = 0.0;
 }
 
+static NPY_INLINE int
+sign_qd(const qd *v, double eps)
+{
+    if (eps == 0.0) {
+        // do a strict check without tolerances. we have to follow through
+        // if leading components are zero, continue checking the next
+        // component.
+        for (int i = 0; i < 4; ++i) {
+            if (v->x[i] > 0.0) {
+                return 1;
+            }
+            if (v->x[i] < 0.0) {
+                return -1;
+            }
+        }
+    } else {
+        if (v->x[0] > eps) {
+            return 1;
+        }
+        if (v->x[0] < -eps) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 static NPY_INLINE void
 load_point(const char *in, const intp s, double *out)
 {
@@ -244,13 +271,15 @@ is_vertex_close(const qd *A, const qd *B, double tol)
 {
     size_t i;
     double s[4] = {0.0, 0.0, 0.0, 0.0}, t[4];
+    int cmp;
 
     for (i = 0; i < 3; ++i) {
         c_qd_sub(A[i].x, B[i].x, t);
         c_qd_sqr(t, t);
         c_qd_add(s, t, s);
     }
-    return (s[0] < tol * tol) ? 1 : 0;
+    c_qd_comp_qd_d(s, tol * tol, &cmp);
+    return (cmp <= 0) ? 1 : 0;
 }
 
 static NPY_INLINE void
@@ -415,13 +444,16 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D, qd *T, doubl
     qd tmp[3];
     qd dot;
 
-    *match = !(equals_qd(A, C) | equals_qd(A, D) | equals_qd(B, C) | equals_qd(B, D));
+    //*match = !(equals_qd(A, C) | equals_qd(A, D) | equals_qd(B, C) | equals_qd(B, D));
+    *match =
+        !(is_vertex_close(A, C, 1e-15) | is_vertex_close(A, D, 1e-15) |
+          is_vertex_close(B, C, 1e-15) | is_vertex_close(B, D, 1e-15));
 
     if (*match) {
         cross_qd(A, B, ABX);
         cross_qd(C, D, CDX);
         cross_qd(ABX, CDX, T);
-        if (normalize_qd(T, T, 0.0)) {
+        if (normalize_qd(T, T, 1e-32)) {
             *match = 0;
             return;
         }
@@ -429,16 +461,16 @@ intersection_qd(const qd *A, const qd *B, const qd *C, const qd *D, qd *T, doubl
         *match = 0;
         cross_qd(ABX, A, tmp);
         dot_qd(tmp, T, &dot);
-        *s = sign(dot.x[0]);
+        *s = sign_qd(&dot, 0.0);
         cross_qd(B, ABX, tmp);
         dot_qd(tmp, T, &dot);
-        if (*s == sign(dot.x[0])) {
+        if (*s == sign_qd(&dot, 0.0)) {
             cross_qd(CDX, C, tmp);
             dot_qd(tmp, T, &dot);
-            if (*s == sign(dot.x[0])) {
+            if (*s == sign_qd(&dot, 0.0)) {
                 cross_qd(D, CDX, tmp);
                 dot_qd(tmp, T, &dot);
-                if (*s == sign(dot.x[0])) {
+                if (*s == sign_qd(&dot, 0.0)) {
                     *match = 1;
                 }
             }
@@ -687,9 +719,9 @@ DOUBLE_intersection(char **args, const intp *dimensions, const intp *steps, void
     intersection_qd(A, B, C, D, T, &s, &match);
 
     if (match) {
-        T[0].x[0] *= s;
-        T[1].x[0] *= s;
-        T[2].x[0] *= s;
+        c_qd_mul_qd_d(T[0].x, s, T[0].x);
+        c_qd_mul_qd_d(T[1].x, s, T[1].x);
+        c_qd_mul_qd_d(T[2].x, s, T[2].x);
         save_point_qd(T, op, is5);
     } else {
         save_point(nans, op, is5);
@@ -819,7 +851,8 @@ DOUBLE_intersects_point(
     int cmp;
     unsigned int old_cw;
 
-    const double epsilon = 1e-16; // Tolerance for coplanarity and degenerate check
+    // Tolerance for coplanarity and degenerate check:
+    const double epsilon = 1e-16;
 
     INIT_OUTER_LOOP_4
     intp is1 = steps[0], is2 = steps[1], is3 = steps[2];
@@ -905,7 +938,7 @@ DOUBLE_intersects_point(
         continue;
     }
 
-    /* not untipodal: AB > -1 */
+    /* not antipodal: AB > -1 */
     c_qd_comp_qd_d(dot_ab.x, -1.0 + epsilon, &cmp);
     int not_antipodal = (cmp == 1);
 

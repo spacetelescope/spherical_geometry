@@ -7,6 +7,8 @@ Great circles are circles on the unit sphere whose center is
 coincident with the center of the sphere.  Great circle arcs are the
 section of those circles between two points on the unit sphere.
 """
+# STDLIB
+from fractions import Fraction
 
 # THIRD-PARTY
 import numpy as np
@@ -69,127 +71,178 @@ else:
 
 
 if HAS_C_UFUNCS:
-    def _cross_and_normalize(A, B):
-        with np.errstate(invalid="ignore"):
+    def _cross_and_normalize(A, B, eps=1e-31):
+        with np.errstate(invalid='ignore'):
+            # TODO: Figure out how to pass eps to C-ufunc
             return math_util.cross_and_norm(A, B)
 else:
-    def _cross_and_normalize(A, B):
-        T = _fast_cross(A, B)
-        # Normalization
-        l = np.sqrt(np.sum(T ** 2, axis=-1))
-        l = two_d(l)
-        # Might get some divide-by-zeros
-        with np.errstate(invalid="ignore"):
-            TN = T / l
-        # ... but set to zero, or we miss real NaNs elsewhere
-        TN = np.nan_to_num(TN)
-        return TN
+    def _cross_and_normalize(a, b, eps=1e-15):
+        a = np.asarray(a, dtype=float)
+        b = np.asarray(b, dtype=float)
+
+        x = _fast_cross(a, b)
+        n = np.linalg.norm(x, axis=-1)
+
+        if np.isscalar(n):
+            if n < eps:
+                return np.full_like(x, np.nan, dtype=float)
+            return x / n
+
+        # if array
+        mask_small = (n <= eps)
+        denom = n.copy()
+        denom[mask_small] = np.nan
+
+        # Broadcast denom to (..., 3)
+        denom = denom[..., None]
+
+        with np.errstate(invalid="ignore", divide="ignore"):
+            out = x / denom
+        return out
 
 
 if HAS_C_UFUNCS:
     triple_product = math_util.triple_product
+    intersection = math_util.intersection
+
 else:
     def triple_product(A, B, C):
         return inner1d(C, _fast_cross(A, B))
 
 
-def intersection(A, B, C, D):
-    r"""
-    Returns the point of intersection between two great circle arcs.
-    The arcs are defined between the points *AB* and *CD*.  Either *A*
-    and *B* or *C* and *D* may be arrays of points, but not both.
+    def _det3_broadcast(a, b, c):
+        """
+        Determinant of 3x3 with rows a, b, c.
+        a, b, c: (..., 3) arrays, already broadcast to same shape.
+        Returns: (...) array of determinants.
+        """
+        return (
+            a[..., 0] * (b[..., 1] * c[..., 2] - b[..., 2] * c[..., 1]) -
+            a[..., 1] * (b[..., 0] * c[..., 2] - b[..., 2] * c[..., 0]) +
+            a[..., 2] * (b[..., 0] * c[..., 1] - b[..., 1] * c[..., 0])
+        )
 
-    Parameters
-    ----------
-    A, B : (*x*, *y*, *z*) triples or Nx3 arrays of triples
-        Endpoints of the first great circle arc.
 
-    C, D : (*x*, *y*, *z*) triples or Nx3 arrays of triples
-        Endpoints of the second great circle arc.
+    def _exact_det3(a, b, c):
+        """
+        Exact 3x3 determinant using Fractions for single 3-vectors.
+        a, b, c: shape (3,) arrays, assumed finite and non-NaN.
+        """
+        fa = [Fraction(x) for x in a]
+        fb = [Fraction(x) for x in b]
+        fc = [Fraction(x) for x in c]
 
-    Returns
-    -------
-    T : (*x*, *y*, *z*) triples or Nx3 arrays of triples
-        If the given arcs intersect, the intersection is returned.  If
-        the arcs do not intersect, the triple is set to all NaNs.
+        return (
+            fa[0] * (fb[1] * fc[2] - fb[2] * fc[1]) -
+            fa[1] * (fb[0] * fc[2] - fb[2] * fc[0]) +
+            fa[2] * (fb[0] * fc[1] - fb[1] * fc[0])
+        )
 
-    Notes
-    -----
-    The basic intersection is computed using linear algebra as follows
-    [1]_:
 
-    .. math::
+    def _robust_det_sign(a, b, c):
+        """
+        Shewchuk-style adaptive sign of det([a; b; c]) with broadcasting.
 
-        T = \lVert(A × B) × (C × D)\rVert
+        a, b, c: (..., 3) arrays (any broadcastable combination).
+        Returns: int array of shape (...) with values in {-1, 0, +1}.
+        """
+        a = np.asarray(a, dtype=float)
+        b = np.asarray(b, dtype=float)
+        c = np.asarray(c, dtype=float)
 
-    To determine the correct sign (i.e. hemisphere) of the
-    intersection, the following four values are computed:
+        # Broadcast all three to a common shape (..., 3)
+        a, b, c = np.broadcast_arrays(a, b, c)
 
-    .. math::
+        det = _det3_broadcast(a, b, c)
+        sign = np.zeros_like(det, dtype=int)
 
-        s_1 = ((A × B) × A) \cdot T
+        # fast path: |det| > eps -> sign from float
+        eps=1e-12
+        mask_fast_pos = det > eps
+        mask_fast_neg = det < -eps
+        sign[mask_fast_pos] = 1
+        sign[mask_fast_neg] = -1
 
-        s_2 = (B × (A × B)) \cdot T
+        # slow path: |det| <= eps -> exact Fraction per element
+        mask_slow = ~(mask_fast_pos | mask_fast_neg)
 
-        s_3 = ((C × D) × C) \cdot T
+        if np.any(mask_slow):
+            it = np.nditer(mask_slow, flags=['multi_index'])
+            while not it.finished:
+                if it[0]:
+                    idx = it.multi_index
+                    a_i = a[idx]  # shape (3,)
+                    b_i = b[idx]
+                    c_i = c[idx]
 
-        s_4 = (D × (C × D)) \cdot T
+                    # If any NaN/inf is present, we cannot do exact arithmetic;
+                    # treat as indeterminate sign -> 0.
+                    if (np.isnan(a_i).any() or np.isnan(b_i).any() or np.isnan(c_i).any() or
+                        np.isinf(a_i).any() or np.isinf(b_i).any() or np.isinf(c_i).any()):
+                        sign[idx] = 0
+                    else:
+                        det_exact = _exact_det3(a_i, b_i, c_i)
+                        if det_exact > 0:
+                            sign[idx] = 1
+                        elif det_exact < 0:
+                            sign[idx] = -1
+                        else:
+                            sign[idx] = 0
+                it.iternext()
 
-    For :math:`s_n`, if all positive :math:`T` is returned as-is.  If
-    all negative, :math:`T` is multiplied by :math:`-1`.  Otherwise
-    the intersection does not exist and is undefined.
+        return sign
 
-    References
-    ----------
 
-    .. [1] Method explained in an `e-mail
-        <http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271>`_
-        by Roger Stafford.
+    def intersection(A, B, C, D, eps=1e-13):
+        r"""
+        Returns the point of intersection between two great circle arcs.
+        The arcs are defined between the points *AB* and *CD*.  Either *A*
+        and *B* or *C* and *D* may be arrays of points, but not both.
+        """
 
-    http://www.mathworks.com/matlabcentral/newsreader/view_thread/276271
+        A = np.asanyarray(A, dtype=float)
+        B = np.asanyarray(B, dtype=float)
+        C = np.asanyarray(C, dtype=float)
+        D = np.asanyarray(D, dtype=float)
 
-    Also see: http://www.boeing-727.com/Data/fly%20odds/distance.html
-    """
-    if HAS_C_UFUNCS:
-        return math_util.intersection(A, B, C, D)
+        A, B = np.broadcast_arrays(A, B)
+        C, D = np.broadcast_arrays(C, D)
 
-    A = np.asanyarray(A)
-    B = np.asanyarray(B)
-    C = np.asanyarray(C)
-    D = np.asanyarray(D)
+        ABX = _fast_cross(A, B)
+        CDX = _fast_cross(C, D)
+        T = _cross_and_normalize(ABX, CDX, eps=eps)
+        T_ndim = T.ndim
 
-    A, B = np.broadcast_arrays(A, B)
-    C, D = np.broadcast_arrays(C, D)
+        if T_ndim > 1:
+            s = np.zeros(T.shape[0], dtype=int)
+        else:
+            s = np.zeros(1, dtype=int)
 
-    ABX = _fast_cross(A, B)
-    CDX = _fast_cross(C, D)
-    T = _cross_and_normalize(ABX, CDX)
-    T_ndim = len(T.shape)
+        # ((A x B) x A) . T  == det([A x B; A; T])
+        s += _robust_det_sign(ABX, A, T)
+        # (B x (A x B)) · T  == det([B; A x B; T])
+        s += _robust_det_sign(B, ABX, T)
+        # ((C x D) x C) · T  == det([C x D; C; T])
+        s += _robust_det_sign(CDX, C, T)
+        # (D x (C x D)) · T  == det([D; C x D; T])
+        s += _robust_det_sign(D, CDX, T)
 
-    if T_ndim > 1:
-        s = np.zeros(T.shape[0])
-    else:
-        s = np.zeros(1)
-    s += np.sign(inner1d(_fast_cross(ABX, A), T))
-    s += np.sign(inner1d(_fast_cross(B, ABX), T))
-    s += np.sign(inner1d(_fast_cross(CDX, C), T))
-    s += np.sign(inner1d(_fast_cross(D, CDX), T))
-    if T_ndim > 1:
-        s = two_d(s)
+        if T_ndim > 1:
+            s_col = two_d(s)
+        else:
+            s_col = s
 
-    cross = np.where(s == -4, -T, np.where(s == 4, T, np.nan))
+        cross = np.where(s_col == -4, -T,
+                        np.where(s_col == 4, T, np.nan))
 
-    # If they share a common point, it's not an intersection.  This
-    # gets around some rounding-error/numerical problems with the
-    # above.
-    equals = (np.all(A == C, axis=-1) |
-              np.all(A == D, axis=-1) |
-              np.all(B == C, axis=-1) |
-              np.all(B == D, axis=-1))
+        equals = (np.all(A == C, axis=-1) |
+                np.all(A == D, axis=-1) |
+                np.all(B == C, axis=-1) |
+                np.all(B == D, axis=-1))
 
-    equals = two_d(equals)
+        equals = two_d(equals)
 
-    return np.where(equals, np.nan, cross)
+        return np.where(equals, np.nan, cross)
 
 
 def length(A, B):
