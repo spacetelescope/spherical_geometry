@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/spacetelescope/stsci-package-template",
+  "commit": "9d1515679d243805f399ca9c085d8b9d67281435",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "spherical_geometry",
+      "package_name": "spherical_geometry",
+      "repository_url": "https://github.com/spacetelescope/spherical_geometry",
+      "git_username": "spacetelescope/spherical_geometry-maintainers",
+      "project_description": "Python based tools for spherical geometry",
+      "manage_changelog_with_towncrier": true,
+      "publish_docs_to": "readthedocs.io",
+      "task_runner": "tox",
+      "python_version": ">=3.11",
+      "python_c_extensions": true,
+      "python_build_backend": "setuptools",
+      "crds_observatory": "none",
+      "_template": "https://github.com/spacetelescope/stsci-package-template",
+      "_commit": "9d1515679d243805f399ca9c085d8b9d67281435"
+    }
+  },
+  "directory": "python-package"
+}
