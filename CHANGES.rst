@@ -47,6 +47,13 @@ Release Notes
   detection in the Python version of the function by using Shewchuk-style
   adaptive precision arithmetic. [#341]
 
+- Made polygon tracing in the ``graph`` module deterministic: results no
+  longer depend on ``set``/``WeakSet`` iteration order. Node ordering now
+  uses vertex coordinates instead of hashes, and the tracer picks the next
+  edge by the smallest signed turn angle with a coordinate-based tie-break.
+  Also hardened ``_split_edge`` against splitting at an existing endpoint
+  and run the union/intersection cleanup passes to a fixed point. [#347]
+
 
 1.4.0 (2026-03-11)
 ==================

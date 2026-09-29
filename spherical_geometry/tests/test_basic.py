@@ -823,8 +823,7 @@ def test_degenerate_polygon():
     assert not p._degenerate
     assert p.area() != 0.0
 
-# TODO make this test pass
-@pytest.mark.xfail(reason="https://github.com/spacetelescope/spherical_geometry/issues/192")
+
 def test_nearly_degenerate_polygon():
     """https://github.com/spacetelescope/spherical_geometry/issues/192"""
 
@@ -837,8 +836,8 @@ def test_nearly_degenerate_polygon():
     single = polygon.SingleSphericalPolygon(points)
     multi = polygon.SphericalPolygon(points)
 
-    assert single.area > 0
-    assert multi.area > 0
+    assert single.area() > 0
+    assert multi.area() > 0
 
 
 # TODO make this test pass
