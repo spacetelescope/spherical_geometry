@@ -6,6 +6,7 @@ This contains the code that does the actual unioning of regions.
 
 # STDLIB
 import inspect
+import math
 import weakref
 
 # THIRD-PARTY
@@ -25,17 +26,34 @@ __all__ = ["Graph"]
 # Set to True to enable some sanity checks
 DEBUG = True
 
+# tolerance for comparing points
+NODE_EPS = 2.0**(-32)
+NRM_EPS = 1.0e-16 * NODE_EPS  # for projection normalization
+ANG_EPS = 0.0  # skip near-zero angles to avoid backtracking
 
-# The following two functions are called by sorted to provide a consistent
-# ordering of nodes and edges retrieved from the graph, since values are
-# retrieved from sets in an order that varies from run to run
+# '_node_order()' and '_edge_order()' functions are called by sorted to provide
+# a consistent ordering of nodes and edges retrieved from the graph,
+# since values are retrieved from sets in an order that varies from run to run:
+def _point_key(point):
+    return (float(point[0]), float(point[1]), float(point[2]))
 
-def node_order(node):
+# TODO: Consider using _point_key for consistent ordering instead of hash-based
+# ordering. Needs to guard against None and NaN values (maybe in _add_node or
+# Node initializer?)
+#
+# def _node_order(node):
+#     return _point_key(node._point)
+
+# def _edge_order(edge):
+#     a, b = _node_order(edge._nodes[0]), _node_order(edge._nodes[1])
+#     return (a, b) if a <= b else (b, a)   # commutative AND injective
+
+def _node_order(node):
     return hash(tuple(node._point))
 
 
-def edge_order(edge):
-    return node_order(edge._nodes[0]) + node_order(edge._nodes[1])
+def _edge_order(edge):
+    return _node_order(edge._nodes[0]) + _node_order(edge._nodes[1])
 
 
 def _malformed_polygon_error(msg):
@@ -85,7 +103,7 @@ class Graph:
         def __repr__(self):
             return f"Node({self._point!s} {len(self._edges)})"
 
-        def equals(self, other, thresh=1.0e-10):
+        def equals(self, other, thresh=NODE_EPS):
             """
             Returns `True` if the location of this and the *other*
             `~Graph.Node` are the same.
@@ -244,7 +262,7 @@ class Graph:
             The new node
         """
         # Any nodes whose Cartesian coordinates are closer together
-        # than 2 ** -32 will cause numerical problems in the
+        # than NODE_EPS will cause numerical problems in the
         # intersection calculations, so we merge any nodes that
         # are closer together than that.
 
@@ -257,13 +275,19 @@ class Graph:
             nodes = list(self._nodes)
             node_array = np.array([node._point for node in nodes])
 
-            diff = np.all(np.abs(point - node_array) < 2 ** -32, axis=-1)
-            # TODO: consider using arccos: v1 . v2 = cos(angle), so angle = arccos(v1 . v2).
-            # diff = np.arccos(np.clip(node_array @ point, -1, 1)) < 4e-9
+            diff = np.linalg.norm(node_array - point, axis=-1) < NODE_EPS
+            # diff = np.all(np.abs(point - node_array) < NODE_EPS, axis=-1)
+
+            # TODO: consider alternatives such as using the arccos:
+            # v1 . v2 = cos(angle), so angle = arccos(v1 . v2)
+            # however, arccos can be numerically unstable for angles very close
+            # to 0 or pi.
+            # diff = np.arccos(np.clip(node_array @ point, -1, 1)) < 100 * NODE_EPS
+
             # TODO: even more accurate but slower (makes one xfailed test to
             # pass and another test to fail that was expected to pass -
-            # different number of vertices):
-            # diff = gca.length(node_array, point) < 4e-10
+            # different number of vertices - that's OK):
+            # diff = gca.length(node_array, point) < NODE_EPS
 
             indices = np.nonzero(diff)[0]
             if len(indices):
@@ -338,8 +362,10 @@ class Graph:
                  B is edge._nodes[0])):
                 # Q: is it possible for an edge to be between the same two
                 # nodes but not be the same edge?
-                #if source_polygons is not None:
-                edge._source_polygons.update(source_polygons)
+                # Q: what happens when A and B are the same node?
+                # Should we allow self-pointing edges?
+                if source_polygons is not None:
+                    edge._source_polygons.update(source_polygons)
                 return edge
 
         new_edge = self.Edge(A, B, source_polygons)
@@ -389,18 +415,46 @@ class Graph:
         -------
         edgeA, edgeB : `~Graph.Edge` instances
             The two new edges on either side of *node*.
-        """
-        if edge not in self._edges or node not in self._nodes:
-            raise ValueError("Either node or edge not in the graph.")
 
+        """
         A, B = edge._nodes
+
+        # If node coincides with A or B, do not split
+        if node is A or node is B or node.equals(A) or node.equals(B):
+            # Return the original edge twice so callers can unpack
+            return [edge, edge]
+
+        # Normal split
         edgeA = self._add_edge(A, node, edge._source_polygons)
         edgeB = self._add_edge(node, B, edge._source_polygons)
-        if edge not in (edgeA, edgeB):
-            self._remove_edge(edge)
-        return [edgeA, edgeB]
 
-    def _sanity_check(self, msg, node_is_2=False):
+        valid_edges = []
+        for e in (edgeA, edgeB):
+            # Zero-length/self-edge -> remove immediately
+            if e._nodes[0] is e._nodes[1] or e._nodes[0].equals(e._nodes[1]):
+                if e in self._edges:
+                    self._remove_edge(e)
+            else:
+                valid_edges.append(e)
+
+        # If both collapsed, return original edge twice
+        if not valid_edges:
+            return [edge, edge]
+
+        # If only one valid edge remains, return it twice
+        if len(valid_edges) == 1:
+            if edge not in valid_edges and edge in self._edges:
+                self._remove_edge(edge)
+            return [valid_edges[0], valid_edges[0]]
+
+        # Normal case: two valid edges
+        if edge not in valid_edges and edge in self._edges:
+            self._remove_edge(edge)
+
+        return valid_edges
+
+
+    def _sanity_check(self, msg, require_even_node_degree=False):
         """
         For debugging purposes: assert that edges and nodes are
         connected to each other correctly and there are no orphaned
@@ -417,11 +471,11 @@ class Graph:
             edge_repr = [tuple(x._point) for x in edge._nodes]
             edge_repr.sort()
             edge_repr = tuple(edge_repr)
-            # assert edge_repr not in unique_edges
+            assert edge_repr not in unique_edges
             unique_edges.add(edge_repr)
 
         for node in self._nodes:
-            if node_is_2:
+            if require_even_node_degree:
                 if len(node._edges) % 2 != 0:
                     _malformed_polygon_error(msg)
 
@@ -448,20 +502,10 @@ class Graph:
         self._sanity_check("union: find all intersections")
         self._remove_interior_edges()
         self._sanity_check("union: remove interior edges")
-        self._remove_degenerate_edges()
-        self._sanity_check("union: remove degenerate edges")
-        self._remove_3ary_edges()
-        self._sanity_check("union: remove 3ary edges")
-        self._remove_orphaned_nodes()
-        self._sanity_check("union: remove orphan nodes", True)
+        self._cleanup_graph(remove_cut_lines=False)
+        self._sanity_check("union: cleanup", require_even_node_degree=True)
 
-        poly = self._trace()
-        for source_poly in self._source_polygons:
-            inside_point = source_poly.inside
-            break
-        else:
-            inside_point = None
-        return SphericalPolygon((poly, ), inside=inside_point)
+        return SphericalPolygon((self._trace(),))
 
     def intersection(self):
         """
@@ -478,13 +522,11 @@ class Graph:
         self._sanity_check("intersection: find all intersections")
         self._remove_exterior_edges()
         self._sanity_check("intersection: remove exterior edges")
-        self._remove_cut_lines()
-        self._sanity_check("intersection: remove cut lines")
-        self._remove_orphaned_nodes()
-        self._sanity_check("intersection: remove orphan nodes", True)
+        self._cleanup_graph(remove_cut_lines=True)
+        self._sanity_check("intersection: cleanup", True)
 
         poly = self._trace()
-        # If multiple polygons, the inside point can only be in one
+
         if len(poly._polygons) == 1 and not self._contains_inside_point(poly):
             poly = poly.invert_polygon()
         return poly
@@ -493,11 +535,20 @@ class Graph:
         """
         Convert a graph containing cut lines and self intersections
         into a list of disjoint polygons
+
+        Returns
+        -------
+        polygons : list of SphericalPolygon
+            A list of disjoint polygons obtained from the graph.
+
         """
         changed = self._remove_cut_lines()
         self._sanity_check("disjoint: remove cut lines")
         changed = self._find_all_intersections() or changed
         self._sanity_check("disjoint: find all intersections")
+        changed = self._cleanup_graph() or changed
+        self._sanity_check("disjoint: cleanup", require_even_node_degree=True)
+
         if changed:
             polygons = self._trace_polygons()
         else:
@@ -544,20 +595,27 @@ class Graph:
 
         cut_lines = []
         changed = False
-
         for edge in self._edges:
             A, B = edge._nodes
             if len(A._edges) == 3 and len(B._edges) == 3:
                 cut_lines.append(edge)
-                changed = True
 
         for edge in cut_lines:
             if edge in self._edges:
-                self._remove_edge(edge)
+                A, B = edge._nodes
+                if len(A._edges) == 3 and len(B._edges) == 3:
+                    self._remove_edge(edge)
+                    changed = True
 
+        changed = self._remove_orphaned_nodes() or changed
         return changed
 
     def _get_edge_points(self, edges):
+        if not edges:
+            # Return proper 2-D empty arrays so vstack works
+            return (np.empty((0, 3), dtype=float),
+                    np.empty((0, 3), dtype=float))
+
         return (np.array([x._nodes[0]._point for x in edges]),
                 np.array([x._nodes[1]._point for x in edges]))
 
@@ -568,10 +626,10 @@ class Graph:
         # intersection between an edge and all other nodes becomes a
         # fast, vectorized operation.
 
-        edges = sorted(self._edges, key=edge_order)
+        edges = sorted(self._edges, key=_edge_order)
         _starts, _ends = self._get_edge_points(edges)
 
-        nodes = sorted(self._nodes, key=node_order)
+        nodes = sorted(self._nodes, key=_node_order)
         nodes_array = np.array([x._point for x in nodes])
 
         # Split all edges by any nodes that intersect them
@@ -595,6 +653,8 @@ class Graph:
                         if edge not in edges]
 
                     for end_point in AB._nodes:
+                        # Q: doesn't 'node' already have its own source polygons?
+                        # Why do we need to update it with the end point's source polygons?
                         node._source_polygons.update(
                             end_point._source_polygons)
                     edges = edges + new_edges
@@ -609,7 +669,7 @@ class Graph:
         # time to keep them in sync, but of course the interface for
         # doing so is different between Python lists and numpy arrays.
 
-        edges = sorted(self._edges, key=edge_order)
+        edges = sorted(self._edges, key=_edge_order)
         starts, ends = self._get_edge_points(edges)
 
         # Calculate edge-to-edge intersections and break
@@ -726,6 +786,9 @@ class Graph:
             A, B = edge._nodes
             for polygon in polygons:
                 if polygon in edge._source_polygons:
+                # TODO: This seems unreliable, especially the midpoint check:
+                #       it may fail for concave polygons and also for large
+                #       polygons spanning a significant portion of the sphere.
                     edge._count += 1
                 elif ((polygon in A._source_polygons or
                        polygon.contains_point(A._point)) and
@@ -757,6 +820,10 @@ class Graph:
         for edge in removals:
             if edge in self._edges:
                 self._remove_edge(edge)
+
+        if changed:
+            self._remove_orphaned_nodes()
+
         return changed
 
     def _remove_3ary_edges(self):
@@ -769,6 +836,10 @@ class Graph:
         for edge in self._edges:
             nedges_a = len(edge._nodes[0]._edges)
             nedges_b = len(edge._nodes[1]._edges)
+
+            # Q: Why 3? Why not >= 2 ? When can two nodes be connected by more
+            # than one edge? I thought this code no longer uses cut lines,
+            # so how can this happen or when 2 lines are allowed?
             if (nedges_a % 2 == 1 and nedges_a >= 3 and
                     nedges_b % 2 == 1 and nedges_b >= 3):
                 removals.append(edge)
@@ -777,6 +848,10 @@ class Graph:
         for edge in removals:
             if edge in self._edges:
                 self._remove_edge(edge)
+
+        if changed:
+            self._remove_orphaned_nodes()
+
         return changed
 
     def _remove_orphaned_nodes(self):
@@ -798,6 +873,21 @@ class Graph:
                 break
         return changed
 
+    def _cleanup_graph(self, remove_cut_lines=False):
+        """
+        Run all graph-simplification passes to a fixed point.
+        """
+        changed = True
+        any_change = False
+        while changed:
+            changed = self._remove_degenerate_edges()
+            if remove_cut_lines:
+                changed = self._remove_cut_lines() or changed
+            changed = self._remove_3ary_edges() or changed
+            changed = self._remove_orphaned_nodes() or changed
+            any_change = any_change or changed
+        return any_change
+
     def _contains_inside_point(self, poly):
         """
         Check if the polygons in the graph all contain
@@ -813,85 +903,128 @@ class Graph:
         """
         Given a graph that has had cutlines removed and all
         intersections found, traces it to find a list of
-        disjoint polygons
+        disjoint polygons.
+
+        Assumes:
+        - graph represents simple (non-self-intersecting) spherical polygons
+        - edges are great-circle arcs between unit 3D points
+        - polygons are not larger than a hemisphere (recommended)
+
         """
 
-        def edge_normal(edge, last_edge):
-            # THe normal vector to the plane defining the arc
-            normal = gca._cross_and_normalize(edge._nodes[0]._point,
-                                              edge._nodes[1]._point)
-            if last_edge is not None:
-                orientation = None
-                for i in (0, 1):
-                    last_edge_point = last_edge._nodes[i]._point
-                    for j in (0, 1):
-                        point = edge._nodes[j]._point
-                        if np.array_equal(last_edge_point, point):
-                            if i == j:
-                                orientation = -1.0
-                            else:
-                                orientation = 1.0
+        def edge_dir(node, edge):
+            """
+            Direction of edge when leaving `node`, projected to the tangent
+            plane at `node._point` and normalized.
+            """
+            p = node._point
+            q = edge.follow(node)._point  # other endpoint
 
-                if orientation is None:
-                    raise RuntimeError("Unconnected edge found when tracing")
-                normal = orientation * normal
+            # project q onto tangent plane at p
+            v = q - np.dot(q, p) * p
+            nrm = np.linalg.norm(v)
+            if nrm < NRM_EPS:
+                return v
+            return v / nrm
 
-            return normal
+        def signed_turn_angle(node, last_edge, next_edge):
+            """
+            Signed angle from last_edge to next_edge around the normal `node._point`.
+            Positive = left turn when looking along node._point.
+            """
+            p = node._point
+            d0 = edge_dir(node, last_edge)
+            d1 = edge_dir(node, next_edge)
+
+            # atan2( (d0 x d1)·p , d0·d1 )
+            cross = np.cross(d0, d1)
+            sin_theta = np.dot(cross, p)
+            cos_theta = np.dot(d0, d1)
+            angle = math.atan2(sin_theta, cos_theta)
+
+            # normalize to [0, 2π)
+            if angle < 0.0:
+                angle += 2.0 * math.pi
+
+            return angle
 
         def pick_next_edge(node, last_edge):
-            # Pick the next edge when arriving at a node from
-            # last_edge.  If there's only one other edge, the choice
-            # is obvious.  If there's more than one, disfavor an edge
-            # with the same normal as the previous edge, in order to
-            # trace 4-connected nodes into separate distinct shapes
-            # and avoid edge crossings.
-            candidates = []
-            for edge in node._edges:
-                if not edge._followed:
-                    candidates.append(edge)
+            """
+            Pick the next edge when arriving at `node` from `last_edge`.
+            Deterministic: independent of set / WeakSet iteration order.
+            """
+            candidates = [e for e in node._edges if not e._followed]
+            if not candidates:
+                raise ValueError("No more edges to follow at node")
 
-            if len(candidates) == 0:
-                raise ValueError("No more edges to follow")
-            elif len(candidates) == 1 or last_edge is None:
+            # Primary determinism: a fixed order on the candidate edges,
+            # keyed by the coordinate of the far endpoint.
+            candidates.sort(key=lambda e: _point_key(e.follow(node)._point))
+
+            if last_edge is None or len(candidates) == 1:
                 return candidates[0]
 
-            last_edge_cross = edge_normal(last_edge, None)
-            edge_cross = [edge_normal(edge, last_edge) for edge in candidates]
-            edge_cross = np.asanyarray(edge_cross)
-            dot = gca.inner1d(edge_cross, last_edge_cross)
+            def turn_key(e):
+                ang = signed_turn_angle(node, last_edge, e)
+                # Push backtracking / collinear edges to the back so a reversal
+                # is only taken when it is the sole remaining option.
+                if ang <= ANG_EPS:
+                    ang += 2.0 * math.pi
+                # Secondary key breaks genuine ties (duplicate / overlapping
+                # edges produced by intersection splitting).
+                return (ang, _point_key(e.follow(node)._point))
 
-            schwartz = zip(dot, candidates)
-            schwartz = sorted(schwartz, key=lambda x: x[0])
-
-            middle = len(candidates) // 2
-            return schwartz[middle][1]
+            return min(candidates, key=turn_key)
 
         polygons = []
-        edges = set(self._edges)  # copy
+        edges = sorted(self._edges, key=_edge_order)
         for edge in self._edges:
             edge._followed = False
 
-        while len(edges):
+        while edges:
             points = []
-            edge = edges.pop()
+
+            # start from the first unused edge
+            edge = edges.pop(0)
+            if edge._followed:
+                continue
             edge._followed = True
-            start_node = node = edge._nodes[0]
+
+            # Deterministic traversal direction: enter the ring from the
+            # endpoint with the smaller point key, so a given cycle is always
+            # walked the same way regardless of which Edge object we seeded
+            # from or how `_nodes` happened to be ordered.
+            n0, n1 = edge._nodes
+            if _point_key(n0._point) <= _point_key(n1._point):
+                start_node, node = n0, n1
+            else:
+                start_node, node = n1, n0
+
+            points.append(start_node._point)
             points.append(node._point)
-            node = edge._nodes[1]
-            points.append(node._point)
+
             while True:
                 if not np.array_equal(points[-1], node._point):
                     points.append(node._point)
 
-                edge = pick_next_edge(node, edge)
-                edge._followed = True
-                edges.discard(edge)
+                next_edge = pick_next_edge(node, edge)
+                next_edge._followed = True
+                try:
+                    edges.remove(next_edge)
+                except ValueError:
+                    pass
+
+                edge = next_edge
                 node = edge.follow(node)
+
                 if node is start_node:
                     points.append(node._point)
                     break
 
             polygon = SingleSphericalPolygon(points)
+            # TODO: consider ensuring consistent winding order for polygons
+            # if polygon.is_clockwise():
+            #     polygon = SingleSphericalPolygon(points[::-1])
             polygons.append(polygon)
 
         return polygons
