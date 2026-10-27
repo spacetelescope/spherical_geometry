@@ -57,5 +57,5 @@ jobs:
           posargs: -v
 
         - name: Python 3.15 with dev version of dependencies
-          linux: py3.15-test-devdeps
+          linux: py315-test-devdeps
           posargs: -v
