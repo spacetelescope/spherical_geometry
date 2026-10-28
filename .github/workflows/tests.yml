@@ -43,7 +43,7 @@ jobs:
           linux: py314-test
           posargs: -v
 
-        - name: Python 3.15 with coverage
+        - name: Python 3 with coverage
           linux: py315-test-cov
           posargs: -v
           coverage: codecov-oidc
