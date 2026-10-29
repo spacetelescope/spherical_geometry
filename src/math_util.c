@@ -3,9 +3,18 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #define _USE_MATH_DEFINES
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 #include "numpy/ndarraytypes.h"
-#include "numpy/ufuncobject.h"
 #include "numpy/arrayobject.h"
+#include "numpy/ufuncobject.h"
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #include "numpy/npy_math.h"
 
@@ -14,6 +23,7 @@
 #endif
 
 #include "qd/c_qd.h"
+#include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -74,9 +84,9 @@ typedef struct {
 
 #define ISNAN_QD(q) ((q.x[0]) != (q.x[0]))
 
-double QD_ZERO[4] = {0.0, 0.0, 0.0, 0.0};
-double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
-double QD_TWO[4] = {2.0, 0.0, 0.0, 0.0};
+// static const double QD_ZERO[4] = {0.0, 0.0, 0.0, 0.0};
+static const double QD_ONE[4] = {1.0, 0.0, 0.0, 0.0};
+static const double QD_TWO[4] = {2.0, 0.0, 0.0, 0.0};
 
 static NPY_INLINE void
 qd_set_zero(qd *v)
@@ -111,6 +121,7 @@ sign_qd(const qd *v, double eps)
     return 0;
 }
 
+/*
 static NPY_INLINE void
 load_point(const char *in, const intp s, double *out)
 {
@@ -120,6 +131,7 @@ load_point(const char *in, const intp s, double *out)
     in += s;
     out[2] = (*(double *) in);
 }
+*/
 
 static NPY_INLINE void
 load_point_qd(const char *in, const intp s, qd *out)
@@ -383,6 +395,7 @@ t_os_solid_angle_qd(qd *a, qd *b, qd *c, qd *angle)
     c_qd_mul(angle->x, QD_TWO, angle->x);
 }
 
+/*
 static NPY_INLINE double
 sign(const double A)
 {
@@ -392,6 +405,7 @@ sign(const double A)
     return npy_signbit(A) ? -1.0 : 1.0;
 #endif
 }
+*/
 
 static NPY_INLINE int
 equals_qd(const qd *A, const qd *B)
@@ -1342,6 +1356,13 @@ PyInit_math_util(void)
         PyErr_SetString(PyExc_RuntimeError, "cannot load umath_tests module.");
         return NULL;
     }
+
+#ifdef Py_GIL_DISABLED
+    if (PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED) < 0) {
+        Py_DECREF(m);
+        return NULL;
+    }
+#endif
 
     import_array();
     import_ufunc();
