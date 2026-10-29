@@ -4,11 +4,11 @@ dynamic = ["version"]
 description = "Python based tools for spherical geometry"
 readme = "README.rst"
 authors = [{ name = "STScI" }]
-license = { text = "BSD-3-Clause" }
+license = "BSD-3-Clause"
+license-files = ["licenses/*"]
 requires-python = ">=3.11"
 classifiers = [
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: C",
   "Programming Language :: Python :: 3",
@@ -68,7 +68,6 @@ test-command = "python -c \"import spherical_geometry\""
 
 [tool.setuptools]
 include-package-data = false
-license-files = ["licenses/*.rst"]
 zip-safe = false
 
 [tool.setuptools.packages.find]
