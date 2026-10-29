@@ -18,10 +18,6 @@
 
 #include "numpy/npy_math.h"
 
-#if NPY_VERSION >= 0x02000000
-#include "numpy/npy_2_compat.h"
-#endif
-
 #include "qd/c_qd.h"
 #include <string.h>
 #include <math.h>
@@ -1069,6 +1065,11 @@ addUfuncs(PyObject *dictionary)
 {
     PyObject *f;
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
     f = PyUFunc_FromFuncAndDataAndSignature(
         inner1d_functions, inner1d_data, inner1d_signatures, 1, 2, 1, PyUFunc_None, "inner1d",
         "inner on the last dimension and broadcast on the rest \n"
@@ -1155,6 +1156,10 @@ addUfuncs(PyObject *dictionary)
         0, angle_signature);
     PyDict_SetItemString(dictionary, "angle", f);
     Py_DECREF(f);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 }
 
 /*
@@ -1198,7 +1203,17 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
 
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
     points = (PyArrayObject *) PyArray_FROM_OTF(points_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
     if (points == NULL) {
         PyErr_SetString(
             PyExc_TypeError, "Failed to convert points to a NumPy array of type float64");
@@ -1212,8 +1227,18 @@ single_polygon_area(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     if (inside_obj != NULL && inside_obj != Py_None) {
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
         PyArrayObject *inside_arr =
             (PyArrayObject *) PyArray_FROM_OTF(inside_obj, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
         if (inside_arr == NULL) {
             Py_DECREF(points);
