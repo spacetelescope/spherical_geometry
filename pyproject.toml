@@ -64,7 +64,7 @@ build = [
   "cp311-*",  # build for CPython 3.11 Stable API
   "cp3*t-*",  # build for free-threaded Python
 ]
-test-command = "python -c 'import spherical_geometry'"
+test-command = "python -c \"import spherical_geometry\""
 
 [tool.setuptools]
 include-package-data = false
