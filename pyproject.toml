@@ -4,11 +4,11 @@ dynamic = ["version"]
 description = "Python based tools for spherical geometry"
 readme = "README.rst"
 authors = [{ name = "STScI" }]
-license = { text = "BSD-3-Clause" }
+license = "BSD-3-Clause"
+license-files = ["licenses/*"]
 requires-python = ">=3.11"
 classifiers = [
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: C",
   "Programming Language :: Python :: 3",
@@ -24,12 +24,26 @@ keywords = [
   "spherical",
   "geometry",
 ]
-dependencies = ["numpy>=1.25"]
+dependencies = [
+  "numpy>=1.25"
+]
 
 [project.optional-dependencies]
-test = ["astropy>=5.2.0", "coverage", "pytest>=9.0", "pytest-astropy-header", "gwcs"]
-docs = ["astropy>=5.2.0", "sphinx-automodapi", "numpydoc"]
-wcs = ["astropy>=5.2.0"]
+test = [
+  "astropy>=5.2.0",
+  "coverage",
+  "pytest>=9.0",
+  "pytest-astropy-header",
+  "gwcs"
+]
+docs = [
+  "astropy>=5.2.0",
+  "sphinx-automodapi",
+  "numpydoc"
+]
+wcs = [
+  "astropy>=5.2.0"
+]
 
 [project.urls]
 bug = "https://github.com/spacetelescope/spherical_geometry/issues/"
@@ -38,12 +52,22 @@ help = "https://hsthelp.stsci.edu"
 documentation = "http://spherical-geometry.readthedocs.io/"
 
 [build-system]
-requires = ["setuptools>=61.2", "setuptools_scm[toml]>=3.6", "numpy>=2.0.0"]
+requires = [
+  "setuptools>=61.2",
+  "setuptools_scm[toml]>=3.6",
+  "numpy>=2.0.1"
+]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = [
+  "cp311-*",  # build for CPython 3.11 Stable API
+  "cp3*t-*",  # build for free-threaded Python
+]
+test-command = "python -c \"import spherical_geometry\""
 
 [tool.setuptools]
 include-package-data = false
-license-files = ["licenses/*.rst"]
 zip-safe = false
 
 [tool.setuptools.packages.find]
