@@ -54,6 +54,7 @@ Release Notes
   Also hardened ``_split_edge`` against splitting at an existing endpoint
   and run the union/intersection cleanup passes to a fixed point. [#347]
 
+- build wheels for Linux ARM64 [#362]
 
 1.4.0 (2026-03-11)
 ==================
