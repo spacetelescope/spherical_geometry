@@ -59,3 +59,7 @@ jobs:
         - name: Python 3.15 with dev version of dependencies
           linux: py315-test-devdeps
           posargs: -v
+          
+        - name: Python 3 on Linux ARM64
+          linux: py3-test
+          runs-on: ubuntu-26.04-arm
